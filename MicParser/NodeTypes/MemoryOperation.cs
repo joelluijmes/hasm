@@ -1,4 +1,4 @@
-﻿namespace HomebrewParser.NodeTypes
+﻿namespace MicParser.NodeTypes
 {
     public enum MemoryOperation : long
     {

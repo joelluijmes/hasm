@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Text.RegularExpressions;
-using HomebrewParser;
-using ParserLib.Parsing.Value;
+using MicParser;
 using ParserLib;
+using ParserLib.Parsing.Value;
 
-namespace HomebrewAssembler
+namespace MicAssembler
 {
     internal class Program
     {

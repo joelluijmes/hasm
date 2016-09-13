@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using HomebrewParser.NodeTypes;
+using MicParser.NodeTypes;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 using ParserLib.Parsing.Value;
 
-namespace HomebrewParser
+namespace MicParser
 {
     public sealed class MicroGrammar : Grammar
     {
