@@ -1,7 +1,0 @@
-C:\Users\joell\Dropbox\Programming\C#\Language\HomebrewAssembler\HomebrewParser\obj\Debug\HomebrewParser.csprojResolveAssemblyReference.cache
-C:\Users\joell\Dropbox\Programming\C#\Language\HomebrewAssembler\HomebrewParser\bin\Debug\HomebrewParser.dll
-C:\Users\joell\Dropbox\Programming\C#\Language\HomebrewAssembler\HomebrewParser\bin\Debug\HomebrewParser.pdb
-C:\Users\joell\Dropbox\Programming\C#\Language\HomebrewAssembler\HomebrewParser\bin\Debug\ParserLib.dll
-C:\Users\joell\Dropbox\Programming\C#\Language\HomebrewAssembler\HomebrewParser\bin\Debug\ParserLib.pdb
-C:\Users\joell\Dropbox\Programming\C#\Language\HomebrewAssembler\HomebrewParser\obj\Debug\HomebrewParser.dll
-C:\Users\joell\Dropbox\Programming\C#\Language\HomebrewAssembler\HomebrewParser\obj\Debug\HomebrewParser.pdb
