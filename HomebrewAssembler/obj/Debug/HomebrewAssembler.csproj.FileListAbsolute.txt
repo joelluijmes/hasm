@@ -1,0 +1,10 @@
+C:\Users\joell\Dropbox\Programming\C#\Language\HomebrewAssembler\HomebrewAssembler\obj\Debug\HomebrewAssembler.csprojResolveAssemblyReference.cache
+C:\Users\joell\Dropbox\Programming\C#\Language\HomebrewAssembler\HomebrewAssembler\bin\Debug\HomebrewAssembler.exe.config
+C:\Users\joell\Dropbox\Programming\C#\Language\HomebrewAssembler\HomebrewAssembler\bin\Debug\HomebrewAssembler.exe
+C:\Users\joell\Dropbox\Programming\C#\Language\HomebrewAssembler\HomebrewAssembler\bin\Debug\HomebrewAssembler.pdb
+C:\Users\joell\Dropbox\Programming\C#\Language\HomebrewAssembler\HomebrewAssembler\bin\Debug\HomebrewParser.dll
+C:\Users\joell\Dropbox\Programming\C#\Language\HomebrewAssembler\HomebrewAssembler\bin\Debug\ParserLib.dll
+C:\Users\joell\Dropbox\Programming\C#\Language\HomebrewAssembler\HomebrewAssembler\bin\Debug\HomebrewParser.pdb
+C:\Users\joell\Dropbox\Programming\C#\Language\HomebrewAssembler\HomebrewAssembler\bin\Debug\ParserLib.pdb
+C:\Users\joell\Dropbox\Programming\C#\Language\HomebrewAssembler\HomebrewAssembler\obj\Debug\HomebrewAssembler.exe
+C:\Users\joell\Dropbox\Programming\C#\Language\HomebrewAssembler\HomebrewAssembler\obj\Debug\HomebrewAssembler.pdb
