@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 using MicParser;
 using ParserLib;
-using ParserLib.Parsing.Value;
+using ParserLib.Evaluation;
 
 namespace MicAssembler
 {
@@ -10,7 +10,7 @@ namespace MicAssembler
     {
         private static void Main(string[] args)
         {
-            var statement = MicroGrammar._label;
+            var statement = MicroGrammar.Statement;
 
             Console.WriteLine($"Current grammar: {statement} -> {statement.Definition}");
             Console.WriteLine("=== [ParseTree]");
@@ -26,15 +26,8 @@ namespace MicAssembler
                 var parsed = statement.ParseTree(input);
 
                 Console.WriteLine("=== [Result]");
-                foreach (var p in parsed)
-                {
-                    Console.WriteLine(p.PrettyFormat());
-                    Console.WriteLine();
-
-                    //ValueNode<string> valueNode;
-                    //if ((valueNode = p as ValueNode<string>) != null)
-                    //    Console.WriteLine($"Value: {valueNode.Value}");
-                }
+                Console.WriteLine(parsed.PrettyFormat());
+                Console.WriteLine($"Value: {Evaluator.FirstValueOrDefault<long>(parsed)}");
             }
         }
     }
