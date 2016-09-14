@@ -9,6 +9,7 @@
         ALU,
         Memory,
         Branch,
-        Statement
+        Statement,
+        Instruction
     }
 }

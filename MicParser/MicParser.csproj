@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MicroInstruction.cs" />
     <Compile Include="NodeTypes\AluOperation.cs" />
     <Compile Include="NodeTypes\LeftRegister.cs" />
     <Compile Include="MicroGrammar.cs" />

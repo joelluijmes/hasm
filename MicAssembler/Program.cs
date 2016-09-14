@@ -10,7 +10,7 @@ namespace MicAssembler
     {
         private static void Main(string[] args)
         {
-            var statement = MicroGrammar.Statement;
+            var statement = MicroGrammar._label;
 
             Console.WriteLine($"Current grammar: {statement} -> {statement.Definition}");
             Console.WriteLine("=== [ParseTree]");
@@ -19,7 +19,7 @@ namespace MicAssembler
 
             while (true)
             {
-                Console.Write("Input: ");
+                Console.WriteLine("Input: ");
                 var input = Console.ReadLine();
                 input = Regex.Replace(input, "\\s+", "");
 
@@ -31,9 +31,9 @@ namespace MicAssembler
                     Console.WriteLine(p.PrettyFormat());
                     Console.WriteLine();
 
-                    ValueNode<long> valueNode;
-                    if ((valueNode = p as ValueNode<long>) != null)
-                        Console.WriteLine($"Value: {valueNode.Value:X9}");
+                    //ValueNode<string> valueNode;
+                    //if ((valueNode = p as ValueNode<string>) != null)
+                    //    Console.WriteLine($"Value: {valueNode.Value}");
                 }
             }
         }

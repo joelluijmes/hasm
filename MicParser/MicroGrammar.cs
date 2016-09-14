@@ -10,7 +10,7 @@ namespace MicParser
 {
     public sealed class MicroGrammar : Grammar
     {
-        private static readonly Rule _label = (SharedGrammar.Letter | MatchChar('_')) + ZeroOrMore(SharedGrammar.Digit | SharedGrammar.Letter | MatchChar('_'));
+        public static readonly Rule _label = Value<string>("Label", n => n.Value, SharedGrammar.Letter | MatchChar('_')) + ZeroOrMore(SharedGrammar.Digit | SharedGrammar.Letter | MatchChar('_'));
         private static readonly Rule _gotoMBR = Value("next", 1L << 9, MatchChar('(') + MatchString("MBR", true) + MatchChar(')'));
         private static readonly Rule _constant = Value("constant", long.Parse, SharedGrammar.Digits);
 
@@ -32,16 +32,20 @@ namespace MicParser
         private static readonly Rule _clear = Value(AluOperation.Clear, (long) AluOperation.Clear, MatchString("clr", true));
         private static readonly Rule _preset = Value(AluOperation.Preset, (long) AluOperation.Preset, MatchString("preset", true));
 
-        private static readonly Rule _termRule = _clear | (_right + _sub + _left) | (_left + _sub + _right) | Binary(_left, _add | _logicAnd | _logicOr | _logicXor, _right) | _preset;
+        private static readonly Rule _termRule = _clear 
+            | (_right + _sub + _left) 
+            | (_left + _sub + _right) 
+            | Binary(_left, _add | _logicAnd | _logicOr | _logicXor, _right) 
+            | _preset;
         private static readonly Rule _term = Value<long>(NodeType.Term, GetValue, _termRule);
 
         public static readonly Rule Alu = Value<long>(NodeType.ALU, GetValue, OneOrMore(_destination + MatchChar('=')) + _term);
-
         public static readonly Rule Memory = Value<long>(NodeType.Memory, GetFirstValueFromLeafs, Or(GetValueRulesFromEnum<MemoryOperation, long>()));
-
         public static readonly Rule Goto = Value<long>(NodeType.Branch, GetFirstValueFromLeafs, MatchString("goto") + Node("operand", _gotoMBR | _constant));
 
-        public static readonly Rule Statement = Value<long>(NodeType.Statement, GetValue, (Alu + MatchChar(';')).Optional + (Memory + MatchChar(';')).Optional + (Goto + MatchChar(';')).Optional + End());
+        private static readonly Rule _cycle = Value<long>(NodeType.Statement, GetValue, (Alu + MatchChar(';')).Optional + (Memory + MatchChar(';')).Optional + (Goto + MatchChar(';')).Optional + End());
+        public static readonly Rule Statement = Value<MicroInstruction>(NodeType.Instruction, GetFirstValueFromLeafs, _label + MatchChar(':') + _cycle);
+
         private static Rule Node(NodeType type, Rule rule) => Node(type.ToString(), rule);
         private static Rule Node(AluOperation operation, Rule rule) => Node(operation.ToString(), rule);
 
