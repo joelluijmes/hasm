@@ -2,8 +2,8 @@
 {
     public enum LeftRegister : long
     {
-        Null = 2 << 17,
-        One = 1 << 17,
-        H = 0 << 17
+        Null = 2 << 18,
+        One  = 1 << 18,
+        H    = 0 << 18
     }
 }
