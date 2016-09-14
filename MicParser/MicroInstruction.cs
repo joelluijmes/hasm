@@ -1,4 +1,7 @@
-﻿namespace MicParser
+﻿using ParserLib.Evaluation;
+using ParserLib.Parsing;
+
+namespace MicParser
 {
     public struct MicroInstruction
     {
@@ -10,5 +13,11 @@
             Label = label;
             Instruction = instruction;
         }
+
+        public static MicroInstruction FromNode(Node statement) => new MicroInstruction(
+            Evaluator.FirstValue<string>(statement),
+            Evaluator.FirstValue<long>(statement));
+
+        public override string ToString() => $"{Label}: {Instruction:X9}";
     }
 }

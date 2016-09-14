@@ -2,6 +2,7 @@
 {
     public enum AluOperation : long
     {
+        InverseSub = 1 << 14,
         Add = 3 << 14,
         Sub = 2 << 14,
         Or = 5 << 14,

@@ -27,7 +27,8 @@ namespace MicAssembler
 
                 Console.WriteLine("=== [Result]");
                 Console.WriteLine(parsed.PrettyFormat());
-                Console.WriteLine($"Value: {Evaluator.FirstValueOrDefault<long>(parsed)}");
+                Console.WriteLine($"Value: {Evaluator.FirstValueOrDefault<MicroInstruction>(parsed)}");
+
             }
         }
     }

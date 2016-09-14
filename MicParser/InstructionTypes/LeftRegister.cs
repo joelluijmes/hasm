@@ -1,4 +1,4 @@
-﻿namespace MicParser.NodeTypes
+﻿namespace MicParser.InstructionTypes
 {
     public enum LeftRegister : long
     {
