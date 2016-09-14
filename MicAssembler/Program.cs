@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 using MicParser;
+using MicParser.OpCode;
 using ParserLib;
 using ParserLib.Evaluation;
 
@@ -10,6 +11,9 @@ namespace MicAssembler
     {
         private static void Main(string[] args)
         {
+            var opCode = new MicroOpCode {Output = OutputRegister.SP, };
+            Console.WriteLine(opCode.Value);
+
             var statement = MicroGrammar.Statement;
 
             Console.WriteLine($"Current grammar: {statement} -> {statement.Definition}");

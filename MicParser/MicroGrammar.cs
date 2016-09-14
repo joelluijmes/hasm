@@ -1,8 +1,10 @@
 ﻿
 using System;
 using MicParser.InstructionTypes;
+using MicParser.OpCode;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
+using RightRegister = MicParser.InstructionTypes.RightRegister;
 
 namespace MicParser
 {
@@ -15,7 +17,7 @@ namespace MicParser
             ValueGrammar.ConstantValue(LeftRegister.H.ToString(), (long) LeftRegister.H, MatchString("H", true)) |
             ValueGrammar.ConstantValue(LeftRegister.One.ToString(), (long) LeftRegister.One, MatchChar('1')) |
             ValueGrammar.ConstantValue(LeftRegister.Null.ToString(), (long) LeftRegister.Null, MatchChar('0')));
-        private static readonly Rule _rightInput      = ValueGrammar.MatchEnum<RightRegister, long>("B");
+        public static readonly Rule _rightInput      = ValueGrammar.MatchEnum<RightRegister, long>("B");
         private static readonly Rule _destination     = ValueGrammar.MatchEnum<DestinationRegister, long>("C");
         private static readonly Rule _output          = ValueGrammar.AccumulateLeafs("Output", _accumulator, OneOrMore(_destination + MatchChar('=')));
         
