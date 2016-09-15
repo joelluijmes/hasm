@@ -42,15 +42,14 @@ namespace MicParser
         public static readonly Rule Memory = ValueGrammar.MatchEnum<MemoryOperation, long>("Memory") + MatchChar(';');
 
         // Branching
-        private static readonly Rule _label = ValueGrammar.Text("Label", (SharedGrammar.Letter | MatchChar('_')) + ZeroOrMore(SharedGrammar.Digit | SharedGrammar.Letter | MatchChar('_'))) + MatchChar(':');
+        private static readonly Rule _label = ValueGrammar.Text("Label", (SharedGrammar.Letter | MatchChar('_')) + ZeroOrMore(SharedGrammar.Digit | SharedGrammar.Letter | MatchChar('_')));
         private static readonly Rule _nextInstruction = ValueGrammar.ConstantValue("Next", 1L << 9, MatchChar('(') + MatchString("MBR", true) + MatchChar(')'));
         private static readonly Rule _absolute = ValueGrammar.ConvertToValue("Absolute", long.Parse, SharedGrammar.Digits);
 
-        public static readonly Rule Branch = ValueGrammar.FirstValue<long>("Branch", MatchString("goto") + (_label | _nextInstruction | _absolute)) + MatchChar(';');
-
-
+        public static readonly Rule Branch = MatchString("goto") +  ValueGrammar.Text("Branch", _label | _nextInstruction | _absolute) + MatchChar(';');
+        
         // Total :)
         private static readonly Rule _operation = ValueGrammar.AccumulateLeafs("Operation", _accumulator, Alu.Optional + Memory.Optional + Branch.Optional);
-        public static readonly Rule Statement = ValueGrammar.ConvertToValue("Statement", MicroInstruction.FromNode, _label.Optional + _operation);
+        public static readonly Rule Instruction = ValueGrammar.ConvertToValue("Instruction", MicroInstruction.FromNode, (_label + MatchChar(':')).Optional + _operation);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using MicParser;
 using MicParser.OpCode;
@@ -11,28 +12,34 @@ namespace MicAssembler
     {
         private static void Main(string[] args)
         {
-            var opCode = new MicroOpCode {Output = OutputRegister.SP, };
-            Console.WriteLine(opCode.Value);
+            var statement = MicroGrammar.Instruction;
 
-            var statement = MicroGrammar.Statement;
+            //Console.WriteLine($"Current grammar: {statement} -> {statement.Definition}");
+            //Console.WriteLine("=== [ParseTree]");
+            //Console.WriteLine(statement.PrettyFormat());
+            //Console.WriteLine();
 
-            Console.WriteLine($"Current grammar: {statement} -> {statement.Definition}");
-            Console.WriteLine("=== [ParseTree]");
-            Console.WriteLine(statement.PrettyFormat());
-            Console.WriteLine();
+            //while (true)
+            //{
+            //    Console.WriteLine("Input: ");
+            //    var input = Console.ReadLine();
+            //    input = Regex.Replace(input, "\\s+", "");
 
-            while (true)
+            //    var parsed = statement.ParseTree(input);
+
+            //    Console.WriteLine("=== [Result]");
+            //    Console.WriteLine(parsed.PrettyFormat());
+            //    Console.WriteLine($"Value: {Evaluator.FirstValueOrDefault<MicroInstruction>(parsed)}");
+            //    //Console.WriteLine($"Value: {Evaluator.FirstValueOrDefault<string>(parsed)}");
+            //}
+
+            var lines = File.ReadAllLines("assembly.txt");
+            foreach (var line in lines)
             {
-                Console.WriteLine("Input: ");
-                var input = Console.ReadLine();
-                input = Regex.Replace(input, "\\s+", "");
+                var parsed = statement.ParseTree(Regex.Replace(line, "\\s+", ""));
+                var instruction = Evaluator.FirstValue<MicroInstruction>(parsed);
 
-                var parsed = statement.ParseTree(input);
-
-                Console.WriteLine("=== [Result]");
-                Console.WriteLine(parsed.PrettyFormat());
-                Console.WriteLine($"Value: {Evaluator.FirstValueOrDefault<MicroInstruction>(parsed)}");
-
+                Console.WriteLine(instruction);
             }
         }
     }
