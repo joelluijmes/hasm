@@ -1,4 +1,4 @@
-﻿using ParserLib.Evaluation;
+﻿using ParserLib;
 using ParserLib.Parsing;
 
 namespace MicParser.OpCode
@@ -18,17 +18,17 @@ namespace MicParser.OpCode
 
         public static MicroInstruction FromNode(Node statement)
         {
-            var labelNode = Evaluator.FirstNodeByName(statement, "Label");
-            var label = labelNode != null ? Evaluator.FirstValue<string>(labelNode) : "";
+            var labelNode = statement.FindByName("Label");
+            var label = labelNode != null ? labelNode.Value<string>() : "";
 
-            var aluNode = Evaluator.FirstNodeByName(statement, "ALU");
-            var alu = aluNode != null ? Evaluator.FirstValue<long>(aluNode) : 0L;
+            var aluNode = statement.FindByName("ALU");
+            var alu = aluNode?.Value<long>() ?? 0L;
 
-            var memoryNode = Evaluator.FirstNodeByName(statement, "Memory");
-            var memory = memoryNode != null ? Evaluator.FirstValue<long>(memoryNode) : 0L;
+            var memoryNode = statement.FindByName("Memory");
+            var memory = memoryNode?.Value<long>() ?? 0L;
 
-            var branchNode = Evaluator.FirstNodeByName(statement, "Branch");
-            var branch = branchNode != null ? "goto " + Evaluator.FirstValue<string>(branchNode) : "";
+            var branchNode = statement.FindByName("Branch");
+            var branch = branchNode != null ? "goto " + branchNode.Value<string>() : "";
 
             var opcode = new MicroOpCode {Value = alu | memory};
             return new MicroInstruction(label, opcode, branch);

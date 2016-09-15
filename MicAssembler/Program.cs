@@ -37,7 +37,7 @@ namespace MicAssembler
             foreach (var line in lines)
             {
                 var parsed = statement.ParseTree(Regex.Replace(line, "\\s+", ""));
-                var instruction = Evaluator.FirstValue<MicroInstruction>(parsed);
+                var instruction = parsed.Value<MicroInstruction>();
 
                 Console.WriteLine(instruction);
             }
