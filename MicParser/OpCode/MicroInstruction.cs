@@ -1,13 +1,16 @@
-﻿using ParserLib;
+﻿using System.Text.RegularExpressions;
+using ParserLib;
+using ParserLib.Evaluation;
 using ParserLib.Parsing;
 
 namespace MicParser.OpCode
 {
-    public struct MicroInstruction
+    public class MicroInstruction
     {
-        public string Label { get; }
-        public MicroOpCode OpCode { get; }
-        public string Branch { get; }
+        public string Label { get; set; }
+        public MicroOpCode OpCode { get; set; }
+        public string Branch { get; set; }
+        public int Address { get; set; } = -1;
 
         public MicroInstruction(string label, MicroOpCode opCode, string branch)
         {
@@ -27,13 +30,26 @@ namespace MicParser.OpCode
             var memoryNode = statement.FindByName("Memory");
             var memory = memoryNode?.Value<long>() ?? 0L;
 
-            var branchNode = statement.FindByName("Branch");
-            var branch = branchNode != null ? "goto " + branchNode.Value<string>() : "";
+            var opcode = new MicroOpCode { Value = alu | memory };
 
-            var opcode = new MicroOpCode {Value = alu | memory};
+            var branchNode = statement.FindByName("Branch");
+            if (branchNode != null)
+            {
+                var knownBranch = Evaluator.FirstValueNodeOrDefault<long>(branchNode);
+                if (knownBranch != null)
+                    opcode.NextAddress = (ushort) knownBranch.Value;
+            }
+
+            var branch = branchNode != null && opcode.NextAddress == 0 ? branchNode.Value<string>() : "";
             return new MicroInstruction(label, opcode, branch);
         }
 
-        public override string ToString() => $"{Label}:\t{OpCode.Value:X9}; {Branch}";
+        public override string ToString()
+        {
+            var address = Address == -1 ? "XXX" : $"{Address:X3}";
+            var branch = string.IsNullOrEmpty(Branch) ? "" : "goto " + Branch;
+
+            return $"{address}  {Label}:\t{Regex.Replace($"{OpCode.Value:X9}", ".{3}", "$0 ")} {branch}";
+        }
     }
 }

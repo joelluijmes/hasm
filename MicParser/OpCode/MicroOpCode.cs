@@ -1,6 +1,6 @@
 namespace MicParser.OpCode
 {
-    public struct MicroOpCode
+    public class MicroOpCode
     {
         public ushort NextAddress { get; set; }
         public JAM JAM { get; set; }

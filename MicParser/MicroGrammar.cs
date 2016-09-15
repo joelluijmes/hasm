@@ -17,7 +17,7 @@ namespace MicParser
             ValueGrammar.ConstantValue(LeftRegister.H.ToString(), (long) LeftRegister.H, MatchString("H", true)) |
             ValueGrammar.ConstantValue(LeftRegister.One.ToString(), (long) LeftRegister.One, MatchChar('1')) |
             ValueGrammar.ConstantValue(LeftRegister.Null.ToString(), (long) LeftRegister.Null, MatchChar('0')));
-        public static readonly Rule _rightInput      = ValueGrammar.MatchEnum<RightRegister, long>("B");
+        private static readonly Rule _rightInput      = ValueGrammar.MatchEnum<RightRegister, long>("B");
         private static readonly Rule _destination     = ValueGrammar.MatchEnum<DestinationRegister, long>("C");
         private static readonly Rule _output          = ValueGrammar.AccumulateLeafs("Output", _accumulator, OneOrMore(_destination + MatchChar('=')));
         
@@ -46,7 +46,7 @@ namespace MicParser
         private static readonly Rule _nextInstruction = ValueGrammar.ConstantValue("Next", 1L << 9, MatchChar('(') + MatchString("MBR", true) + MatchChar(')'));
         private static readonly Rule _absolute = ValueGrammar.ConvertToValue("Absolute", long.Parse, SharedGrammar.Digits);
 
-        public static readonly Rule Branch = MatchString("goto") +  ValueGrammar.Text("Branch", _label | _nextInstruction | _absolute) + MatchChar(';');
+        public static readonly Rule Branch = MatchString("goto") + ValueGrammar.Text("Branch", _label | _nextInstruction | _absolute) + MatchChar(';');
         
         // Total :)
         private static readonly Rule _operation = ValueGrammar.AccumulateLeafs("Operation", _accumulator, Alu.Optional + Memory.Optional + Branch.Optional);
