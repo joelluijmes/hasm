@@ -21,6 +21,7 @@ namespace MicParser.OpCode
 
         public static MicroInstruction FromNode(Node statement)
         {
+            // TODO: Cleanup
             var labelNode = statement.FindByName("Label");
             var label = labelNode != null ? labelNode.Value<string>() : "";
 
@@ -39,8 +40,11 @@ namespace MicParser.OpCode
                 if (knownBranch != null)
                     opcode.NextAddress = (ushort) knownBranch.Value;
             }
-
+            
             var branch = branchNode != null && opcode.NextAddress == 0 ? branchNode.Value<string>() : "";
+            if (label == branch)
+                label = "";
+
             return new MicroInstruction(label, opcode, branch);
         }
 
