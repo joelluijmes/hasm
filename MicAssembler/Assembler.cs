@@ -28,7 +28,7 @@ namespace MicAssembler
             IList<MicroInstruction> parsedInstructions = listing
                 .Select(l => Regex.Replace(l, "\\s+", "")) // remove whitespace
                 .Select(Grammar.ParseTree) // parse every line
-                .Select(p => p.Value<MicroInstruction>()) // get the MicroInstruction 
+                .Select(p => p.FirstValue<MicroInstruction>()) // get the MicroInstruction 
                 .ToList();
 
             parsedInstructions = FixLabels(parsedInstructions);
@@ -50,8 +50,8 @@ namespace MicAssembler
                 if (string.IsNullOrEmpty(instruction.Label))
                 {
                     var parsed = _labelRule.ParseTree(previous.Label);
-                    var name = parsed.Value<string>();
-                    var index = Evaluator.FirstValueOrDefault<int>(parsed);
+                    var name = parsed.FirstValue<string>();
+                    var index = parsed.FirstValueOrDefault<int>();
 
                     instruction.Label = $"{name}{++index}";
                 }

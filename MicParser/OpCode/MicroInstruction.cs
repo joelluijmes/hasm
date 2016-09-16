@@ -22,26 +22,23 @@ namespace MicParser.OpCode
         public static MicroInstruction FromNode(Node statement)
         {
             // TODO: Cleanup
-            var labelNode = statement.FindByName("Label");
-            var label = labelNode != null ? labelNode.Value<string>() : "";
+            var labelNode = statement.FirstNodeByNameOrDefault("Label");
+            var label = labelNode != null ? labelNode.FirstValue<string>() : "";
 
-            var aluNode = statement.FindByName("ALU");
-            var alu = aluNode?.Value<long>() ?? 0L;
+            var aluNode = statement.FirstNodeByNameOrDefault("ALU");
+            var alu = aluNode?.FirstValue<long>() ?? 0L;
 
-            var memoryNode = statement.FindByName("Memory");
-            var memory = memoryNode?.Value<long>() ?? 0L;
+            var memoryNode = statement.FirstNodeByNameOrDefault("Memory");
+            var memory = memoryNode?.FirstValue<long>() ?? 0L;
 
             var opcode = new MicroOpCode { Value = alu | memory };
 
-            var branchNode = statement.FindByName("Branch");
-            if (branchNode != null)
-            {
-                var knownBranch = Evaluator.FirstValueNodeOrDefault<long>(branchNode);
-                if (knownBranch != null)
-                    opcode.NextAddress = (ushort) knownBranch.Value;
-            }
-            
-            var branch = branchNode != null && opcode.NextAddress == 0 ? branchNode.Value<string>() : "";
+            var branchNode = statement.FirstNodeByNameOrDefault("Branch");
+            var knownBranch = branchNode?.FirstValueNodeOrDefault<long>();
+            if (knownBranch != null)
+                opcode.NextAddress = (ushort) knownBranch.Value;
+
+            var branch = branchNode != null && opcode.NextAddress == 0 ? branchNode.FirstValue<string>() : "";
             if (label == branch)
                 label = "";
 

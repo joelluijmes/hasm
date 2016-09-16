@@ -19,7 +19,7 @@ namespace MicParser
             ValueGrammar.ConstantValue(LeftRegister.Null.ToString(), (long) LeftRegister.Null, MatchChar('0')));
         private static readonly Rule _rightInput      = ValueGrammar.MatchEnum<RightRegister, long>("B");
         private static readonly Rule _destination     = ValueGrammar.MatchEnum<DestinationRegister, long>("C");
-        private static readonly Rule _output          = ValueGrammar.AccumulateLeafs("Output", _accumulator, OneOrMore(_destination + MatchChar('=')));
+        private static readonly Rule _output          = ValueGrammar.Accumulate("Output", _accumulator, OneOrMore(_destination + MatchChar('=')));
         
         private static readonly Rule _add      = ValueGrammar.ConstantValue(AluOperation.Add.ToString(), (long)AluOperation.Add, SharedGrammar.MatchAnyString("add +", true));
         private static readonly Rule _sub = ValueGrammar.ConstantValue(AluOperation.Sub.ToString(), (long)AluOperation.Sub, SharedGrammar.MatchAnyString("sub -", true));
@@ -29,14 +29,14 @@ namespace MicParser
         private static readonly Rule _logicXor = ValueGrammar.ConstantValue(AluOperation.Xor.ToString(), (long)AluOperation.Xor, SharedGrammar.MatchAnyString("xor ^", true));
         private static readonly Rule _clear    = ValueGrammar.ConstantValue(AluOperation.Clear.ToString(), (long)AluOperation.Clear, MatchString("clr", true));
         private static readonly Rule _preset   = ValueGrammar.ConstantValue(AluOperation.Preset.ToString(), (long)AluOperation.Preset, MatchString("preset", true));
-        private static readonly Rule _term     = ValueGrammar.AccumulateLeafs("Term", _accumulator,
+        private static readonly Rule _term     = ValueGrammar.Accumulate("Term", _accumulator,
             _clear |
             (_rightInput + _inverseSub + _leftInput) |
             (_leftInput + _sub + _rightInput) |
             Binary(_leftInput, _add | _logicAnd | _logicOr | _logicXor, _rightInput) |
             _preset);
 
-        public static readonly Rule Alu = ValueGrammar.AccumulateLeafs("ALU", _accumulator, _output + _term) + MatchChar(';');
+        public static readonly Rule Alu = ValueGrammar.Accumulate("ALU", _accumulator, _output + _term) + MatchChar(';');
 
         // Memory
         public static readonly Rule Memory = ValueGrammar.MatchEnum<MemoryOperation, long>("Memory") + MatchChar(';');
@@ -49,7 +49,7 @@ namespace MicParser
         public static readonly Rule Branch = MatchString("goto") + ValueGrammar.Text("Branch", _label | _nextInstruction | _absolute) + MatchChar(';');
         
         // Total :)
-        private static readonly Rule _operation = ValueGrammar.AccumulateLeafs("Operation", _accumulator, Alu.Optional + Memory.Optional + Branch.Optional);
+        private static readonly Rule _operation = ValueGrammar.Accumulate("Operation", _accumulator, Alu.Optional + Memory.Optional + Branch.Optional);
         public static readonly Rule Instruction = ValueGrammar.ConvertToValue("Instruction", MicroInstruction.FromNode, (_label + MatchChar(':')).Optional + _operation);
     }
 }
