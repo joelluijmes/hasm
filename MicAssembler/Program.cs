@@ -21,7 +21,7 @@ namespace MicAssembler
             //Console.WriteLine($"Current grammar: {statement} -> {statement.Definition}");
             //Console.WriteLine("=== [ParseTree]");
             //Console.WriteLine(statement.PrettyFormat());
-            
+
             //while (true)
             //{
             //    Console.WriteLine();
@@ -39,7 +39,7 @@ namespace MicAssembler
             //    //Console.WriteLine($"Value: {Evaluator.FirstValueOrDefault<string>(parsed)}");
             //}
 
-            var lookup = new Dictionary<string, byte>
+            var lookup = new Dictionary<string, int>
             {
                 ["main"] = 0,
                 ["iadd1"] = 0x60,
@@ -70,12 +70,11 @@ namespace MicAssembler
 
             //Console.WriteLine();
 
-            var assembler = new Assembler(statement);
+            var assembler = new Assembler(statement, lookup);
             var instructions = assembler.Parse(lines);
 
             foreach (var instruction in instructions)
                 Console.WriteLine(instruction);
-
         }
     }
 
@@ -83,12 +82,14 @@ namespace MicAssembler
     {
         private static readonly Rule _labelRule = ValueGrammar.Text("name", SharedGrammar.Letters) + ValueGrammar.ConvertToValue("index", int.Parse, SharedGrammar.Digits).Optional;
 
-        public Assembler(Rule grammar)
+        public Assembler(Rule grammar, IDictionary<string, int> positions)
         {
             Grammar = grammar;
+            Positions = positions;
         }
 
         public Rule Grammar { get; }
+        public IDictionary<string, int> Positions { get; }
 
         public IList<MicroInstruction> Parse(IEnumerable<string> listing)
         {
@@ -100,6 +101,8 @@ namespace MicAssembler
 
             parsedInstructions = FixLabels(parsedInstructions);
             parsedInstructions = FixBranch(parsedInstructions);
+            parsedInstructions = FitInstructions(parsedInstructions, Positions);
+            parsedInstructions = FixAddresses(parsedInstructions, Positions);
 
             return parsedInstructions;
         }
@@ -147,9 +150,50 @@ namespace MicAssembler
             return listing;
         }
 
+        private static IList<MicroInstruction> FixAddresses(IList<MicroInstruction> listing, IDictionary<string, int> lookup)
+        {
+            foreach (var instruction in listing)
+            {
+                int address;
+
+                if (lookup.TryGetValue(instruction.Label, out address))
+                    instruction.Address = address;
+
+                if (!lookup.TryGetValue(instruction.Branch, out address))
+                    continue;
+
+                instruction.Branch = ""; // we found the address
+                instruction.OpCode.NextAddress = (ushort) address;
+            }
+
+            return listing;
+        }
+
+        private static IList<MicroInstruction> FitInstructions(IList<MicroInstruction> listing, IDictionary<string, int> lookup)
+        {
+            var address = 0;
+            var takenAddresses = new Dictionary<int, bool>();
+            foreach (var value in lookup.Values)
+                takenAddresses[value] = true;
+            
+            foreach (var instruction in listing)
+            {
+                if (lookup.ContainsKey(instruction.Label))
+                    continue;
+
+                while (takenAddresses.ContainsKey(address))
+                    ++address;
+
+                takenAddresses[address] = true;
+                lookup[instruction.Label] = address;
+                instruction.Address = address;
+            }
+
+            return listing;
+        }
+
         private enum InstructionState
         {
-            
         }
     }
 }
