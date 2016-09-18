@@ -1,7 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using Fclp;
 using MicParser;
+using MicParser.OpCode;
+using ParserLib;
+using ParserLib.Evaluation;
+using ParserLib.Parsing.Rules;
 
 namespace MicAssembler
 {
@@ -9,65 +16,107 @@ namespace MicAssembler
     {
         private static void Main(string[] args)
         {
-            var statement = MicroGrammar.Instruction;
+            var commandParser = new FluentCommandLineParser<ApplicationArguments>();
+            commandParser.Setup(a => a.InputFile)
+                .As('i', "input")
+                .WithDescription("\tInput file to be assembled");
+            commandParser.Setup(a => a.OutputFile)
+                .As('o', "output")
+                .WithDescription("Output file of the assembler");
+            commandParser.Setup(a => a.ShowGrammar)
+                .As('s', "show-grammar")
+                .WithDescription("Print the used grammar tree");
+            commandParser.Setup(a => a.LiveMode)
+                .As('l', "live-mode")
+                .WithDescription("Use live mode");
+            commandParser.SetupHelp("?", "help")
+                .WithHeader("Invalid usage: ")
+                .Callback(c => Console.WriteLine(c));
 
-            //Console.WriteLine($"Current grammar: {statement} -> {statement.Definition}");
-            //Console.WriteLine("=== [ParseTree]");
-            //Console.WriteLine(statement.PrettyFormat());
-
-            //while (true)
-            //{
-            //    Console.WriteLine();
-            //    Console.WriteLine("Input: ");
-            //    var input = Console.ReadLine();
-            //    input = Regex.Replace(input, "\\s+", "");
-
-            //    var parsed = statement.ParseTree(input);
-            //    Console.WriteLine("=== [Result]");
-            //    Console.WriteLine(parsed.PrettyFormat());
-
-            //    var opcode = Evaluator.FirstValueOrDefault<long>(parsed);
-
-            //    Console.WriteLine($"opcode: {Regex.Replace($"{opcode:X9}", ".{3}", "$0 ")}");
-            //    //Console.WriteLine($"Value: {Evaluator.FirstValueOrDefault<string>(parsed)}");
-            //}
-
-            var lookup = new Dictionary<string, int>
+            var result = commandParser.Parse(args);
+            if (result.HasErrors)
             {
-                ["main"] = 0,
-                ["iadd1"] = 0x60,
-            };
+                commandParser.HelpOption.ShowHelp(commandParser.Options);
+                return;
+            }
+            
+            var statement = MicroGrammar.Instruction;
+            var arguments = commandParser.Object;
 
-            var lines = File.ReadAllLines("assembly.txt");
-            //var instructions = lines
-            //    .Select(line => statement.ParseTree(Regex.Replace(line, "\\s+", "")))
-            //    .Select(parsed => parsed.Value<MicroInstruction>())
-            //    .ToDictionary(instr => instr.Label);
+            if (arguments.ShowGrammar)
+                PrintGrammar(statement);
+            
+            if (arguments.LiveMode && string.IsNullOrEmpty(arguments.InputFile) && string.IsNullOrEmpty(arguments.OutputFile))
+            {
+                LiveMode(statement, arguments.ShowGrammar);
+                return;
+            }
 
-            //foreach (var labelInstruction in instructions)
-            //{
-            //    var instruction = labelInstruction.Value;
-            //    Console.WriteLine(instruction);
+            if (!string.IsNullOrEmpty(arguments.InputFile) && !string.IsNullOrEmpty(arguments.OutputFile))
+            {
+                var lookup = new Dictionary<string, int>
+                {
+                    ["main"] = 0,
+                    ["iadd1"] = 0x60,
+                };
 
-            //    byte address;
+                var lines = File.ReadAllLines(arguments.InputFile);
+                var assembler = new Assembler(statement, lookup);
+                var instructions = assembler.Parse(lines);
 
-            //    if (lookup.TryGetValue(labelInstruction.Key, out address))
-            //        instruction.Address = address;
+                SaveInstructions(instructions, arguments.OutputFile);
+            }
+            else
+            {
+                commandParser.HelpOption.ShowHelp(commandParser.Options);
+            }
+        }
 
-            //    if (!lookup.TryGetValue(instruction.Branch, out address))
-            //        continue;
+        private static void SaveInstructions(IEnumerable<MicroInstruction> listing, string path)
+        {
+            
+        }
 
-            //    instruction.OpCode.NextAddress = address;
-            //    instruction.Branch = "";
-            //}
+        private static void PrintGrammar(Rule grammar)
+        {
+            Console.WriteLine($"Current grammar: {grammar} -> {grammar.Definition}");
+            Console.WriteLine(grammar.PrettyFormat());
+        }
 
-            //Console.WriteLine();
+        private static void LiveMode(Rule statement, bool printTree)
+        {
+            Console.WriteLine("Enter expression to parse. Use exit to stop.");
 
-            var assembler = new Assembler(statement, lookup);
-            var instructions = assembler.Parse(lines);
+            while (true)
+            {
+                Console.WriteLine();
+                Console.Write("Input: ");
+                var input = Console.ReadLine();
+                if (input == "exit")
+                    return;
 
-            foreach (var instruction in instructions)
-                Console.WriteLine(instruction);
+                input = Regex.Replace(input, "\\s+", "");
+
+                var parsed = statement.ParseTree(input);
+                Console.WriteLine("=== [Result]");
+
+                if (printTree)
+                    Console.WriteLine(parsed.PrettyFormat());
+
+                var opcode = parsed.FirstValueOrDefault<long>();
+                Console.WriteLine($"opcode: {Regex.Replace($"{opcode:X9}", ".{3}", "$0 ")}");
+            }
+        }
+
+        private class ApplicationArguments
+        {
+            public string InputFile { get; set; }
+
+            public string OutputFile { get; set; }
+
+            public bool ShowGrammar { get; set; }
+
+            public bool LiveMode { get; set; }
         }
     }
 }

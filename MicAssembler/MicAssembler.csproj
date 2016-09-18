@@ -33,6 +33,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FluentCommandLineParser, Version=1.4.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentCommandLineParser.1.4.3\lib\net35\FluentCommandLineParser.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="ParserLib, Version=48.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\ParserLib-debug.1.3.48\lib\ParserLib.dll</HintPath>
       <Private>True</Private>
