@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace MicParser.OpCode
 {
     public class MicroOpCode

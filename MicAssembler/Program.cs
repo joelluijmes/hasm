@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -72,9 +73,14 @@ namespace MicAssembler
             }
         }
 
-        private static void SaveInstructions(IEnumerable<MicroInstruction> listing, string path)
+        private static void SaveInstructions(IList<MicroInstruction> listing, string path)
         {
-            
+            // idk how to do this
+            using (var file = File.CreateText(path))
+            {
+                foreach (var instruction in listing)
+                    file.WriteLine($"{Regex.Replace($"{instruction.OpCode.Value:X9}", ".{3}", "$0 ")}");
+            }
         }
 
         private static void PrintGrammar(Rule grammar)
