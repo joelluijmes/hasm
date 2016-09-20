@@ -48,9 +48,10 @@ namespace MicParser
         public override string ToString()
         {
             var address = Address == -1 ? "XXX" : $"{Address:X3}";
-            var branch = string.IsNullOrEmpty(Branch) ? "" : "goto " + Branch;
+            var branch = string.IsNullOrEmpty(Branch) ? " " : "goto " + Branch;
+            var label = string.IsNullOrEmpty(Label) ? ":\t" : $"  {Label}:\t";
 
-            return $"{address}  {Label}:\t{Regex.Replace($"{OpCode.Value:X9}", ".{3}", "$0 ")} {branch}";
+            return $"{address}{label}{Regex.Replace($"{OpCode.Value:X9}", ".{3}", "$0 ")}{branch}\t{OpCode}";
         }
     }
 }

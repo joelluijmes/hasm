@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace MicParser.OpCode
 {
@@ -42,6 +45,55 @@ namespace MicParser.OpCode
                 mask |= (long) value;
 
             return mask;
+        }
+
+        public override string ToString()
+        {
+            var builder = new StringBuilder();
+            var destinations = Enum.GetValues(Output.GetType())
+                .Cast<Enum>()
+                .Where(Output.HasFlag)
+                .ToArray();
+
+            if (destinations.Any())
+                builder.Append(destinations.Select(s => s.ToString()).Aggregate((a, b) => $"{a} = {b}") + " =");
+
+            if (ALU != ALU.Clear && ALU != ALU.Preset)
+            {
+                if (ALU.HasFlag(ALU.One))
+                    builder.Append(" 1");
+                else if (ALU.HasFlag(ALU.Zero))
+                    builder.Append(" 0");
+                else if (ALU.HasFlag(ALU.H))
+                    builder.Append(" H");
+            }
+
+            var printRight = true;
+            if (ALU.HasFlag(ALU.Add))
+                builder.Append(" + ");
+            else if (ALU.HasFlag(ALU.Sub) || ALU.HasFlag(ALU.InverseSub))
+                builder.Append(" - ");
+            else if (ALU.HasFlag(ALU.And))
+                builder.Append(" & ");
+            else if (ALU.HasFlag(ALU.Or))
+                builder.Append(" | ");
+            else if (ALU.HasFlag(ALU.Xor))
+                builder.Append(" ^ ");
+            else
+            {
+                builder.Append(ALU);
+                printRight = false;
+            }
+
+            if (printRight)
+                builder.Append(RightRegister);
+
+            builder.Append(";");
+            if (Memory != 0)
+                builder.Append($" {Memory};");
+            
+            builder.Append($" goto {NextAddress};");
+            return builder.ToString();
         }
     }
 }

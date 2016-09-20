@@ -17,6 +17,6 @@ namespace MicParser.OpCode
         Preset = 7L << 14,
         H = 0L << 18,
         One = 1L << 18,
-        Null = 2L << 18
+        Zero = 2L << 18
     }
 }

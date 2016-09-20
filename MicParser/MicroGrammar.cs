@@ -13,7 +13,7 @@ namespace MicParser
         private static readonly Rule _leftInput = ValueGrammar.FirstValue<long>("A",
             ValueGrammar.ConstantValue(ALU.H.ToString(), (long) ALU.H, MatchString("H", true)) |
             ValueGrammar.ConstantValue(ALU.One.ToString(), (long) ALU.One, MatchChar('1')) |
-            ValueGrammar.ConstantValue(ALU.Null.ToString(), (long) ALU.Null, MatchChar('0')));
+            ValueGrammar.ConstantValue(ALU.Zero.ToString(), (long) ALU.Zero, MatchChar('0')));
 
         private static readonly Rule _rightInput = ValueGrammar.MatchEnum<RightRegister, long>("B");
         private static readonly Rule _destination = ValueGrammar.MatchEnum<OutputRegister, long>("C");
