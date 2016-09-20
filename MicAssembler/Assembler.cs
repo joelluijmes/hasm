@@ -72,7 +72,7 @@ namespace MicAssembler
                 var current = listing[i];
                 var next = listing[i + 1];
 
-                if (string.IsNullOrEmpty(current.Branch))
+                if (string.IsNullOrEmpty(current.Branch) && current.OpCode.NextAddress == 0)
                     current.Branch = next.Label;
             }
 
@@ -98,7 +98,7 @@ namespace MicAssembler
                 instruction.OpCode.NextAddress = (ushort) address;
             }
 
-            return listing;
+            return listing.OrderBy(m => m.Address).ToList();
         }
 
         private static IList<MicroInstruction> FitInstructions(IList<MicroInstruction> listing, IDictionary<string, int> lookup)
@@ -120,7 +120,7 @@ namespace MicAssembler
                 lookup[instruction.Label] = address;
                 instruction.Address = address;
             }
-
+            
             return listing;
         }
     }

@@ -60,8 +60,7 @@ namespace MicAssembler
 
             if (arguments.ShowGrammar)
                 PrintGrammar(statement);
-
-            var lookup = ParseConstants(arguments.ConstantsFile);
+            
             if (arguments.LiveMode && string.IsNullOrEmpty(arguments.InputFile) && string.IsNullOrEmpty(arguments.OutputFile) && string.IsNullOrEmpty(arguments.ConstantsFile))
             {
                 LiveMode(statement, arguments.ShowGrammar);
@@ -71,6 +70,7 @@ namespace MicAssembler
             if (!string.IsNullOrEmpty(arguments.InputFile) && !string.IsNullOrEmpty(arguments.OutputFile) && !string.IsNullOrEmpty(arguments.ConstantsFile))
             {
                 var lines = File.ReadAllLines(arguments.InputFile);
+                var lookup = ParseConstants(arguments.ConstantsFile);
                 var assembler = new Assembler(statement, lookup);
                 var instructions = assembler.Parse(lines);
 
@@ -82,13 +82,24 @@ namespace MicAssembler
             }
         }
 
-        private static void SaveInstructions(IList<MicroInstruction> listing, string path)
+        private static void SaveInstructions(IEnumerable<MicroInstruction> listing, string path)
         {
-            // idk how to do this
             using (var file = File.CreateText(path))
             {
-                foreach (var instruction in listing)
-                    file.WriteLine($"{Regex.Replace($"{instruction.OpCode.Value:X9}", ".{3}", "$0 ")}");
+                var ordered = listing.OrderBy(m => m.Address);
+
+                MicroInstruction previous = null;
+                foreach (var current in ordered)
+                {
+                    if (previous != null)
+                    {
+                        for (var j = 0; j < current.Address - previous.Address - 1; ++j)
+                            file.WriteLine($"{Regex.Replace($"{1:X9}", ".{3}", "$0 ")}");
+                    }
+
+                    file.WriteLine($"{Regex.Replace($"{current.OpCode.Value:X9}", ".{3}", "$0 ")}");
+                    previous = current;
+                }
             }
         }
 
