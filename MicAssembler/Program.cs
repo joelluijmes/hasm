@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -9,6 +10,7 @@ using MicParser;
 using MicParser.OpCode;
 using ParserLib;
 using ParserLib.Evaluation;
+using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
 namespace MicAssembler
@@ -30,6 +32,9 @@ namespace MicAssembler
             commandParser.Setup(a => a.LiveMode)
                 .As('l', "live-mode")
                 .WithDescription("Use live mode");
+            commandParser.Setup(a => a.ConstantsFile)
+                .As('c', "constants")
+                .WithDescription("Constants file, required to correctly assemble");
             commandParser.SetupHelp("?", "help")
                 .WithHeader("Invalid usage: ")
                 .Callback(c => Console.WriteLine(c));
@@ -44,23 +49,27 @@ namespace MicAssembler
             var statement = MicroGrammar.Instruction;
             var arguments = commandParser.Object;
 
+#if DEBUG
+            if (Debugger.IsAttached)
+            {
+                arguments.InputFile = "mic-1.txt";
+                arguments.OutputFile = "out.txt";
+                arguments.ConstantsFile = "c_ijvm.txt";
+            }
+#endif
+
             if (arguments.ShowGrammar)
                 PrintGrammar(statement);
-            
-            if (arguments.LiveMode && string.IsNullOrEmpty(arguments.InputFile) && string.IsNullOrEmpty(arguments.OutputFile))
+
+            var lookup = ParseConstants(arguments.ConstantsFile);
+            if (arguments.LiveMode && string.IsNullOrEmpty(arguments.InputFile) && string.IsNullOrEmpty(arguments.OutputFile) && string.IsNullOrEmpty(arguments.ConstantsFile))
             {
                 LiveMode(statement, arguments.ShowGrammar);
                 return;
             }
 
-            if (!string.IsNullOrEmpty(arguments.InputFile) && !string.IsNullOrEmpty(arguments.OutputFile))
+            if (!string.IsNullOrEmpty(arguments.InputFile) && !string.IsNullOrEmpty(arguments.OutputFile) && !string.IsNullOrEmpty(arguments.ConstantsFile))
             {
-                var lookup = new Dictionary<string, int>
-                {
-                    ["main"] = 0,
-                    ["iadd1"] = 0x60,
-                };
-
                 var lines = File.ReadAllLines(arguments.InputFile);
                 var assembler = new Assembler(statement, lookup);
                 var instructions = assembler.Parse(lines);
@@ -114,14 +123,32 @@ namespace MicAssembler
             }
         }
 
+        private static Dictionary<string, int> ParseConstants(string constansFile)
+        {
+            var hex = ValueGrammar.FirstValue<int>("address", Grammar.MatchString("0x", true) + ValueGrammar.ConvertToValue("hex", s => Convert.ToInt32(s, 16), Grammar.OneOrMore(SharedGrammar.Hexadecimal)));
+            var label = ValueGrammar.Text("label", MicroGrammar.Label);
+            var rule = hex + Grammar.MatchChar(':') + label;
+
+            var dict = new Dictionary<string, int>();
+            foreach (var line in File.ReadAllLines(constansFile))
+            {
+                var tree = rule.ParseTree(Regex.Replace(line, "\\s+", ""));
+
+                var key = tree.FirstValueByName<string>(label.Name);
+                var value = tree.FirstValueByName<int>(hex.Name);
+
+                dict[key] = value;
+            }
+
+            return dict;
+        }
+
         private class ApplicationArguments
         {
             public string InputFile { get; set; }
-
             public string OutputFile { get; set; }
-
+            public string ConstantsFile { get; set; }
             public bool ShowGrammar { get; set; }
-
             public bool LiveMode { get; set; }
         }
     }
