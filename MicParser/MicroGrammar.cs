@@ -1,9 +1,7 @@
 ﻿using System;
-using MicParser.InstructionTypes;
 using MicParser.OpCode;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
-using RightRegister = MicParser.InstructionTypes.RightRegister;
 
 namespace MicParser
 {
@@ -13,22 +11,22 @@ namespace MicParser
 
         // ALU
         private static readonly Rule _leftInput = ValueGrammar.FirstValue<long>("A",
-            ValueGrammar.ConstantValue(LeftRegister.H.ToString(), (long) LeftRegister.H, MatchString("H", true)) |
-            ValueGrammar.ConstantValue(LeftRegister.One.ToString(), (long) LeftRegister.One, MatchChar('1')) |
-            ValueGrammar.ConstantValue(LeftRegister.Null.ToString(), (long) LeftRegister.Null, MatchChar('0')));
+            ValueGrammar.ConstantValue(ALU.H.ToString(), (long) ALU.H, MatchString("H", true)) |
+            ValueGrammar.ConstantValue(ALU.One.ToString(), (long) ALU.One, MatchChar('1')) |
+            ValueGrammar.ConstantValue(ALU.Null.ToString(), (long) ALU.Null, MatchChar('0')));
 
         private static readonly Rule _rightInput = ValueGrammar.MatchEnum<RightRegister, long>("B");
-        private static readonly Rule _destination = ValueGrammar.MatchEnum<DestinationRegister, long>("C");
+        private static readonly Rule _destination = ValueGrammar.MatchEnum<OutputRegister, long>("C");
         private static readonly Rule _output = ValueGrammar.Accumulate("Output", _accumulator, OneOrMore(_destination + MatchChar('=')));
 
-        private static readonly Rule _add = ValueGrammar.ConstantValue(AluOperation.Add.ToString(), (long) AluOperation.Add, MatchAnyString("add +", true));
-        private static readonly Rule _sub = ValueGrammar.ConstantValue(AluOperation.Sub.ToString(), (long) AluOperation.Sub, MatchAnyString("sub -", true));
-        private static readonly Rule _inverseSub = ValueGrammar.ConstantValue(AluOperation.InverseSub.ToString(), (long) AluOperation.InverseSub, MatchAnyString("sub -", true));
-        private static readonly Rule _logicAnd = ValueGrammar.ConstantValue(AluOperation.And.ToString(), (long) AluOperation.And, MatchAnyString("and &", true));
-        private static readonly Rule _logicOr = ValueGrammar.ConstantValue(AluOperation.Or.ToString(), (long) AluOperation.Or, MatchAnyString("or |", true));
-        private static readonly Rule _logicXor = ValueGrammar.ConstantValue(AluOperation.Xor.ToString(), (long) AluOperation.Xor, MatchAnyString("xor ^", true));
-        private static readonly Rule _clear = ValueGrammar.ConstantValue(AluOperation.Clear.ToString(), (long) AluOperation.Clear, MatchString("clr", true));
-        private static readonly Rule _preset = ValueGrammar.ConstantValue(AluOperation.Preset.ToString(), (long) AluOperation.Preset, MatchString("preset", true));
+        private static readonly Rule _add = ValueGrammar.ConstantValue(ALU.Add.ToString(), (long) ALU.Add, MatchAnyString("add +", true));
+        private static readonly Rule _sub = ValueGrammar.ConstantValue(ALU.Sub.ToString(), (long) ALU.Sub, MatchAnyString("sub -", true));
+        private static readonly Rule _inverseSub = ValueGrammar.ConstantValue(ALU.InverseSub.ToString(), (long) ALU.InverseSub, MatchAnyString("sub -", true));
+        private static readonly Rule _logicAnd = ValueGrammar.ConstantValue(ALU.And.ToString(), (long) ALU.And, MatchAnyString("and &", true));
+        private static readonly Rule _logicOr = ValueGrammar.ConstantValue(ALU.Or.ToString(), (long) ALU.Or, MatchAnyString("or |", true));
+        private static readonly Rule _logicXor = ValueGrammar.ConstantValue(ALU.Xor.ToString(), (long) ALU.Xor, MatchAnyString("xor ^", true));
+        private static readonly Rule _clear = ValueGrammar.ConstantValue(ALU.Clear.ToString(), (long) ALU.Clear, MatchString("clr", true));
+        private static readonly Rule _preset = ValueGrammar.ConstantValue(ALU.Preset.ToString(), (long) ALU.Preset, MatchString("preset", true));
 
         private static readonly Rule _term = ValueGrammar.Accumulate("Term", _accumulator,
             _clear |
@@ -40,7 +38,7 @@ namespace MicParser
         public static readonly Rule Alu = ValueGrammar.Accumulate("ALU", _accumulator, _output + _term) + MatchChar(';');
 
         // Memory
-        public static readonly Rule Memory = ValueGrammar.MatchEnum<MemoryOperation, long>("Memory") + MatchChar(';');
+        public static readonly Rule Memory = ValueGrammar.MatchEnum<Memory, long>("Memory") + MatchChar(';');
 
         // Branching
         public static readonly Rule Label = ValueGrammar.Text("Label", (SharedGrammar.Letter | MatchChar('_')) + ZeroOrMore(SharedGrammar.Digit | SharedGrammar.Letter | MatchChar('_')));

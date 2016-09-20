@@ -1,8 +1,9 @@
 ﻿using System.Text.RegularExpressions;
+using MicParser.OpCode;
 using ParserLib.Evaluation;
 using ParserLib.Parsing;
 
-namespace MicParser.OpCode
+namespace MicParser
 {
     public class MicroInstruction
     {

@@ -51,6 +51,8 @@ namespace MicAssembler
 #if DEBUG
             if (Debugger.IsAttached)
             {
+                //arguments.ShowGrammar = true;
+                //arguments.LiveMode = true;
                 arguments.InputFile = "mic-1.txt";
                 arguments.OutputFile = "out.txt";
                 arguments.ConstantsFile = "c_ijvm.txt";

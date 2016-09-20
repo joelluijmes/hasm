@@ -1,3 +1,5 @@
+using System;
+
 namespace MicParser.OpCode
 {
     public class MicroOpCode
@@ -11,16 +13,35 @@ namespace MicParser.OpCode
 
         public long Value
         {
-            get { return NextAddress | ((long) JAM << 9) | ((long) ALU << 12) | ((long) Output << 20) | ((long) Memory << 29) | ((long) RightRegister << 32); }
+            get { return NextAddress | (long) JAM | (long) ALU | (long) Output | (long) Memory | (long) RightRegister; }
             set
             {
                 NextAddress = (ushort) (value & 0x01FF);
-                JAM = (JAM) ((value >> 9) & 0x07);
-                ALU = (ALU) ((value >> 12) & 0xFF);
-                Output = (OutputRegister) ((value >> 20) & 0x01FF);
-                Memory = (Memory) ((value >> 29) & 0x07);
-                RightRegister = (RightRegister) ((value >> 32) & 0x0F);
+                JAM = FromValue<JAM>(value);
+                ALU = FromValue<ALU>(value);
+                Output = FromValue<OutputRegister>(value);
+                Memory = FromValue<Memory>(value);
+                RightRegister = FromValue<RightRegister>(value);
             }
+        }
+
+        private static TEnum FromValue<TEnum>(long value)
+        {
+            var type = typeof(TEnum);
+            if (!type.IsEnum)
+                throw new ArgumentException();
+
+            var mask = GetEnumMask<TEnum>();
+            return (TEnum) (object) (value & mask);
+        }
+
+        private static long GetEnumMask<TEnum>()
+        {
+            long mask = 0;
+            foreach (var value in Enum.GetValues(typeof(TEnum)))
+                mask |= (long) value;
+
+            return mask;
         }
     }
 }
