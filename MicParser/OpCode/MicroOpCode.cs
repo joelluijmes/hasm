@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-
 namespace MicParser.OpCode
 {
     public class MicroOpCode
@@ -13,7 +11,7 @@ namespace MicParser.OpCode
 
         public long Value
         {
-            get { return NextAddress | (long) JAM << 9 | (long) ALU << 12 | (long) Output << 20 | (long) Memory << 29 | (long) RightRegister << 32; }
+            get { return NextAddress | ((long) JAM << 9) | ((long) ALU << 12) | ((long) Output << 20) | ((long) Memory << 29) | ((long) RightRegister << 32); }
             set
             {
                 NextAddress = (ushort) (value & 0x01FF);

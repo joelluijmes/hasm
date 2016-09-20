@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using MicParser.OpCode;
-using ParserLib;
 using ParserLib.Evaluation;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
@@ -72,7 +71,7 @@ namespace MicAssembler
                 var current = listing[i];
                 var next = listing[i + 1];
 
-                if (string.IsNullOrEmpty(current.Branch) && current.OpCode.NextAddress == 0)
+                if (string.IsNullOrEmpty(current.Branch) && (current.OpCode.NextAddress == 0))
                     current.Branch = next.Label;
             }
 
@@ -107,7 +106,7 @@ namespace MicAssembler
             var takenAddresses = new Dictionary<int, bool>();
             foreach (var value in lookup.Values)
                 takenAddresses[value] = true;
-            
+
             foreach (var instruction in listing)
             {
                 if (lookup.ContainsKey(instruction.Label))
@@ -120,7 +119,7 @@ namespace MicAssembler
                 lookup[instruction.Label] = address;
                 instruction.Address = address;
             }
-            
+
             return listing;
         }
     }

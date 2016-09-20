@@ -47,7 +47,7 @@
     <Compile Include="OpCode\ALU.cs" />
     <Compile Include="OpCode\JAM.cs" />
     <Compile Include="OpCode\Memory.cs" />
-    <Compile Include="OpCode\MicroInstruction.cs" />
+    <Compile Include="MicroInstruction.cs" />
     <Compile Include="InstructionTypes\AluOperation.cs" />
     <Compile Include="InstructionTypes\LeftRegister.cs" />
     <Compile Include="MicroGrammar.cs" />

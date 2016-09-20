@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -45,7 +44,7 @@ namespace MicAssembler
                 commandParser.HelpOption.ShowHelp(commandParser.Options);
                 return;
             }
-            
+
             var statement = MicroGrammar.Instruction;
             var arguments = commandParser.Object;
 
@@ -60,7 +59,7 @@ namespace MicAssembler
 
             if (arguments.ShowGrammar)
                 PrintGrammar(statement);
-            
+
             if (arguments.LiveMode && string.IsNullOrEmpty(arguments.InputFile) && string.IsNullOrEmpty(arguments.OutputFile) && string.IsNullOrEmpty(arguments.ConstantsFile))
             {
                 LiveMode(statement, arguments.ShowGrammar);
@@ -92,10 +91,8 @@ namespace MicAssembler
                 foreach (var current in ordered)
                 {
                     if (previous != null)
-                    {
                         for (var j = 0; j < current.Address - previous.Address - 1; ++j)
                             file.WriteLine($"{Regex.Replace($"{1:X9}", ".{3}", "$0 ")}");
-                    }
 
                     file.WriteLine($"{Regex.Replace($"{current.OpCode.Value:X9}", ".{3}", "$0 ")}");
                     previous = current;
