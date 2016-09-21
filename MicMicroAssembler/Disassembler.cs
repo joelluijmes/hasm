@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using MicParser;
 using MicParser.OpCode;
 
-namespace MicAssembler
+namespace MicMicroAssembler
 {
     internal sealed class Disassembler
     {

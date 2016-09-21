@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using MicParser;
-using MicParser.OpCode;
 using ParserLib.Evaluation;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
-namespace MicAssembler
+namespace MicMicroAssembler
 {
     internal class Assembler
     {

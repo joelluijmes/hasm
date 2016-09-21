@@ -5,7 +5,7 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicParser", "MicParser\MicParser.csproj", "{7EF14F13-A73D-44BE-A872-F7017D476089}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicAssembler", "MicAssembler\MicAssembler.csproj", "{E2B7D257-D207-4706-998A-E220C1C1AB36}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicMicroAssembler", "MicMicroAssembler\MicMicroAssembler.csproj", "{E2B7D257-D207-4706-998A-E220C1C1AB36}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
