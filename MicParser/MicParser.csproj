@@ -48,7 +48,7 @@
     <Compile Include="OpCode\JAM.cs" />
     <Compile Include="OpCode\Memory.cs" />
     <Compile Include="MicroInstruction.cs" />
-    <Compile Include="MicroGrammar.cs" />
+    <Compile Include="Grammars\MicroAssemblerGrammar.cs" />
     <Compile Include="OpCode\MicroOpCode.cs" />
     <Compile Include="OpCode\OutputRegister.cs" />
     <Compile Include="OpCode\RightRegister.cs" />

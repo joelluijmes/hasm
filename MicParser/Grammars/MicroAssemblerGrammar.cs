@@ -3,9 +3,9 @@ using MicParser.OpCode;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
-namespace MicParser
+namespace MicParser.Grammars
 {
-    public sealed class MicroGrammar : Grammar
+    public sealed class MicroAssemblerGrammar : Grammar
     {
         private static readonly Func<long, long, long> _accumulator = (a, b) => a | b;
 

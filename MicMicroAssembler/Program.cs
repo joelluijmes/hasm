@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Fclp;
 using MicParser;
+using MicParser.Grammars;
 using ParserLib;
 using ParserLib.Evaluation;
 using ParserLib.Parsing;
@@ -47,7 +48,7 @@ namespace MicMicroAssembler
                 return;
             }
 
-            var statement = MicroGrammar.Instruction;
+            var statement = MicroAssemblerGrammar.Instruction;
             var arguments = commandParser.Object;
 
 #if DEBUG
@@ -162,7 +163,7 @@ namespace MicMicroAssembler
         private static Dictionary<string, int> ParseConstants(string constansFile)
         {
             var hex = ValueGrammar.FirstValue<int>("address", Grammar.MatchString("0x", true) + ValueGrammar.ConvertToValue("hex", s => Convert.ToInt32(s, 16), Grammar.OneOrMore(SharedGrammar.Hexadecimal)));
-            var label = ValueGrammar.Text("label", MicroGrammar.Label);
+            var label = ValueGrammar.Text("label", MicroAssemblerGrammar.Label);
             var rule = hex + Grammar.MatchChar(':') + label;
 
             var dict = new Dictionary<string, int>();
