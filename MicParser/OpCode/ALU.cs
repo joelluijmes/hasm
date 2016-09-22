@@ -14,9 +14,6 @@ namespace MicParser.OpCode
         Or = 5L << 14,
         And = 6L << 14,
         Xor = 4L << 14,
-        Preset = 7L << 14,
-        H = 0L << 18,
-        One = 1L << 18,
-        Zero = 2L << 18
+        Preset = 7L << 14
     }
 }

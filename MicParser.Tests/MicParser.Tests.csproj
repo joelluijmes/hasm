@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{7EF14F13-A73D-44BE-A872-F7017D476089}</ProjectGuid>
+    <ProjectGuid>{817900B5-6BCF-49DD-819F-E5F5A540D3F2}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MicParser</RootNamespace>
-    <AssemblyName>MicParser</AssemblyName>
+    <RootNamespace>MicParser.Tests</RootNamespace>
+    <AssemblyName>MicParser.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -30,6 +30,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="nunit.framework, Version=3.4.1.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
+      <HintPath>..\packages\NUnit.3.4.1\lib\net45\nunit.framework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="ParserLib, Version=53.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\ParserLib-debug.1.4.53\lib\ParserLib.dll</HintPath>
       <Private>True</Private>
@@ -44,20 +48,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Grammars\AssemblerGrammar.cs" />
-    <Compile Include="OpCode\ALU.cs" />
-    <Compile Include="OpCode\JAM.cs" />
-    <Compile Include="OpCode\LeftRegister.cs" />
-    <Compile Include="OpCode\Memory.cs" />
-    <Compile Include="MicroInstruction.cs" />
-    <Compile Include="Grammars\MicroAssemblerGrammar.cs" />
-    <Compile Include="OpCode\MicroOpCode.cs" />
-    <Compile Include="OpCode\OutputRegister.cs" />
-    <Compile Include="OpCode\RightRegister.cs" />
+    <Compile Include="MicoAssemblerGrammarTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MicParser\MicParser.csproj">
+      <Project>{7EF14F13-A73D-44BE-A872-F7017D476089}</Project>
+      <Name>MicParser</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

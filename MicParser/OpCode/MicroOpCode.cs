@@ -11,15 +11,17 @@ namespace MicParser.OpCode
         public ALU ALU { get; set; }
         public OutputRegister Output { get; set; }
         public Memory Memory { get; set; }
+        public LeftRegister LeftRegister { get; set; }
         public RightRegister RightRegister { get; set; }
 
         public long Value
         {
-            get { return NextAddress | (long) JAM | (long) ALU | (long) Output | (long) Memory | (long) RightRegister; }
+            get { return NextAddress | (long) JAM | (long)LeftRegister | (long) ALU | (long) Output | (long) Memory | (long) RightRegister; }
             set
             {
                 NextAddress = (ushort) (value & 0x01FF);
                 JAM = FromValue<JAM>(value);
+                LeftRegister = FromValue<LeftRegister>(value);
                 ALU = FromValue<ALU>(value);
                 Output = FromValue<OutputRegister>(value);
                 Memory = FromValue<Memory>(value);
@@ -57,15 +59,12 @@ namespace MicParser.OpCode
             if (destinations.Any())
                 builder.Append(destinations.Select(s => s.ToString()).Aggregate((a, b) => $"{a} = {b}") + " =");
 
-            if ((ALU != ALU.Clear) && (ALU != ALU.Preset))
-            {
-                if (ALU.HasFlag(ALU.One))
-                    builder.Append(" 1");
-                else if (ALU.HasFlag(ALU.Zero))
-                    builder.Append(" 0");
-                else if (ALU.HasFlag(ALU.H))
-                    builder.Append(" H");
-            }
+            if (LeftRegister.HasFlag(LeftRegister.One))
+                builder.Append(" 1");
+            else if (LeftRegister.HasFlag(LeftRegister.Zero))
+                builder.Append(" 0");
+            else if (LeftRegister.HasFlag(LeftRegister.H))
+                builder.Append(" H");
 
             var printRight = true;
             if (ALU.HasFlag(ALU.Add))
