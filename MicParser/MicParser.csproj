@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Grammars\AssemblerGrammar.cs" />
+    <Compile Include="Mnemonic.cs" />
     <Compile Include="OpCode\ALU.cs" />
     <Compile Include="OpCode\JAM.cs" />
     <Compile Include="OpCode\LeftRegister.cs" />
