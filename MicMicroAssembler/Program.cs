@@ -125,8 +125,8 @@ namespace MicMicroAssembler
 
         private static void LiveMode(Rule statement, ApplicationArguments arguments)
         {
-            Console.WriteLine(arguments.Disassemble 
-                ? "Enter value to disassemble. Use exit to stop." 
+            Console.WriteLine(arguments.Disassemble
+                ? "Enter value to disassemble. Use exit to stop."
                 : "Enter expression to assemble. Use exit to stop.");
 
             while (true)
@@ -162,8 +162,8 @@ namespace MicMicroAssembler
 
         private static Dictionary<string, int> ParseConstants(string constansFile)
         {
-            var hex = ValueGrammar.FirstValue<int>("address", Grammar.MatchString("0x", true) + ValueGrammar.ConvertToValue("hex", s => Convert.ToInt32(s, 16), Grammar.OneOrMore(SharedGrammar.Hexadecimal)));
-            var label = ValueGrammar.Text("label", MicroAssemblerGrammar.Label);
+            var hex = Grammar.FirstValue<int>("address", Grammar.MatchString("0x", true) + Grammar.ConvertToValue("hex", s => Convert.ToInt32(s, 16), Grammar.OneOrMore(Grammar.Hexadecimal)));
+            var label = Grammar.Text("label", Grammar.Label);
             var rule = hex + Grammar.MatchChar(':') + label;
 
             var dict = new Dictionary<string, int>();

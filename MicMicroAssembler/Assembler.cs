@@ -11,22 +11,22 @@ namespace MicMicroAssembler
 {
     internal class Assembler
     {
-        private static readonly Rule _labelRule = ValueGrammar.Text("name", SharedGrammar.Letters) + ValueGrammar.ConvertToValue("index", int.Parse, SharedGrammar.Digits).Optional;
+        private static readonly Rule _labelRule = Grammar.Text("name", Grammar.Letters) + Grammar.ConvertToValue("index", int.Parse, Grammar.Digits).Optional;
 
-        public Assembler(Rule grammar, IDictionary<string, int> positions)
+        public Assembler(Rule rule, IDictionary<string, int> positions)
         {
-            Grammar = grammar;
+            Rule = rule;
             Positions = positions;
         }
 
-        public Rule Grammar { get; }
+        public Rule Rule { get; }
         public IDictionary<string, int> Positions { get; }
 
         public IList<MicroInstruction> Parse(IEnumerable<string> listing)
         {
             IList<MicroInstruction> parsedInstructions = listing
                 .Select(l => Regex.Replace(l, "\\s+", "")) // remove whitespace
-                .Select(Grammar.ParseTree) // parse every line
+                .Select(Rule.ParseTree) // parse every line
                 .Select(p => p.FirstValue<MicroInstruction>()) // get the MicroInstruction 
                 .ToList();
 

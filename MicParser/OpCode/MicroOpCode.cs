@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -58,7 +57,7 @@ namespace MicParser.OpCode
             if (destinations.Any())
                 builder.Append(destinations.Select(s => s.ToString()).Aggregate((a, b) => $"{a} = {b}") + " =");
 
-            if (ALU != ALU.Clear && ALU != ALU.Preset)
+            if ((ALU != ALU.Clear) && (ALU != ALU.Preset))
             {
                 if (ALU.HasFlag(ALU.One))
                     builder.Append(" 1");
@@ -91,7 +90,7 @@ namespace MicParser.OpCode
             builder.Append(";");
             if (Memory != 0)
                 builder.Append($" {Memory};");
-            
+
             builder.Append($" goto {NextAddress};");
             return builder.ToString();
         }
