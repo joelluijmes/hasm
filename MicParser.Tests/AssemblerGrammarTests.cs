@@ -234,5 +234,16 @@ namespace MicParser.Tests
             var parsed = rule.ParseTree("WIDE");
             Assert.AreEqual((int)Mnemonic.WIDE, parsed.FirstValueByName<int>("Mnemonic"));
         }
+
+        [Test]
+        public void TestInt8()
+        {
+            var rule = AssemblerGrammar.DataInt8;
+
+            var parsed = rule.ParseTree("num: db 2");
+            Assert.AreEqual("num", parsed.FirstValueByName<string>("label"));
+            Assert.AreEqual(2, parsed.FirstValueByName<byte>("int8"));
+
+        }
     }
 }

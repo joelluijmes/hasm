@@ -1,17 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using ParserLib.Parsing;
+﻿using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
 namespace MicParser.Grammars
 {
     public sealed class AssemblerGrammar : Grammar
     {
-        private static readonly Rule _anyChar = Char(c => true);
-        private static readonly Rule _newline = MatchChar('\r').Optional + MatchChar('\n');
-        private static readonly Rule _whitespace = OneOrMore(Char(char.IsWhiteSpace));      // one or more whitespace
-        private static Rule _whileNot(Rule rule) => ZeroOrMore(rule.Not + _anyChar);
+        private static readonly Rule _whitespace = OneOrMore(Char(char.IsWhiteSpace)); // one or more whitespace
 
         public static readonly Rule Section = FirstValue<string>("Section", MatchString("section", true) + _whitespace + MatchChar('.') + Text("name", Label));
 
@@ -35,5 +29,7 @@ namespace MicParser.Grammars
         public static readonly Rule POP = EnumValue<Mnemonic, int>(Mnemonic.POP);
         public static readonly Rule SWAP = EnumValue<Mnemonic, int>(Mnemonic.SWAP);
         public static readonly Rule WIDE = EnumValue<Mnemonic, int>(Mnemonic.WIDE);
+
+        public static readonly Rule DataInt8 = Text("label", Label) + MatchChar(':') + _whitespace + MatchString("db", true) + _whitespace + Int8("int8");
     }
 }
