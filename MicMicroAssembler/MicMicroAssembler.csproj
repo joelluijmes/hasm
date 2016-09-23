@@ -37,8 +37,8 @@
       <HintPath>..\packages\FluentCommandLineParser.1.4.3\lib\net35\FluentCommandLineParser.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="ParserLib, Version=53.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ParserLib-debug.1.4.53\lib\ParserLib.dll</HintPath>
+    <Reference Include="ParserLib, Version=60.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ParserLib-debug.1.4.60\lib\ParserLib.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />

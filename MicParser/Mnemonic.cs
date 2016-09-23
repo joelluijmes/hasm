@@ -9,7 +9,7 @@
         IAND          = 0x7E,
         IFEQ          = 0x99,
         IFLT          = 0x9B,
-        IF_ICMPEW     = 0x9F,
+        IF_ICMPEQ     = 0x9F,
         IINC          = 0x84,
         ILOAD         = 0x15,
         INVOKEVIRTUAL = 0xB6,
