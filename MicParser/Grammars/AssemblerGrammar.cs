@@ -9,26 +9,28 @@ namespace MicParser.Grammars
 
         public static readonly Rule Section = FirstValue<string>("Section", MatchString("section", true) + _whitespace + MatchChar('.') + Text("name", Label));
 
-        public static readonly Rule BIPUSH = EnumValue<Mnemonic, int>(Mnemonic.BIPUSH) + Whitespace.Optional + Int8("byte");
-        public static readonly Rule DUP = EnumValue<Mnemonic, int>(Mnemonic.DUP);
-        public static readonly Rule GOTO = EnumValue<Mnemonic, int>(Mnemonic.GOTO) + Whitespace.Optional + (Int16("absolute") | Text("label", Label));
-        public static readonly Rule IADD = EnumValue<Mnemonic, int>(Mnemonic.IADD);
-        public static readonly Rule IAND = EnumValue<Mnemonic, int>(Mnemonic.IAND);
-        public static readonly Rule IFEQ = EnumValue<Mnemonic, int>(Mnemonic.IFEQ) + Whitespace.Optional + (Int16("absolute") | Text("label", Label));
-        public static readonly Rule IFLT = EnumValue<Mnemonic, int>(Mnemonic.IFLT) + Whitespace.Optional + (Int16("absolute") | Text("label", Label));
-        public static readonly Rule IF_ICMPEQ = EnumValue<Mnemonic, int>(Mnemonic.IF_ICMPEQ) + Whitespace.Optional + (Int16("absolute") | Text("label", Label));
-        public static readonly Rule IINC = EnumValue<Mnemonic, int>(Mnemonic.IINC) + Whitespace.Optional + (Int8("varnum") | Text("var", Label)) + Whitespace.Optional + Int8("const");
-        public static readonly Rule ILOAD = EnumValue<Mnemonic, int>(Mnemonic.ILOAD) + Whitespace.Optional + (Int8("varnum") | Text("var", Label));
-        public static readonly Rule INVOKEVIRTUAL = EnumValue<Mnemonic, int>(Mnemonic.INVOKEVIRTUAL) + Whitespace.Optional + (Int16("absolute") | Text("label", Label));
-        public static readonly Rule IOR = EnumValue<Mnemonic, int>(Mnemonic.IOR);
-        public static readonly Rule IRETURN = EnumValue<Mnemonic, int>(Mnemonic.IRETURN);
-        public static readonly Rule ISTORE = EnumValue<Mnemonic, int>(Mnemonic.ISTORE) + Whitespace.Optional + (Int8("varnum") | Text("var", Label));
-        public static readonly Rule ISUB = EnumValue<Mnemonic, int>(Mnemonic.ISUB);
-        public static readonly Rule LDC_W = EnumValue<Mnemonic, int>(Mnemonic.LDC_W) + Whitespace.Optional + (Int16("absolute") | Text("label", Label));
-        public static readonly Rule NOP = EnumValue<Mnemonic, int>(Mnemonic.NOP);
-        public static readonly Rule POP = EnumValue<Mnemonic, int>(Mnemonic.POP);
-        public static readonly Rule SWAP = EnumValue<Mnemonic, int>(Mnemonic.SWAP);
-        public static readonly Rule WIDE = EnumValue<Mnemonic, int>(Mnemonic.WIDE);
+        public static readonly Rule BIPUSH = EnumValue<Mnemonic, byte>(Mnemonic.BIPUSH) + Whitespace.Optional + Int8("byte");
+        public static readonly Rule DUP = EnumValue<Mnemonic, byte>(Mnemonic.DUP);
+        public static readonly Rule GOTO = EnumValue<Mnemonic, byte>(Mnemonic.GOTO) + Whitespace.Optional + (Int16("absolute") | Text("label", Label));
+        public static readonly Rule IADD = EnumValue<Mnemonic, byte>(Mnemonic.IADD);
+        public static readonly Rule IAND = EnumValue<Mnemonic, byte>(Mnemonic.IAND);
+        public static readonly Rule IFEQ = EnumValue<Mnemonic, byte>(Mnemonic.IFEQ) + Whitespace.Optional + (Int16("absolute") | Text("label", Label));
+        public static readonly Rule IFLT = EnumValue<Mnemonic, byte>(Mnemonic.IFLT) + Whitespace.Optional + (Int16("absolute") | Text("label", Label));
+        public static readonly Rule IF_ICMPEQ = EnumValue<Mnemonic, byte>(Mnemonic.IF_ICMPEQ) + Whitespace.Optional + (Int16("absolute") | Text("label", Label));
+        public static readonly Rule IINC = EnumValue<Mnemonic, byte>(Mnemonic.IINC) + Whitespace.Optional + (Int8("varnum") | Text("var", Label)) + Whitespace.Optional + Int8("const");
+        public static readonly Rule ILOAD = EnumValue<Mnemonic, byte>(Mnemonic.ILOAD) + Whitespace.Optional + (Int8("varnum") | Text("var", Label));
+        public static readonly Rule INVOKEVIRTUAL = EnumValue<Mnemonic, byte>(Mnemonic.INVOKEVIRTUAL) + Whitespace.Optional + (Int16("absolute") | Text("label", Label));
+        public static readonly Rule IOR = EnumValue<Mnemonic, byte>(Mnemonic.IOR);
+        public static readonly Rule IRETURN = EnumValue<Mnemonic, byte>(Mnemonic.IRETURN);
+        public static readonly Rule ISTORE = EnumValue<Mnemonic, byte>(Mnemonic.ISTORE) + Whitespace.Optional + (Int8("varnum") | Text("var", Label));
+        public static readonly Rule ISUB = EnumValue<Mnemonic, byte>(Mnemonic.ISUB);
+        public static readonly Rule LDC_W = EnumValue<Mnemonic, byte>(Mnemonic.LDC_W) + Whitespace.Optional + (Int16("absolute") | Text("label", Label));
+        public static readonly Rule NOP = EnumValue<Mnemonic, byte>(Mnemonic.NOP);
+        public static readonly Rule POP = EnumValue<Mnemonic, byte>(Mnemonic.POP);
+        public static readonly Rule SWAP = EnumValue<Mnemonic, byte>(Mnemonic.SWAP);
+        public static readonly Rule WIDE = EnumValue<Mnemonic, byte>(Mnemonic.WIDE);
+
+        public static readonly Rule Instruction = BIPUSH | DUP | GOTO | IADD | IAND | IFEQ | IFLT | IF_ICMPEQ | IINC | ILOAD | INVOKEVIRTUAL | IOR | IRETURN | ISTORE | ISUB | LDC_W | NOP | POP | SWAP | WIDE;
 
         public static readonly Rule DataInt8 = Text("label", Label) + MatchChar(':') + _whitespace + MatchString("db", true) + _whitespace + Int8("int8");
     }

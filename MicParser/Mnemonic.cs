@@ -1,6 +1,6 @@
 ﻿namespace MicParser
 {
-    public enum Mnemonic
+    public enum Mnemonic : byte
     {
         BIPUSH        = 0x10,
         DUP           = 0x59,

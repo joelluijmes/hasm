@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using MicParser.Grammars;
 using ParserLib.Evaluation;
@@ -31,10 +32,24 @@ namespace MicAssembler
 
         private void ParseText(IList<string> content)
         {
+            using (var f = File.CreateText("out.txt"))
+            {
+                foreach (var line in content)
+                {
+                    var tree = AssemblerGrammar.Instruction.ParseTree(line);
+                    var assembled = tree.IsLeaf
+                        ? tree.FirstValue<byte>().ToString("X2")
+                        : tree.Leafs.Select(l => l.FirstValue<byte>().ToString("X2"))
+                            .Aggregate((a, b) => $"{a} {b}");
+
+                    f.WriteLine(assembled);
+                }
+            }
         }
 
-        private void ParseInit(IList<string> content)
+        private void ParseInit(IEnumerable<string> content)
         {
+            
         }
 
         private Dictionary<string, List<string>> ParseSections()
