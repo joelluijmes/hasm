@@ -2,14 +2,18 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
+using MicParser;
 using MicParser.Grammars;
 using ParserLib.Evaluation;
+using ParserLib.Parsing;
 
 namespace MicAssembler
 {
     internal sealed class Assembler
     {
-        private readonly List<string> _listing;
+        private List<string> _listing;
+        private Dictionary<string, string> _definitions;
 
         public Assembler(IEnumerable<string> listing)
         {
@@ -21,13 +25,37 @@ namespace MicAssembler
 
         public void Parse()
         {
+            _definitions = ParseDefinitions();
             var sections = ParseSections();
-
+            
             List<string> content;
             if (sections.TryGetValue("init", out content))
                 ParseInit(content);
             if (sections.TryGetValue("text", out content))
                 ParseText(content);
+        }
+
+        private Dictionary<string, string> ParseDefinitions()
+        {
+            var dic = new Dictionary<string, string>();
+            var listing = new List<string>();
+            foreach (var line in _listing)
+            {
+                if (!AssemblerGrammar.Definition.Match(line))
+                {
+                    listing.Add(line);
+                    continue;
+                }
+
+                var tree = AssemblerGrammar.Definition.ParseTree(line);
+
+                var key = tree.FirstValueByName<string>("key");
+                var value = tree.FirstValueByName<string>("value");
+                dic[key] = value;
+            }
+
+            _listing = listing;
+            return dic;
         }
 
         private void ParseText(IList<string> content)
@@ -37,14 +65,42 @@ namespace MicAssembler
                 foreach (var line in content)
                 {
                     var tree = AssemblerGrammar.Instruction.ParseTree(line);
-                    var assembled = tree.IsLeaf
-                        ? tree.FirstValue<byte>().ToString("X2")
-                        : tree.Leafs.Select(l => l.FirstValue<byte>().ToString("X2"))
-                            .Aggregate((a, b) => $"{a} {b}");
+                    var assembled = ParseInstruction(tree);
 
                     f.WriteLine(assembled);
                 }
             }
+        }
+
+        private string ParseInstruction(Node tree)
+        {
+            var mnemonic = tree.FirstValueByName<byte>(nameof(Mnemonic));
+            if (tree.IsLeaf)
+                return mnemonic.ToString("X2");
+
+            var assembled = new List<byte>(new[] {mnemonic});
+            foreach (var leaf in tree.Leafs.Skip(1))
+            {
+                if (leaf.Name == AssemblerGrammar.Byte.Name || leaf.Name == AssemblerGrammar.Const.Name || leaf.Name == AssemblerGrammar.Varnum.Name)
+                {
+                    assembled.Add(leaf.FirstValue<byte>());
+                    continue;
+                }
+
+                var key = leaf.FirstValueNode<string>();
+                if (key.Name != AssemblerGrammar.Var.Name)
+                    throw new NotImplementedException();
+
+                string value;
+                if (!_definitions.TryGetValue(key.Value, out value))
+                    throw new NotImplementedException();
+
+                var rule = Grammar.MatchString("var", true) + Grammar.ConvertToValue("num", int.Parse, Grammar.Digits);
+                var num = rule.ParseTree(value).FirstValueByName<int>("num");
+                assembled.Add((byte) num);
+            }
+
+            return assembled.Select(a => a.ToString("X2")).Aggregate((a, b) => $"{a} {b}");
         }
 
         private void ParseInit(IEnumerable<string> content)
