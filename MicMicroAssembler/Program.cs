@@ -162,7 +162,7 @@ namespace MicMicroAssembler
 
         private static Dictionary<string, int> ParseConstants(string constansFile)
         {
-            var hex = Grammar.FirstValue<int>("address", Grammar.MatchString("0x", true) + Grammar.ConvertToValue("hex", s => Convert.ToInt32(s, 16), Grammar.OneOrMore(Grammar.Hexadecimal)));
+            var hex = Grammar.FirstValue<int>("address", Grammar.MatchString("0x", true) + Grammar.ConvertToValue("hex", s => Convert.ToInt32(s, 16), Grammar.OneOrMore(Grammar.Hex)));
             var label = Grammar.Text("label", Grammar.Label);
             var rule = hex + Grammar.MatchChar(':') + label;
 
