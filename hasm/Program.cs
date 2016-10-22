@@ -30,7 +30,7 @@ namespace hasm
                 _logger.Debug($"{pair.Key}: {pair.Value}");
 
             var parsed = HasmGrammer.Parse(instruction.Grammar, defines);
-            _logger.Info($"{Environment.NewLine}{parsed.PrettyFormat()}");
+            _logger.Info(parsed.ParseTree("mov r1,r2").PrettyFormat());
         }
         
         private static List<Instruction> ParseInstructions()

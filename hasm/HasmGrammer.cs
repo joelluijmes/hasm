@@ -30,7 +30,16 @@ namespace hasm
 
             var parts = grammar.Split(new []{',', ' '}, StringSplitOptions.RemoveEmptyEntries);
 
-            var rule = Whitespace.Optional;
+            Rule rule = null;
+            Action<Rule, Rule> appendRule = (target, appendend) =>
+            {
+                if (target == null)
+                    rule = appendend;
+                else if (Equals(target.GetChildren().Last(), Whitespace))
+                    rule = target + appendend;
+                else
+                    rule = target + MatchChar(',') + appendend;
+            };
 
             _logger.Info($"Parsing {grammar}..");
             foreach (var operand in parts)
@@ -38,16 +47,16 @@ namespace hasm
                 Rule tmp;
                 if (defines.TryGetValue(operand, out tmp))
                 {
-                    rule += Whitespace + tmp;
                     _logger.Debug($"Found definition for {operand}: {tmp}");
+                    appendRule(rule, tmp);
                 }
                 else
                 {
                     _logger.Debug($"No definition found for {operand}");
-                    if (!rule.Equals(Whitespace.Optional))
+                    if (rule != null)
                         _logger.Warn($"Assuming that operand '{operand}' is MatchString");
 
-                    rule += MatchString(operand, true);
+                    appendRule(rule, MatchString(operand, true) + Whitespace);
                 }
             }
             _logger.Info($"Parsed {grammar}: {rule}");
