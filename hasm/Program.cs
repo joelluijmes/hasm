@@ -29,14 +29,13 @@ namespace hasm
             foreach (var pair in defines)
                 _logger.Debug($"{pair.Key}: {pair.Value}");
 
-            var parsed = HasmGrammer.Parse(instruction.Grammar, defines);
+			var hasm = new HasmGrammer(defines);
+	        var parsed = hasm.ParseInstruction(ParseInstructions().First());
             _logger.Info(parsed.ParseTree("mov r1,r2").PrettyFormat());
         }
         
-        private static List<Instruction> ParseInstructions()
+        private static IEnumerable<Instruction> ParseInstructions()
         {
-            var instructions = new List<Instruction>();
-
             using (var stream = new MemoryStream(Resources.Instructionset))
             using (var package = new ExcelPackage(stream))
             {
@@ -49,14 +48,11 @@ namespace hasm
                 {
                     var range = sheet.Cells[row, 1, row, end.Column];
                     var instruction = Instruction.Parse(range);
-
-                    instructions.Add(instruction);
+					
                     _logger.Debug($"Added: {instruction}");
+					yield return instruction;
                 }
             }
-
-            _logger.Info($"Parsed {instructions.Count} instructions from sheet");
-            return instructions;
         }
     }
 }
