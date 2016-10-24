@@ -14,10 +14,14 @@ namespace hasm
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
+		private delegate int EncodeValue(string encoding, string value);
+
 		private static readonly ValueRule<string> _opcodeMask;
 		private static readonly ValueRule<string> _sourceRegisterMask;
 		private static readonly ValueRule<string> _destinationRegisterMask;
+
 		private static readonly IDictionary<OperandTypes, Rule> _knownRules;
+		private static readonly IDictionary<OperandTypes, EncodeValue> _knownEncodings;
 
 		private readonly IDictionary<string, OperandTypes> _defines;
 		
@@ -37,8 +41,14 @@ namespace hasm
 
 			_knownRules = new Dictionary<OperandTypes, Rule>
 			{
-				[OperandTypes.DestinationRegister] = GeneralRegister("dst"),
-				[OperandTypes.SourceRegister] = GeneralRegister("src")
+				[OperandTypes.DestinationRegister] = GeneralRegisterRule("dst"),
+				[OperandTypes.SourceRegister] = GeneralRegisterRule("src")
+			};
+
+			_knownEncodings = new Dictionary<OperandTypes, EncodeValue>
+			{
+				[OperandTypes.DestinationRegister] = DestinationRegisterEncoding,
+				[OperandTypes.SourceRegister] = SourceRegisterEncoding
 			};
 		}
 
@@ -48,7 +58,7 @@ namespace hasm
 			var rule = ParseOpcode(instruction) + Whitespace + ParseOperands(instruction);
 			_logger.Info($"Parsed {instruction}: {rule}");
 			
-			return rule;
+			return Accumulate<int>((current, next) => current | next, rule);
 		}
 
 		private ValueRule<int> ParseOpcode(Instruction instruction)
@@ -64,19 +74,7 @@ namespace hasm
 			var operands = GetOperands(instruction.Grammar);
 			foreach (var operand in operands)
 			{
-				Rule tmp;
-				OperandTypes type;
-
-				// try to get existing rule for this operand
-				if (!_defines.TryGetValue(operand, out type) || !_knownRules.TryGetValue(type, out tmp))
-				{
-					_logger.Debug($"No definition found for {operand}");
-					_logger.Warn($"Assuming that operand '{operand}' is MatchString");
-
-					// rule was not found
-					tmp = MatchString(operand, true);
-				}
-				else _logger.Debug($"Found definition for {operand}: {tmp}");
+				var tmp = ParseOperand(operand, instruction);
 
 				rule = rule == null
 					? tmp
@@ -84,6 +82,29 @@ namespace hasm
 			}
 
 			return rule;
+		}
+
+		private Rule ParseOperand(string operand, Instruction instruction)
+		{
+			Rule tmp;
+			OperandTypes type;
+
+			// try to get existing rule for this operand
+			if (!_defines.TryGetValue(operand, out type) || !_knownRules.TryGetValue(type, out tmp))
+			{
+				_logger.Debug($"No definition found for {operand}");
+				_logger.Warn($"Assuming that operand '{operand}' is MatchString");
+
+				// rule was not found
+				tmp = MatchString(operand, true);
+			}
+
+			EncodeValue encoder;
+			if (type == OperandTypes.Unkown || !_knownEncodings.TryGetValue(type, out encoder))
+				throw new InvalidOperationException($"Impossible to encode this {instruction}");
+
+			_logger.Debug($"Found definition for {operand}: {tmp} with encoder {encoder.Method.Name}");
+			return ConvertToValue(s => encoder(instruction.Encoding, tmp.FirstValue<string>(s)), tmp);
 		}
 
 		private static int OpcodeEncoding(string encoding)
@@ -95,33 +116,34 @@ namespace hasm
 			return result;
 		}
 
+		private static int SourceRegisterEncoding(string encoding, string value)
+			=> RegisterEncoding(encoding, value, _sourceRegisterMask, 'r');
+
 		private static int DestinationRegisterEncoding(string encoding, string value)
-		{
-			var opcodeBinary = _destinationRegisterMask.FirstValue(encoding); // gets the binary representation of the encoding
-			var start = opcodeBinary.IndexOf('d');
-			var substr = opcodeBinary.Substring(start, opcodeBinary.IndexOf('0', start) - start);
+			=> RegisterEncoding(encoding, value, _destinationRegisterMask, 'd');
 
+		private static int RegisterEncoding(string encoding, string value, ValueRule<string> registerMask, char mask)
+		{
+			var opcodeBinary = registerMask.FirstValue(encoding); // gets the binary representation of the encoding
+			var index = opcodeBinary.IndexOf(mask);
+			var nextIndex = opcodeBinary.IndexOf('0', index);
+			if (nextIndex == -1)
+				nextIndex = opcodeBinary.Length;
+			var length = nextIndex - index;
+
+			opcodeBinary = opcodeBinary.Remove(index, length).Insert(index, value);
 			var result = Convert.ToInt32(opcodeBinary, 2);
 
-			_logger.Info($"Destination for {encoding} is {result}");
+			_logger.Info($"Register encoding ({mask}) for {encoding} is {result}");
 			return result;
 		}
-
-		private static int SourceRegisterEncoding(string encoding)
-		{
-			var opcodeBinary = _sourceRegisterMask.FirstValue(encoding); // gets the binary representation of the encoding
-			var result = Convert.ToInt32(opcodeBinary, 2);
-
-			_logger.Info($"Opcode for {encoding} is {result}");
-			return result;
-		}
-
+		
 		private static ValueRule<string> MaskEncodingRule(char mask)
 		{
-			var one = ConstantValue(mask, MatchChar(mask)); // matches only the mask
+			var matched = ConstantValue(mask.ToString(), MatchChar(mask)); // matches only the mask
 			var rest = ConstantValue("0", MatchAnyChar()); // treat the rest as an zero
 
-			var rule = Accumulate<string>((cur, next) => cur + next, MatchWhile(one | rest)); // merge the encoding
+			var rule = Accumulate<string>((cur, next) => cur + next, MatchWhile(matched | rest)); // merge the encoding
 			_logger.Debug(() => $"Created encoding-mask ('{mask}') rule{Environment.NewLine}{rule.PrettyFormat()}");
 
 			return rule;
@@ -152,6 +174,7 @@ namespace hasm
 
 		internal enum OperandTypes
 		{
+			Unkown,
 			Immediate,
 			SourceRegister,
 			DestinationRegister

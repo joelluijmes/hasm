@@ -7,6 +7,7 @@ using hasm.Properties;
 using NLog;
 using OfficeOpenXml;
 using ParserLib;
+using ParserLib.Evaluation;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
@@ -37,8 +38,14 @@ namespace hasm
                 _logger.Debug($"{pair.Key}: {pair.Value}");
 
 			var hasm = new HasmGrammer(defines);
-	        var parsed = hasm.ParseInstruction(ParseInstructions().First());
-            //_logger.Info(parsed.ParseTree("mov r1,r2").PrettyFormat());
+	        var instruction = ParseInstructions().First();
+	        var parsed = hasm.ParseInstruction(instruction);
+
+	        var input = "mov r1,r2";
+	        var encoded = parsed.FirstValue<int>(input);
+
+	        var binary = Convert.ToString(encoded, 2).PadLeft(instruction.Encoding.Length, '0');
+	        _logger.Info($"Parsed {input} to encoding {binary}");
         }
         
         private static IEnumerable<Instruction> ParseInstructions()
