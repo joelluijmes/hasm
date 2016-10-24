@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using NLog;
+using ParserLib;
+using ParserLib.Evaluation;
+using ParserLib.Evaluation.Rules;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
@@ -10,6 +13,8 @@ namespace hasm
 	internal sealed class HasmGrammer : Grammar
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
+		private static ValueRule<string> _opcodeEncodingRule;
 		private readonly IDictionary<string, Rule> _defines;
 
 		public HasmGrammer(IDictionary<string, Rule> defines)
@@ -27,20 +32,21 @@ namespace hasm
 
 			return FirstValue<int>("GeneralRegister", MatchChar('R', true) + Or(range));
 		}
-		
+
 		public Rule ParseInstruction(Instruction instruction)
 		{
 			_logger.Info($"Parsing {instruction}..");
 			var rule = ParseOpcode(instruction) + Whitespace + ParseOperands(instruction);
 			_logger.Info($"Parsed {instruction}: {rule}");
-
+			
 			return rule;
 		}
 
-		private Rule ParseOpcode(Instruction instruction)
+		private ValueRule<int> ParseOpcode(Instruction instruction)
 		{
 			var opcode = GetOpcode(instruction.Grammar);
-			return MatchString(opcode, true);
+			var encoding = OpcodeEncoding(instruction.Encoding);
+			return ConstantValue(encoding, MatchString(opcode, true));	// when it matches the opcode give its encoding 
 		}
 
 		private Rule ParseOperands(Instruction instruction)
@@ -67,6 +73,30 @@ namespace hasm
 			}
 
 			return rule;
+		}
+
+		private static int OpcodeEncoding(string encoding)
+		{
+			var rule = OpcodeEncodingRule();
+			var opcodeBinary = rule.FirstValue(encoding); // gets the binary representation of the encoding
+			var result = Convert.ToInt32(opcodeBinary, 2);
+			
+			_logger.Info($"Opcode for {encoding} is {result}");
+			return result;
+		}
+
+		private static ValueRule<string> OpcodeEncodingRule()
+		{
+			if (_opcodeEncodingRule != null)
+				return _opcodeEncodingRule;
+
+			var one = ConstantValue("1", MatchChar('1')); // matches the one's as 1
+			var rest = ConstantValue("0", MatchAnyChar()); // treat the rest as an zero
+
+			_opcodeEncodingRule = Accumulate<string>((cur, next) => cur + next, MatchWhile(one | rest)); // merge the encoding
+			_logger.Debug(() => $"Create opcode encoding rule{Environment.NewLine}{_opcodeEncodingRule.PrettyFormat()}");
+
+			return _opcodeEncodingRule;
 		}
 
 		private static IEnumerable<string> GetOperands(string grammar)

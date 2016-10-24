@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using hasm.Properties;
@@ -17,7 +18,13 @@ namespace hasm
 
         private static void Main(string[] args)
         {
-            var instruction = ParseInstructions().First();
+#if DEBUG
+	        var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
+			if (Debugger.IsAttached)
+				consoleRule.EnableLoggingForLevel(LogLevel.Debug);
+#endif
+
+			var instruction = ParseInstructions().First();
             var register = HasmGrammer.GeneralRegister();   // same reference
             var defines = new Dictionary<string, Rule>
             {
