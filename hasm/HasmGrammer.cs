@@ -14,7 +14,7 @@ namespace hasm
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-		private static ValueRule<string> _opcodeEncodingRule;
+		private static readonly ValueRule<string> _opcodeMask = MaskEncodingRule('1');
 		private readonly IDictionary<string, Rule> _defines;
 
 		public HasmGrammer(IDictionary<string, Rule> defines)
@@ -23,16 +23,7 @@ namespace hasm
 				throw new ArgumentNullException(nameof(defines));
 			_defines = defines;
 		}
-
-		public static Rule GeneralRegister()
-		{
-			var range = Enumerable.Range(0, 8)
-				.Select(i => i.ToString()[0])
-				.Select(i => ConvertToValue("r" + i, int.Parse, MatchChar(i)));
-
-			return FirstValue<int>("GeneralRegister", MatchChar('R', true) + Or(range));
-		}
-
+		
 		public Rule ParseInstruction(Instruction instruction)
 		{
 			_logger.Info($"Parsing {instruction}..");
@@ -77,26 +68,30 @@ namespace hasm
 
 		private static int OpcodeEncoding(string encoding)
 		{
-			var rule = OpcodeEncodingRule();
-			var opcodeBinary = rule.FirstValue(encoding); // gets the binary representation of the encoding
+			var opcodeBinary = _opcodeMask.FirstValue(encoding); // gets the binary representation of the encoding
 			var result = Convert.ToInt32(opcodeBinary, 2);
 			
 			_logger.Info($"Opcode for {encoding} is {result}");
 			return result;
 		}
 
-		private static ValueRule<string> OpcodeEncodingRule()
+		private static ValueRule<string> MaskEncodingRule(char mask)
 		{
-			if (_opcodeEncodingRule != null)
-				return _opcodeEncodingRule;
-
-			var one = ConstantValue("1", MatchChar('1')); // matches the one's as 1
+			var one = ConstantValue(mask, MatchChar(mask)); // matches only the mask
 			var rest = ConstantValue("0", MatchAnyChar()); // treat the rest as an zero
 
-			_opcodeEncodingRule = Accumulate<string>((cur, next) => cur + next, MatchWhile(one | rest)); // merge the encoding
-			_logger.Debug(() => $"Create opcode encoding rule{Environment.NewLine}{_opcodeEncodingRule.PrettyFormat()}");
+			var rule = Accumulate<string>((cur, next) => cur + next, MatchWhile(one | rest)); // merge the encoding
+			_logger.Debug(() => $"Created encoding-mask rule{Environment.NewLine}{rule.PrettyFormat()}");
 
-			return _opcodeEncodingRule;
+			return rule;
+		}
+		public static Rule GeneralRegister()
+		{
+			var range = Enumerable.Range(0, 8)
+				.Select(i => i.ToString()[0])
+				.Select(i => ConvertToValue(int.Parse, MatchChar(i)));
+
+			return FirstValue<int>("GeneralRegister", MatchChar('R', true) + Or(range));
 		}
 
 		private static IEnumerable<string> GetOperands(string grammar)

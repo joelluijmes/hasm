@@ -19,9 +19,11 @@ namespace hasm
         private static void Main(string[] args)
         {
 #if DEBUG
-	        var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
-			if (Debugger.IsAttached)
-				consoleRule.EnableLoggingForLevel(LogLevel.Debug);
+	        if (Debugger.IsAttached)
+	        {
+		        var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
+		        consoleRule.EnableLoggingForLevel(LogLevel.Debug);
+	        }
 #endif
 
 			var instruction = ParseInstructions().First();
