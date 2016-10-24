@@ -95,6 +95,18 @@ namespace hasm
 			return result;
 		}
 
+		private static int DestinationRegisterEncoding(string encoding, string value)
+		{
+			var opcodeBinary = _destinationRegisterMask.FirstValue(encoding); // gets the binary representation of the encoding
+			var start = opcodeBinary.IndexOf('d');
+			var substr = opcodeBinary.Substring(start, opcodeBinary.IndexOf('0', start) - start);
+
+			var result = Convert.ToInt32(opcodeBinary, 2);
+
+			_logger.Info($"Destination for {encoding} is {result}");
+			return result;
+		}
+
 		private static int SourceRegisterEncoding(string encoding)
 		{
 			var opcodeBinary = _sourceRegisterMask.FirstValue(encoding); // gets the binary representation of the encoding
@@ -115,13 +127,19 @@ namespace hasm
 			return rule;
 		}
 
-		private static Rule GeneralRegister(string name)
+		private static Rule GeneralRegisterRule(string name)
 		{
+			Func<string, string> converter = s =>
+			{
+				var number = int.Parse(s);	// convert it to a number
+				return Convert.ToString(number, 2).PadLeft(3, '0'); // then use Convert to make it binary
+			};
+
 			var range = Enumerable.Range(0, 8)
 				.Select(i => i.ToString()[0])
-				.Select(i => ConvertToValue(int.Parse, MatchChar(i)));
+				.Select(i => ConvertToValue(converter, MatchChar(i)));
 
-			return FirstValue<int>(name, MatchChar('R', true) + Or(range));
+			return FirstValue<string>(name, MatchChar('R', true) + Or(range));
 		}
 
 		private static IEnumerable<string> GetOperands(string grammar)
