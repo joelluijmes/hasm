@@ -26,12 +26,10 @@ namespace hasm
 	        }
 #endif
 
-			var instruction = ParseInstructions().First();
-            var register = HasmGrammer.GeneralRegister();   // same reference
-            var defines = new Dictionary<string, Rule>
+            var defines = new Dictionary<string, HasmGrammer.OperandTypes>
             {
-                ["DST"] = register,
-                ["SRC"] = register
+                ["DST"] = HasmGrammer.OperandTypes.DestinationRegister,
+                ["SRC"] = HasmGrammer.OperandTypes.SourceRegister
             };
 
             _logger.Info($"{defines.Count} definitions");
@@ -40,7 +38,7 @@ namespace hasm
 
 			var hasm = new HasmGrammer(defines);
 	        var parsed = hasm.ParseInstruction(ParseInstructions().First());
-            _logger.Info(parsed.ParseTree("mov r1,r2").PrettyFormat());
+            //_logger.Info(parsed.ParseTree("mov r1,r2").PrettyFormat());
         }
         
         private static IEnumerable<Instruction> ParseInstructions()
