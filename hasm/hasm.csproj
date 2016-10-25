@@ -56,8 +56,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HasmGrammer.cs" />
+    <Compile Include="Parsing\Parsers\BaseImmediateParser.cs" />
+    <Compile Include="Parsing\Parsers\BaseParser.cs" />
+    <Compile Include="Parsing\Parsers\DestinationRegisterParser.cs" />
+    <Compile Include="Parsing\HasmGrammer.cs" />
     <Compile Include="Instruction.cs" />
+    <Compile Include="Parsing\Parsers\Immediate24Parser.cs" />
+    <Compile Include="Parsing\Parsers\Immediate6Parser.cs" />
+    <Compile Include="Parsing\Parsers\Immediate8Parser.cs" />
+    <Compile Include="Parsing\OperandType.cs" />
+    <Compile Include="Parsing\Parsers\BaseRegisterParser.cs" />
+    <Compile Include="Parsing\Parsers\SourceRegisterParser.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -83,6 +92,7 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

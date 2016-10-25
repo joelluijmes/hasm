@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using hasm.Parsing;
 using hasm.Properties;
 using NLog;
 using OfficeOpenXml;
@@ -30,11 +31,13 @@ namespace hasm
 			        consoleRule.EnableLoggingForLevel(LogLevel.Debug);
 		        });
 
-		        var defines = new Dictionary<string, HasmGrammer.OperandTypes>
+		        var defines = new Dictionary<string, OperandType>
 		        {
-			        ["DST"] = HasmGrammer.OperandTypes.DestinationRegister,
-			        ["SRC"] = HasmGrammer.OperandTypes.SourceRegister,
-					["IMM8"] = HasmGrammer.OperandTypes.Immediate
+			        ["DST"] = OperandType.DestinationRegister,
+			        ["SRC"] = OperandType.SourceRegister,
+					["IMM6"]= OperandType.Immediate6,
+					["IMM8"]= OperandType.Immediate8,
+					["IMM12"]= OperandType.Immediate12,
 		        };
 
 		        _logger.Info($"{defines.Count} definitions");
@@ -42,14 +45,19 @@ namespace hasm
 			        _logger.Debug($"{pair.Key}: {pair.Value}");
 
 		        var hasm = new HasmGrammer(defines);
-		        var instruction = ParseInstructions().Skip(1).First();
-		        var parsed = hasm.ParseInstruction(instruction);
+		        var instructions = ParseInstructions().ToList();
 
-		        var input = "mvi r1,8";
-		        var encoded = parsed.FirstValue<int>(input);
+				Console.Write("Enter instruction: ");
+		        var line = Console.ReadLine();
+
+		        var operand = line.Substring(0, line.IndexOf(' '));
+		        var instruction = instructions.First(i => i.Grammar.StartsWith(operand));
+
+		        var parsed = hasm.ParseInstruction(instruction);
+		        var encoded = parsed.FirstValue<int>(line);
 
 		        var binary = Convert.ToString(encoded, 2).PadLeft(instruction.Encoding.Length, '0');
-		        _logger.Info($"Parsed {input} to encoding {binary}");
+		        _logger.Info($"Parsed {line} to encoding {binary}");
 	        }
 	        catch (Exception e)
 	        {
