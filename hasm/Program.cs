@@ -55,7 +55,7 @@ namespace hasm
 			        if (string.IsNullOrEmpty(line))
 				        break;
 
-			        var operand = line.Substring(0, line.IndexOf(' '));
+					var operand = HasmGrammer.Operand.FirstValue(line); 
 			        var instruction = instructions.First(i => i.Grammar.StartsWith(operand));
 
 			        var parsed = hasm.ParseInstruction(instruction);

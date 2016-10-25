@@ -21,6 +21,8 @@ namespace hasm.Parsing
 
 		private readonly IDictionary<string, OperandType> _defines;
 
+		public static readonly ValueRule<string> Operand = Text("Operand", MatchWhile(Label));
+
 		static HasmGrammer()
 		{
 			_knownParsers = Assembly.GetExecutingAssembly()
@@ -29,7 +31,7 @@ namespace hasm.Parsing
 				.Select(t => (BaseParser) Activator.CreateInstance(t))	// create an instance of them
 				.ToDictionary(p => p.OperandType);  // and make it a dictionary :)
 
-			_opcodemaskRule = CreateMaskRule('c');
+			_opcodemaskRule = CreateMaskRule('1');
 			_logger.Info($"Found {_knownParsers.Count} parsers");
 		}
 
@@ -43,15 +45,19 @@ namespace hasm.Parsing
 		public Rule ParseInstruction(Instruction instruction)
 		{
 			_logger.Info($"Parsing {instruction}..");
-			var rule = ParseOpcode(instruction) + Whitespace + ParseOperands(instruction);
-			_logger.Info($"Parsed {instruction}: {rule}");
+			var rule = ParseOpcode(instruction);
+			var operands = ParseOperands(instruction);
 
+			if (operands != null)
+				rule += Whitespace + operands;
+			
+			_logger.Info($"Parsed {instruction}: {rule}");
 			return Accumulate<int>((current, next) => current | next, rule);
 		}
 
-		private ValueRule<int> ParseOpcode(Instruction instruction)
+		private static Rule ParseOpcode(Instruction instruction)
 		{
-			var opcode = GetOpcode(instruction.Grammar);
+			var opcode = Operand.FirstValue(instruction.Grammar);
 			var encoding = OpcodeEncoding(instruction.Encoding);
 			return ConstantValue(encoding, MatchString(opcode, true)); // when it matches the opcode give its encoding 
 		}
@@ -59,6 +65,9 @@ namespace hasm.Parsing
 		private Rule ParseOperands(Instruction instruction)
 		{
 			var operands = GetOperands(instruction.Grammar);
+			if (!operands.Any())	// instruction without oprands
+				return null;
+
 			return operands.Select(o => ParseOperand(o, instruction.Encoding)) // make operand rules from the strings
 				.Aggregate((total, next) => total + MatchChar(',') + next); // merge the rules sepearted by a ,
 		}
@@ -85,13 +94,16 @@ namespace hasm.Parsing
 			return result;
 		}
 
-		private static IEnumerable<string> GetOperands(string grammar)
-			=> grammar.Replace(GetOpcode(grammar), "") // remove operand from grammar
+		private static string[] GetOperands(string grammar)
+		{
+			var operand = Operand.FirstValue(grammar);
+			return grammar.Replace(operand, "") // remove operand from grammar
 				.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries) // operands are split with a ,
-				.Select(s => s.Trim()); // remove any whitespace 
+				.Select(s => s.Trim())
+				.ToArray();
+		}
 
-		private static string GetOpcode(string grammar)
-			=> grammar.Substring(0, grammar.IndexOf(' ')).Trim();
+		// remove any whitespace 
 
 		internal static ValueRule<string> CreateMaskRule(char mask)
 		{
