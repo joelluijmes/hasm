@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -19,36 +20,70 @@ namespace hasm
 
         private static void Main(string[] args)
         {
-#if DEBUG
-	        if (Debugger.IsAttached)
+	        try
 	        {
-		        var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
-		        consoleRule.EnableLoggingForLevel(LogLevel.Debug);
+		        AppDomain.CurrentDomain.UnhandledException += UnhandledException;
+
+		        ExecuteIfDebug(() =>
+		        {
+			        var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
+			        consoleRule.EnableLoggingForLevel(LogLevel.Debug);
+		        });
+
+		        var defines = new Dictionary<string, HasmGrammer.OperandTypes>
+		        {
+			        ["DST"] = HasmGrammer.OperandTypes.DestinationRegister,
+			        ["SRC"] = HasmGrammer.OperandTypes.SourceRegister
+		        };
+
+		        _logger.Info($"{defines.Count} definitions");
+		        foreach (var pair in defines)
+			        _logger.Debug($"{pair.Key}: {pair.Value}");
+
+		        var hasm = new HasmGrammer(defines);
+		        var instruction = ParseInstructions().Skip(1).First();
+		        var parsed = hasm.ParseInstruction(instruction);
+
+		        var input = "mov r1,r2";
+		        var encoded = parsed.FirstValue<int>(input);
+
+		        var binary = Convert.ToString(encoded, 2).PadLeft(instruction.Encoding.Length, '0');
+		        _logger.Info($"Parsed {input} to encoding {binary}");
 	        }
-#endif
-
-            var defines = new Dictionary<string, HasmGrammer.OperandTypes>
-            {
-                ["DST"] = HasmGrammer.OperandTypes.DestinationRegister,
-                ["SRC"] = HasmGrammer.OperandTypes.SourceRegister
-            };
-
-            _logger.Info($"{defines.Count} definitions");
-            foreach (var pair in defines)
-                _logger.Debug($"{pair.Key}: {pair.Value}");
-
-			var hasm = new HasmGrammer(defines);
-	        var instruction = ParseInstructions().First();
-	        var parsed = hasm.ParseInstruction(instruction);
-
-	        var input = "mov r1,r2";
-	        var encoded = parsed.FirstValue<int>(input);
-
-	        var binary = Convert.ToString(encoded, 2).PadLeft(instruction.Encoding.Length, '0');
-	        _logger.Info($"Parsed {input} to encoding {binary}");
+	        catch (Exception e)
+	        {
+				UnhandledException(e);
+	        }
         }
-        
-        private static IEnumerable<Instruction> ParseInstructions()
+
+	    private static void UnhandledException(object sender, UnhandledExceptionEventArgs e)
+	    {
+			var exception = e.ExceptionObject as Exception;
+		    if (exception == null)
+		    {
+			    _logger.Fatal($"ExceptionObject is not an exception: {e.ExceptionObject}");
+				Environment.Exit(-1);
+			}
+		    else UnhandledException(exception);
+	    }
+
+		private static void UnhandledException(Exception e)
+		{
+			_logger.Fatal(e, "Unhandled exception");
+			//ExecuteIfDebug(() => { throw e; });
+
+			Environment.Exit(-1);
+		}
+
+		private static void ExecuteIfDebug(Action action)
+	    {
+#if DEBUG
+		    if (Debugger.IsAttached)
+			    action();
+#endif
+		}
+
+	    private static IEnumerable<Instruction> ParseInstructions()
         {
             using (var stream = new MemoryStream(Resources.Instructionset))
             using (var package = new ExcelPackage(stream))
