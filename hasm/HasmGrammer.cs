@@ -14,8 +14,6 @@ namespace hasm
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-		private delegate int EncodeValue(string encoding, string value);
-
 		private static readonly ValueRule<string> _opcodeMask;
 		private static readonly ValueRule<string> _sourceRegisterMask;
 		private static readonly ValueRule<string> _destinationRegisterMask;
@@ -24,13 +22,6 @@ namespace hasm
 		private static readonly IDictionary<OperandTypes, EncodeValue> _knownEncodings;
 
 		private readonly IDictionary<string, OperandTypes> _defines;
-		
-		public HasmGrammer(IDictionary<string, OperandTypes> defines)
-		{
-			if (defines == null)
-				throw new ArgumentNullException(nameof(defines));
-			_defines = defines;
-		}
 
 		static HasmGrammer()
 		{
@@ -52,12 +43,19 @@ namespace hasm
 			};
 		}
 
+		public HasmGrammer(IDictionary<string, OperandTypes> defines)
+		{
+			if (defines == null)
+				throw new ArgumentNullException(nameof(defines));
+			_defines = defines;
+		}
+
 		public Rule ParseInstruction(Instruction instruction)
 		{
 			_logger.Info($"Parsing {instruction}..");
 			var rule = ParseOpcode(instruction) + Whitespace + ParseOperands(instruction);
 			_logger.Info($"Parsed {instruction}: {rule}");
-			
+
 			return Accumulate<int>((current, next) => current | next, rule);
 		}
 
@@ -65,23 +63,14 @@ namespace hasm
 		{
 			var opcode = GetOpcode(instruction.Grammar);
 			var encoding = OpcodeEncoding(instruction.Encoding);
-			return ConstantValue(encoding, MatchString(opcode, true));	// when it matches the opcode give its encoding 
+			return ConstantValue(encoding, MatchString(opcode, true)); // when it matches the opcode give its encoding 
 		}
 
 		private Rule ParseOperands(Instruction instruction)
 		{
-			Rule rule = null;
 			var operands = GetOperands(instruction.Grammar);
-			foreach (var operand in operands)
-			{
-				var tmp = ParseOperand(operand, instruction);
-
-				rule = rule == null
-					? tmp
-					: rule + MatchChar(',') + tmp;
-			}
-
-			return rule;
+			return operands.Select(o => ParseOperand(o, instruction)) // make operand rules from the strings
+				.Aggregate((total, next) => total + MatchChar(',') + next); // merge the rules sepearted by a ,
 		}
 
 		private Rule ParseOperand(string operand, Instruction instruction)
@@ -100,7 +89,7 @@ namespace hasm
 			}
 
 			EncodeValue encoder;
-			if (type == OperandTypes.Unkown || !_knownEncodings.TryGetValue(type, out encoder))
+			if ((type == OperandTypes.Unkown) || !_knownEncodings.TryGetValue(type, out encoder))
 				throw new InvalidOperationException($"Impossible to encode this {instruction}");
 
 			_logger.Debug($"Found definition for {operand}: {tmp} with encoder {encoder.Method.Name}");
@@ -125,19 +114,20 @@ namespace hasm
 		private static int RegisterEncoding(string encoding, string value, ValueRule<string> registerMask, char mask)
 		{
 			var opcodeBinary = registerMask.FirstValue(encoding); // gets the binary representation of the encoding
-			var index = opcodeBinary.IndexOf(mask);
-			var nextIndex = opcodeBinary.IndexOf('0', index);
+			var index = opcodeBinary.IndexOf(mask); // finds the first occurance of the mask
+			var nextIndex = opcodeBinary.IndexOf('0', index); // and the last
 			if (nextIndex == -1)
-				nextIndex = opcodeBinary.Length;
-			var length = nextIndex - index;
+				nextIndex = opcodeBinary.Length; // could be that it ended with the mask so we set it to the length of total encoding
 
+			var length = nextIndex - index;
 			opcodeBinary = opcodeBinary.Remove(index, length).Insert(index, value);
+
 			var result = Convert.ToInt32(opcodeBinary, 2);
 
 			_logger.Info($"Register encoding ({mask}) for {encoding} is {result}");
 			return result;
 		}
-		
+
 		private static ValueRule<string> MaskEncodingRule(char mask)
 		{
 			var matched = ConstantValue(mask.ToString(), MatchChar(mask)); // matches only the mask
@@ -153,13 +143,13 @@ namespace hasm
 		{
 			Func<string, string> converter = s =>
 			{
-				var number = int.Parse(s);	// convert it to a number
+				var number = int.Parse(s); // convert it to a number
 				return Convert.ToString(number, 2).PadLeft(3, '0'); // then use Convert to make it binary
 			};
 
-			var range = Enumerable.Range(0, 8)
-				.Select(i => i.ToString()[0])
-				.Select(i => ConvertToValue(converter, MatchChar(i)));
+			var range = Enumerable.Range(0, 8) // generate 0 .. 7
+				.Select(i => i.ToString()[0]) // convert them to strings
+				.Select(i => ConvertToValue(converter, MatchChar(i))); // apply the converter
 
 			return FirstValue<string>(name, MatchChar('R', true) + Or(range));
 		}
@@ -171,6 +161,8 @@ namespace hasm
 
 		private static string GetOpcode(string grammar)
 			=> grammar.Substring(0, grammar.IndexOf(' ')).Trim();
+
+		private delegate int EncodeValue(string encoding, string value);
 
 		internal enum OperandTypes
 		{
