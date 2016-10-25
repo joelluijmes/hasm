@@ -46,18 +46,26 @@ namespace hasm
 
 		        var hasm = new HasmGrammer(defines);
 		        var instructions = ParseInstructions().ToList();
+				_logger.Info($"hasm knows {instructions.Count} instructions");
 
-				Console.Write("Enter instruction: ");
-		        var line = Console.ReadLine();
+		        while (true)
+		        {
+			        Console.Write("Enter instruction: ");
+			        var line = Console.ReadLine();
+			        if (string.IsNullOrEmpty(line))
+				        break;
 
-		        var operand = line.Substring(0, line.IndexOf(' '));
-		        var instruction = instructions.First(i => i.Grammar.StartsWith(operand));
+			        var operand = line.Substring(0, line.IndexOf(' '));
+			        var instruction = instructions.First(i => i.Grammar.StartsWith(operand));
 
-		        var parsed = hasm.ParseInstruction(instruction);
-		        var encoded = parsed.FirstValue<int>(line);
+			        var parsed = hasm.ParseInstruction(instruction);
+			        var encoded = parsed.FirstValue<int>(line);
 
-		        var binary = Convert.ToString(encoded, 2).PadLeft(instruction.Encoding.Length, '0');
-		        _logger.Info($"Parsed {line} to encoding {binary}");
+			        var binary = Convert.ToString(encoded, 2).PadLeft(instruction.Encoding.Length, '0');
+			        _logger.Info($"Parsed {line} to encoding {binary}");
+
+					Console.WriteLine();
+		        }
 	        }
 	        catch (Exception e)
 	        {
