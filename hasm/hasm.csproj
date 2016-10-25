@@ -58,7 +58,8 @@
   <ItemGroup>
     <Compile Include="Parsing\Parsers\BaseImmediateParser.cs" />
     <Compile Include="Parsing\Parsers\BaseParser.cs" />
-    <Compile Include="Parsing\Parsers\DestinationRegisterParser.cs" />
+    <Compile Include="Parsing\Parsers\SecondRegisterParser.cs" />
+    <Compile Include="Parsing\Parsers\FirstRegisterParser.cs" />
     <Compile Include="Parsing\HasmGrammer.cs" />
     <Compile Include="Instruction.cs" />
     <Compile Include="Parsing\Parsers\Immediate24Parser.cs" />
@@ -66,7 +67,6 @@
     <Compile Include="Parsing\Parsers\Immediate8Parser.cs" />
     <Compile Include="Parsing\OperandType.cs" />
     <Compile Include="Parsing\Parsers\BaseRegisterParser.cs" />
-    <Compile Include="Parsing\Parsers\SourceRegisterParser.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">

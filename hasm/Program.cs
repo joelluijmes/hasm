@@ -33,8 +33,13 @@ namespace hasm
 
 		        var defines = new Dictionary<string, OperandType>
 		        {
-			        ["DST"] = OperandType.DestinationRegister,
-			        ["SRC"] = OperandType.SourceRegister,
+			        ["REG"] = OperandType.FirstRegister,
+					["DST"] = OperandType.FirstRegister,
+					["REG1"] = OperandType.FirstRegister,
+
+			        ["REG2"] = OperandType.SecondRegister,
+			        ["SRC"] = OperandType.SecondRegister,
+
 					["IMM6"]= OperandType.Immediate6,
 					["IMM8"]= OperandType.Immediate8,
 					["IMM12"]= OperandType.Immediate12,

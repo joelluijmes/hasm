@@ -7,6 +7,8 @@ namespace hasm.Parsing
 		Immediate8,
 		Immediate12,
 		SourceRegister,
-		DestinationRegister
+		DestinationRegister,
+		FirstRegister,
+		SecondRegister
 	}
 }
