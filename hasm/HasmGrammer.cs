@@ -17,6 +17,7 @@ namespace hasm
 		private static readonly ValueRule<string> _opcodeMask;
 		private static readonly ValueRule<string> _sourceRegisterMask;
 		private static readonly ValueRule<string> _destinationRegisterMask;
+		private static readonly ValueRule<string> _immmediateMask;
 
 		private static readonly IDictionary<OperandTypes, Rule> _knownRules;
 		private static readonly IDictionary<OperandTypes, EncodeValue> _knownEncodings;
@@ -28,18 +29,21 @@ namespace hasm
 			_opcodeMask = MaskEncodingRule('1');
 			_sourceRegisterMask = MaskEncodingRule('r');
 			_destinationRegisterMask = MaskEncodingRule('d');
+			_immmediateMask = MaskEncodingRule('k');
 			_logger.Debug("Created the mask rules");
 
 			_knownRules = new Dictionary<OperandTypes, Rule>
 			{
 				[OperandTypes.DestinationRegister] = GeneralRegisterRule("dst"),
-				[OperandTypes.SourceRegister] = GeneralRegisterRule("src")
+				[OperandTypes.SourceRegister] = GeneralRegisterRule("src"),
+				[OperandTypes.Immediate] = ImmediateRule(8)
 			};
 
 			_knownEncodings = new Dictionary<OperandTypes, EncodeValue>
 			{
-				[OperandTypes.DestinationRegister] = DestinationRegisterEncoding,
-				[OperandTypes.SourceRegister] = SourceRegisterEncoding
+				[OperandTypes.DestinationRegister] = (encoding, value) => InsertEncodingValue(encoding, value, _destinationRegisterMask, 'd'),
+				[OperandTypes.SourceRegister] = (encoding, value) => InsertEncodingValue(encoding, value, _sourceRegisterMask, 'r'),
+				[OperandTypes.Immediate] = (encoding, value) => InsertEncodingValue(encoding, value, _immmediateMask, 'k')
 			};
 		}
 
@@ -104,14 +108,8 @@ namespace hasm
 			_logger.Info($"Opcode for {encoding} is {result}");
 			return result;
 		}
-
-		private static int SourceRegisterEncoding(string encoding, string value)
-			=> RegisterEncoding(encoding, value, _sourceRegisterMask, 'r');
-
-		private static int DestinationRegisterEncoding(string encoding, string value)
-			=> RegisterEncoding(encoding, value, _destinationRegisterMask, 'd');
-
-		private static int RegisterEncoding(string encoding, string value, ValueRule<string> registerMask, char mask)
+		
+		private static int InsertEncodingValue(string encoding, string value, ValueRule<string> registerMask, char mask)
 		{
 			var opcodeBinary = registerMask.FirstValue(encoding); // gets the binary representation of the encoding
 			var index = opcodeBinary.IndexOf(mask); // finds the first occurance of the mask
@@ -121,13 +119,12 @@ namespace hasm
 
 			var length = nextIndex - index;
 			opcodeBinary = opcodeBinary.Remove(index, length).Insert(index, value);
-
 			var result = Convert.ToInt32(opcodeBinary, 2);
 
 			_logger.Info($"Register encoding ({mask}) for {encoding} is {result}");
 			return result;
 		}
-
+		
 		private static ValueRule<string> MaskEncodingRule(char mask)
 		{
 			var matched = ConstantValue(mask.ToString(), MatchChar(mask)); // matches only the mask
@@ -137,6 +134,18 @@ namespace hasm
 			_logger.Debug(() => $"Created encoding-mask ('{mask}') rule{Environment.NewLine}{rule.PrettyFormat()}");
 
 			return rule;
+		}
+
+		private static Rule ImmediateRule(int count)
+		{
+			Func<string, string> converter = s =>
+			{
+				var number = int.Parse(s); // convert it to a number
+				return Convert.ToString(number, 2).PadLeft(count, '0'); // then use Convert to make it binary
+			};
+
+			var rule = ConvertToValue(converter, Digits);
+			return FirstValue<string>($"Imm{count}", rule);
 		}
 
 		private static Rule GeneralRegisterRule(string name)

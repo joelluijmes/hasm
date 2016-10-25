@@ -33,7 +33,8 @@ namespace hasm
 		        var defines = new Dictionary<string, HasmGrammer.OperandTypes>
 		        {
 			        ["DST"] = HasmGrammer.OperandTypes.DestinationRegister,
-			        ["SRC"] = HasmGrammer.OperandTypes.SourceRegister
+			        ["SRC"] = HasmGrammer.OperandTypes.SourceRegister,
+					["IMM8"] = HasmGrammer.OperandTypes.Immediate
 		        };
 
 		        _logger.Info($"{defines.Count} definitions");
@@ -44,7 +45,7 @@ namespace hasm
 		        var instruction = ParseInstructions().Skip(1).First();
 		        var parsed = hasm.ParseInstruction(instruction);
 
-		        var input = "mov r1,r2";
+		        var input = "mvi r1,8";
 		        var encoded = parsed.FirstValue<int>(input);
 
 		        var binary = Convert.ToString(encoded, 2).PadLeft(instruction.Encoding.Length, '0');
