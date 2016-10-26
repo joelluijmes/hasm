@@ -44,7 +44,8 @@ namespace hasm
 					["IMM8"]= OperandType.Immediate8,
 					["IMM12"]= OperandType.Immediate12,
 
-					["c"] = OperandType.BranchIf
+					["c"] = OperandType.BranchIf,
+					["PAIR + IMM6"] = OperandType.PairOffset
 		        };
 
 		        _logger.Info($"{defines.Count} definitions");
@@ -66,6 +67,8 @@ namespace hasm
 			        var instruction = instructions.First(i => i.Grammar.StartsWith(operand));
 
 			        var parsed = hasm.ParseInstruction(instruction);
+					_logger.Debug(() => $"Using rule:{Environment.NewLine}{parsed.PrettyFormat()}");
+
 			        var encoded = parsed.FirstValue<int>(line);
 
 			        var binary = Convert.ToString(encoded, 2).PadLeft(instruction.Encoding.Length, '0');

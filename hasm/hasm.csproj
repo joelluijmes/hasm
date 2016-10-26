@@ -43,8 +43,8 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="ParserLib, Version=64.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ParserLib-debug.1.5.64\lib\ParserLib.dll</HintPath>
-      <Private>True</Private>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\ParserLib\ParserLib\bin\Debug\ParserLib.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -59,6 +59,9 @@
     <Compile Include="Parsing\Parsers\BaseImmediateParser.cs" />
     <Compile Include="Parsing\Parsers\BaseParser.cs" />
     <Compile Include="Parsing\Parsers\Branchifparser.cs" />
+    <Compile Include="Parsing\Parsers\IParser.cs" />
+    <Compile Include="Parsing\Parsers\PairOffsetParser.cs" />
+    <Compile Include="Parsing\Parsers\PairParser.cs" />
     <Compile Include="Parsing\Parsers\SecondRegisterParser.cs" />
     <Compile Include="Parsing\Parsers\FirstRegisterParser.cs" />
     <Compile Include="Parsing\HasmGrammer.cs" />

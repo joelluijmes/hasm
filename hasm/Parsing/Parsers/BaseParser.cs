@@ -8,7 +8,7 @@ using ParserLib.Parsing.Rules;
 
 namespace hasm.Parsing.Parsers
 {
-	internal abstract class BaseParser
+	internal abstract class BaseParser : IParser
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 		private readonly ValueRule<string> _encodingMask;
@@ -33,8 +33,9 @@ namespace hasm.Parsing.Parsers
 
 		protected string NumberConverter(string value)
 		{
-			var number = int.Parse(value); // convert it to a number
-			return Convert.ToString(number, 2).PadLeft(Size, '0'); // then use Convert to make it binary
+			var number = int.Parse(value); 
+			var binary = Convert.ToString(number, 2).PadLeft(Size, '0');
+			return binary.Substring(0, Math.Min(Size, binary.Length)); 
 		}
 
 		public Rule CreateRule(string encoding)

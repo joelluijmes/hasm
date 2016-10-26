@@ -16,7 +16,7 @@ namespace hasm.Parsing
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 		
-		private static readonly IDictionary<OperandType, BaseParser> _knownParsers;
+		private static readonly IDictionary<OperandType, IParser> _knownParsers;
 		private static readonly ValueRule<string> _opcodemaskRule;
 
 		private readonly IDictionary<string, OperandType> _defines;
@@ -27,8 +27,8 @@ namespace hasm.Parsing
 		{
 			_knownParsers = Assembly.GetExecutingAssembly()
 				.GetTypes()	// get all types
-				.Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(typeof(BaseParser))) // which are parsers
-				.Select(t => (BaseParser) Activator.CreateInstance(t))	// create an instance of them
+				.Where(t => t.IsClass && !t.IsAbstract && typeof(IParser).IsAssignableFrom(t)) // which are parsers
+				.Select(t => (IParser) Activator.CreateInstance(t))	// create an instance of them
 				.ToDictionary(p => p.OperandType);  // and make it a dictionary :)
 
 			_opcodemaskRule = CreateMaskRule('1');
@@ -74,7 +74,7 @@ namespace hasm.Parsing
 
 		private Rule ParseOperand(string operand, string encoding)
 		{
-			BaseParser parser;
+			IParser parser;
 			OperandType type;
 			
 			// get the parser for this opernad type
