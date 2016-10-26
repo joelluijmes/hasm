@@ -64,7 +64,7 @@ namespace hasm
 				        break;
 
 					var operand = HasmGrammer.Operand.FirstValue(line); 
-			        var instruction = instructions.First(i => i.Grammar.StartsWith(operand));
+			        var instruction = instructions.First(i => i.Grammar.StartsWith(operand.ToUpper()));
 
 			        var parsed = hasm.ParseInstruction(instruction);
 					_logger.Debug(() => $"Using rule:{Environment.NewLine}{parsed.PrettyFormat()}");
