@@ -9,6 +9,7 @@ namespace hasm.Parsing
 		SourceRegister,
 		DestinationRegister,
 		FirstRegister,
-		SecondRegister
+		SecondRegister,
+		BranchIf
 	}
 }

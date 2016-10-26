@@ -58,6 +58,7 @@
   <ItemGroup>
     <Compile Include="Parsing\Parsers\BaseImmediateParser.cs" />
     <Compile Include="Parsing\Parsers\BaseParser.cs" />
+    <Compile Include="Parsing\Parsers\Branchifparser.cs" />
     <Compile Include="Parsing\Parsers\SecondRegisterParser.cs" />
     <Compile Include="Parsing\Parsers\FirstRegisterParser.cs" />
     <Compile Include="Parsing\HasmGrammer.cs" />

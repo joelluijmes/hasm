@@ -43,6 +43,8 @@ namespace hasm
 					["IMM6"]= OperandType.Immediate6,
 					["IMM8"]= OperandType.Immediate8,
 					["IMM12"]= OperandType.Immediate12,
+
+					["c"] = OperandType.BranchIf
 		        };
 
 		        _logger.Info($"{defines.Count} definitions");
