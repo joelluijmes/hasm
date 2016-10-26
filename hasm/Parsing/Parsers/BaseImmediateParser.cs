@@ -11,6 +11,6 @@ namespace hasm.Parsing.Parsers
 		{
 		}
 
-		protected override Rule CreateMatchRule() => Grammar.ConvertToValue(NumberConverter, Grammar.Digits);
+		protected override Rule CreateMatchRule() => Grammar.ConvertToValue(NumberConverter, (Grammar.MatchChar('-') | Grammar.MatchChar('+').Optional) + Grammar.Digits);
 	}
 }
