@@ -1,1 +1,1 @@
-foo: add r1, r2 ; r1 += r2
+foo: add r1,r2 ; r1 += r2

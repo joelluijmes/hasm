@@ -64,6 +64,7 @@ namespace hasm
 					}
 
 					var assembler = new Assembler(_hasmParser, listing);
+					File.WriteAllBytes("test.bin", assembler.Process());
 				}
 				else
 				{
@@ -118,8 +119,8 @@ namespace hasm
 
 				var rule = _hasmParser.FindRule(line);
 
-				var encoded = rule.FirstValue<int>(line);
-				_logger.Info($"Parsed {line} to encoding {encoded:X3}");
+				var encoded = rule.FirstValue(line).Aggregate("0x", (a, b) => $"{a}{b:X2}");
+				_logger.Info($"Parsed {line} to encoding {encoded}");
 
 				Console.WriteLine();
 			}

@@ -1,43 +1,29 @@
-﻿using hasm.Parsing;
-using ParserLib.Evaluation;
-
-namespace hasm
+﻿namespace hasm
 {
-	internal sealed class Instruction
+	internal class Instruction
 	{
-		public string Label { get; set; }
-		public int Address { get; set; }
-		public string Input { get; set; }
-		public string Comment { get; set; }
-
-		public static Instruction ParseFromLine(HasmParser hasmParser, string line)
+		public Instruction(string label, string input, string comment)
 		{
-			line = line.Trim();
-			
-			var label = HasmGrammar.ListingLabel.FirstValueOrDefault(line);
-			if (label != null)
-			{
-				line = line.Substring(label.Length + 1).Trim();
-				label = label.Trim();
-			}
-
-			var input = HasmGrammar.ListingInstruction.FirstValueOrDefault(line);
-			if (input != null)
-			{
-				line = line.Substring(input.Length).Trim();
-				input = input.Trim();
-			}
-
-			var comment = HasmGrammar.ListingComment.FirstValueOrDefault(line);
-			comment = comment?.Trim();
-
-			return new Instruction
-			{
-				Label = label,
-				Input = input,
-				Comment = comment
-			};
+			Label = label;
+			Input = input;
+			Comment = comment;
 		}
-		
+
+		public string Label { get; }
+		public string Input { get; }
+		public string Comment { get; }
+	}
+
+	internal class EncodedInstruction : Instruction
+	{
+		public EncodedInstruction(Instruction instruction, byte[] encoded) : this(instruction.Label, instruction.Input, instruction.Comment, encoded)
+		{ }
+
+		public EncodedInstruction(string label, string input, string comment, byte[] encoded) : base(label, input, comment)
+		{
+			Encoded = encoded;
+		}
+
+		internal byte[] Encoded { get;  }
 	}
 }
