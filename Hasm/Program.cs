@@ -53,7 +53,7 @@ namespace hasm
 					var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
 					consoleRule.EnableLoggingForLevel(LogLevel.Debug);
 
-					LiveMode();
+//					LiveMode();
 
 					var listing = new List<string>();
 					using (var memoryStream = new MemoryStream(Resources.listing))

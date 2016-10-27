@@ -54,6 +54,23 @@ namespace hasm.Parsing
 			return rule.FirstValue(input);
 		}
 
+		public bool TryEncode(string input, out byte[] encoded)
+		{
+			if (string.IsNullOrEmpty(input))
+				throw new ArgumentNullException(nameof(input));
+
+			input = FormatInput(input);
+			var rule = FindRule(input);
+			if (rule.Match(input))
+			{
+				encoded = rule.FirstValue(input);
+				return true;
+			}
+
+			encoded = null;
+			return false;
+		}
+		
 		private static string FormatInput(string input)
 		{
 			var opcode = HasmGrammar.Opcode.FirstValue(input);
