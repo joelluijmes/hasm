@@ -24,7 +24,7 @@ namespace hasm.Parsing.Parsers
 			Name = name;
 			Mask = mask;
 			Size = size;
-			_encodingMask = HasmGrammer.CreateMaskRule(mask);
+			_encodingMask = HasmGrammar.CreateMaskRule(mask);
 		}
 
 		public abstract OperandType OperandType { get; }

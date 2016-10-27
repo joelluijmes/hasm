@@ -59,6 +59,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="HasmGrammer.Rules.cs" />
     <Compile Include="HasmParser.cs" />
     <Compile Include="Parsers\BaseImmediateParser.cs" />
     <Compile Include="Parsers\BaseParser.cs" />
@@ -72,7 +73,7 @@
     <Compile Include="Parsers\SecondSpecialRegisterParser.cs" />
     <Compile Include="Parsers\SecondGeneralRegisterParser.cs" />
     <Compile Include="Parsers\FirstGeneralRegisterParser.cs" />
-    <Compile Include="HasmGrammer.cs" />
+    <Compile Include="HasmGrammar.cs" />
     <Compile Include="InstructionEncoding.cs" />
     <Compile Include="Parsers\Immediate24Parser.cs" />
     <Compile Include="Parsers\Immediate6Parser.cs" />

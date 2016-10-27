@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using hasm.Parsing.Parsers;
@@ -12,18 +13,16 @@ using ParserLib.Parsing.Rules;
 
 namespace hasm.Parsing
 {
-	internal sealed class HasmGrammer : Grammar
+	public sealed partial class HasmGrammar : Grammar
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
 		private static readonly IDictionary<OperandType, IParser> _knownParsers;
 		private static readonly ValueRule<string> _opcodemaskRule;
+		
+		public ReadOnlyDictionary<string, OperandType> Definitions { get; }
 
-		public static readonly ValueRule<string> Operand = Text("Operand", MatchWhile(Label));
-
-		private readonly IDictionary<string, OperandType> _defines;
-
-		static HasmGrammer()
+		static HasmGrammar()
 		{
 			_knownParsers = Assembly.GetExecutingAssembly()
 				.GetTypes() // get all types
@@ -35,14 +34,15 @@ namespace hasm.Parsing
 			_logger.Info($"Found {_knownParsers.Count} parsers");
 		}
 
-		public HasmGrammer(IDictionary<string, OperandType> defines)
+		public HasmGrammar(IDictionary<string, OperandType> definitions)
 		{
-			if (defines == null)
-				throw new ArgumentNullException(nameof(defines));
-			_defines = defines;
+			if (definitions == null)
+				throw new ArgumentNullException(nameof(definitions));
+
+			Definitions = new ReadOnlyDictionary<string, OperandType>(definitions);
 		}
 
-		public Rule ParseInstruction(InstructionEncoding instruction)
+		internal Rule ParseInstruction(InstructionEncoding instruction)
 		{
 			_logger.Info($"Parsing {instruction}..");
 			var rule = ParseOpcode(instruction);
@@ -78,7 +78,7 @@ namespace hasm.Parsing
 			OperandType type;
 
 			// get the parser for this opernad type
-			if (!_defines.TryGetValue(operand, out type) || !_knownParsers.TryGetValue(type, out parser) || (type == OperandType.Unkown))
+			if (!Definitions.TryGetValue(operand, out type) || !_knownParsers.TryGetValue(type, out parser) || (type == OperandType.Unkown))
 				throw new InvalidOperationException($"Impossible to encode for operand {operand}");
 
 			_logger.Debug($"Found parser for {operand}: {parser}");

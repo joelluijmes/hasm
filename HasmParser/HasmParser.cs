@@ -14,23 +14,23 @@ namespace hasm.Parsing
 	public class HasmParser
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-		private readonly HasmGrammer _grammar;
+		private readonly HasmGrammar _grammar;
 		private readonly IList<InstructionEncoding> _instructions;
 
-		public HasmParser(IDictionary<string, OperandType> defines)
+		public HasmParser(HasmGrammar grammar)
 		{
-			_logger.Info($"{defines.Count} definitions");
-			foreach (var pair in defines)
+			_logger.Info($"{grammar.Definitions.Count} definitions");
+			foreach (var pair in grammar.Definitions)
 				_logger.Debug($"{pair.Key}: {pair.Value}");
 
-			_grammar = new HasmGrammer(defines);
+			_grammar = grammar;
 			_instructions = ParseInstructions().ToList(); // parseInstructions is deferred
 			_logger.Info($"hasm knows {_instructions.Count} instructions");
 		}
 
 		public Rule FindRule(string input)
 		{
-			var operand = HasmGrammer.Operand.FirstValue(input);
+			var operand = HasmGrammar.Operand.FirstValue(input);
 			var instruction = _instructions.First(i => i.Grammar.StartsWith(operand.ToUpper()));
 
 			var rule = _grammar.ParseInstruction(instruction);
