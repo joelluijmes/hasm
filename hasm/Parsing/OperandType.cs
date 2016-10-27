@@ -8,8 +8,10 @@ namespace hasm.Parsing
 		Immediate12,
 		SourceRegister,
 		DestinationRegister,
-		FirstRegister,
-		SecondRegister,
+		FirstGeneralRegister,
+		FirstSpecialRegister,
+		SecondGeneralRegister,
+		SecondSpecialRegister,
 		BranchIf,
 		PairOffset,
 		Pair

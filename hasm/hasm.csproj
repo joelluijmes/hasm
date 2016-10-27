@@ -58,12 +58,16 @@
   <ItemGroup>
     <Compile Include="Parsing\Parsers\BaseImmediateParser.cs" />
     <Compile Include="Parsing\Parsers\BaseParser.cs" />
+    <Compile Include="Parsing\Parsers\BaseSpecialRegisterParser.cs" />
+    <Compile Include="Parsing\Parsers\BaseGeneralRegisterParser.cs" />
     <Compile Include="Parsing\Parsers\Branchifparser.cs" />
+    <Compile Include="Parsing\Parsers\FirstSpecialRegisterParser.cs" />
     <Compile Include="Parsing\Parsers\IParser.cs" />
     <Compile Include="Parsing\Parsers\PairOffsetParser.cs" />
     <Compile Include="Parsing\Parsers\PairParser.cs" />
-    <Compile Include="Parsing\Parsers\SecondRegisterParser.cs" />
-    <Compile Include="Parsing\Parsers\FirstRegisterParser.cs" />
+    <Compile Include="Parsing\Parsers\SecondSpecialRegisterParser.cs" />
+    <Compile Include="Parsing\Parsers\SecondGeneralRegisterParser.cs" />
+    <Compile Include="Parsing\Parsers\FirstGeneralRegisterParser.cs" />
     <Compile Include="Parsing\HasmGrammer.cs" />
     <Compile Include="Instruction.cs" />
     <Compile Include="Parsing\Parsers\Immediate24Parser.cs" />
