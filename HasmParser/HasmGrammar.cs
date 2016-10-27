@@ -42,7 +42,7 @@ namespace hasm.Parsing
 			Definitions = new ReadOnlyDictionary<string, OperandType>(definitions);
 		}
 
-		internal Rule ParseInstruction(InstructionEncoding instruction)
+		internal ValueRule<byte[]> ParseInstruction(InstructionEncoding instruction)
 		{
 			_logger.Info($"Parsing {instruction}..");
 			var rule = ParseOpcode(instruction);
@@ -52,7 +52,16 @@ namespace hasm.Parsing
 				rule += Whitespace + operands;
 
 			_logger.Info($"Parsed {instruction}: {rule}");
-			return Accumulate<int>((current, next) => current | next, rule);
+
+			Func<Node, byte[]> converter = node =>
+			{
+				var encodedAsInteger = node.FirstValue<int>();
+				var encoded = BitConverter.GetBytes(encodedAsInteger);
+				Array.Resize(ref encoded, instruction.Count);
+
+				return encoded;
+			};
+			return ConvertToValue(converter, Accumulate<int>((current, next) => current | next, rule));
 		}
 
 		private static Rule ParseOpcode(InstructionEncoding instruction)

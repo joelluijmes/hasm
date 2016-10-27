@@ -7,6 +7,7 @@ using NLog;
 using OfficeOpenXml;
 using ParserLib;
 using ParserLib.Evaluation;
+using ParserLib.Evaluation.Rules;
 using ParserLib.Parsing.Rules;
 
 namespace hasm.Parsing
@@ -28,7 +29,7 @@ namespace hasm.Parsing
 			_logger.Info($"hasm knows {_instructions.Count} instructions");
 		}
 
-		public Rule FindRule(string input)
+		public ValueRule<byte[]> FindRule(string input)
 		{
 			var operand = HasmGrammar.Operand.FirstValue(input);
 			var instruction = _instructions.First(i => i.Grammar.StartsWith(operand.ToUpper()));
@@ -37,6 +38,12 @@ namespace hasm.Parsing
 			_logger.Debug(() => $"{input} - Found rule:{Environment.NewLine}{rule.PrettyFormat()}");
 
 			return rule;
+		}
+
+		public byte[] Encode(string input)
+		{
+			var rule = FindRule(input);
+			return rule.FirstValue(input);
 		}
 
 		private static IEnumerable<InstructionEncoding> ParseInstructions()
