@@ -6,7 +6,7 @@ using ParserLib.Evaluation.Rules;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
-namespace hasm.Parsing.Parsers
+namespace hasm.Parsers
 {
 	internal abstract class BaseParser : IParser
 	{
@@ -28,15 +28,6 @@ namespace hasm.Parsing.Parsers
 		}
 
 		public abstract OperandType OperandType { get; }
-		
-		protected abstract Rule CreateMatchRule();
-
-		protected string NumberConverter(string value)
-		{
-			var number = int.Parse(value); 
-			var binary = Convert.ToString(number, 2).PadLeft(Size, '0');
-			return binary.Substring(0, Math.Min(Size, binary.Length)); 
-		}
 
 		public Rule CreateRule(string encoding)
 		{
@@ -57,7 +48,16 @@ namespace hasm.Parsing.Parsers
 
 			return _rule;
 		}
-		
+
+		protected abstract Rule CreateMatchRule();
+
+		protected string NumberConverter(string value)
+		{
+			var number = int.Parse(value);
+			var binary = Convert.ToString(number, 2).PadLeft(Size, '0');
+			return binary.Substring(0, Math.Min(Size, binary.Length));
+		}
+
 		private int Encode(string encoding, string value)
 		{
 			var opcodeBinary = _encodingMask.FirstValue(encoding); // gets the binary representation of the encoding

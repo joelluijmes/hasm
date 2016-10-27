@@ -5,10 +5,10 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{D5BE1584-6E5C-44B7-90A6-73BC364F4DBF}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>hasm</RootNamespace>
-    <AssemblyName>hasm</AssemblyName>
+    <AssemblyName>hasm-parser</AssemblyName>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -33,6 +33,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="EPPlus, Version=4.1.0.0, Culture=neutral, PublicKeyToken=ea159fdaa78159a1, processorArchitecture=MSIL">
       <HintPath>..\packages\EPPlus.4.1.0\lib\net40\EPPlus.dll</HintPath>
@@ -56,26 +59,26 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Parsing\Parsers\BaseImmediateParser.cs" />
-    <Compile Include="Parsing\Parsers\BaseParser.cs" />
-    <Compile Include="Parsing\Parsers\BaseSpecialRegisterParser.cs" />
-    <Compile Include="Parsing\Parsers\BaseGeneralRegisterParser.cs" />
-    <Compile Include="Parsing\Parsers\Branchifparser.cs" />
-    <Compile Include="Parsing\Parsers\FirstSpecialRegisterParser.cs" />
-    <Compile Include="Parsing\Parsers\IParser.cs" />
-    <Compile Include="Parsing\Parsers\PairOffsetParser.cs" />
-    <Compile Include="Parsing\Parsers\PairParser.cs" />
-    <Compile Include="Parsing\Parsers\SecondSpecialRegisterParser.cs" />
-    <Compile Include="Parsing\Parsers\SecondGeneralRegisterParser.cs" />
-    <Compile Include="Parsing\Parsers\FirstGeneralRegisterParser.cs" />
-    <Compile Include="Parsing\HasmGrammer.cs" />
+    <Compile Include="HasmParser.cs" />
+    <Compile Include="Parsers\BaseImmediateParser.cs" />
+    <Compile Include="Parsers\BaseParser.cs" />
+    <Compile Include="Parsers\BaseSpecialRegisterParser.cs" />
+    <Compile Include="Parsers\BaseGeneralRegisterParser.cs" />
+    <Compile Include="Parsers\Branchifparser.cs" />
+    <Compile Include="Parsers\FirstSpecialRegisterParser.cs" />
+    <Compile Include="Parsers\IParser.cs" />
+    <Compile Include="Parsers\PairOffsetParser.cs" />
+    <Compile Include="Parsers\PairParser.cs" />
+    <Compile Include="Parsers\SecondSpecialRegisterParser.cs" />
+    <Compile Include="Parsers\SecondGeneralRegisterParser.cs" />
+    <Compile Include="Parsers\FirstGeneralRegisterParser.cs" />
+    <Compile Include="HasmGrammer.cs" />
     <Compile Include="Instruction.cs" />
-    <Compile Include="Parsing\Parsers\Immediate24Parser.cs" />
-    <Compile Include="Parsing\Parsers\Immediate6Parser.cs" />
-    <Compile Include="Parsing\Parsers\Immediate8Parser.cs" />
-    <Compile Include="Parsing\OperandType.cs" />
-    <Compile Include="Parsing\Parsers\BaseRegisterParser.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Parsers\Immediate24Parser.cs" />
+    <Compile Include="Parsers\Immediate6Parser.cs" />
+    <Compile Include="Parsers\Immediate8Parser.cs" />
+    <Compile Include="OperandType.cs" />
+    <Compile Include="Parsers\BaseRegisterParser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

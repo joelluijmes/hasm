@@ -3,7 +3,7 @@ using ParserLib.Evaluation;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
-namespace hasm.Parsing.Parsers
+namespace hasm.Parsers
 {
 	internal sealed class BranchIfparser : BaseParser
 	{

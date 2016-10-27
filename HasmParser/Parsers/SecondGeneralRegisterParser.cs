@@ -1,4 +1,4 @@
-﻿namespace hasm.Parsing.Parsers
+﻿namespace hasm.Parsers
 {
 	internal class SecondGeneralRegisterParser : BaseGeneralRegisterParser
 	{

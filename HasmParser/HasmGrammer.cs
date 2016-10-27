@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using hasm.Parsing.Parsers;
+using hasm.Parsers;
 using NLog;
 using ParserLib;
 using ParserLib.Evaluation;
@@ -10,26 +10,26 @@ using ParserLib.Evaluation.Rules;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
-namespace hasm.Parsing
+namespace hasm
 {
 	internal sealed class HasmGrammer : Grammar
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-		
+
 		private static readonly IDictionary<OperandType, IParser> _knownParsers;
 		private static readonly ValueRule<string> _opcodemaskRule;
 
-		private readonly IDictionary<string, OperandType> _defines;
-
 		public static readonly ValueRule<string> Operand = Text("Operand", MatchWhile(Label));
+
+		private readonly IDictionary<string, OperandType> _defines;
 
 		static HasmGrammer()
 		{
 			_knownParsers = Assembly.GetExecutingAssembly()
-				.GetTypes()	// get all types
+				.GetTypes() // get all types
 				.Where(t => t.IsClass && !t.IsAbstract && typeof(IParser).IsAssignableFrom(t)) // which are parsers
-				.Select(t => (IParser) Activator.CreateInstance(t))	// create an instance of them
-				.ToDictionary(p => p.OperandType);  // and make it a dictionary :)
+				.Select(t => (IParser) Activator.CreateInstance(t)) // create an instance of them
+				.ToDictionary(p => p.OperandType); // and make it a dictionary :)
 
 			_opcodemaskRule = CreateMaskRule('1');
 			_logger.Info($"Found {_knownParsers.Count} parsers");
@@ -50,7 +50,7 @@ namespace hasm.Parsing
 
 			if (operands != null)
 				rule += Whitespace + operands;
-			
+
 			_logger.Info($"Parsed {instruction}: {rule}");
 			return Accumulate<int>((current, next) => current | next, rule);
 		}
@@ -65,7 +65,7 @@ namespace hasm.Parsing
 		private Rule ParseOperands(Instruction instruction)
 		{
 			var operands = GetOperands(instruction.Grammar);
-			if (!operands.Any())	// instruction without oprands
+			if (!operands.Any()) // instruction without oprands
 				return null;
 
 			return operands.Select(o => ParseOperand(o, instruction.Encoding)) // make operand rules from the strings
@@ -76,9 +76,9 @@ namespace hasm.Parsing
 		{
 			IParser parser;
 			OperandType type;
-			
+
 			// get the parser for this opernad type
-			if (!_defines.TryGetValue(operand, out type) || !_knownParsers.TryGetValue(type, out parser) || type == OperandType.Unkown)
+			if (!_defines.TryGetValue(operand, out type) || !_knownParsers.TryGetValue(type, out parser) || (type == OperandType.Unkown))
 				throw new InvalidOperationException($"Impossible to encode for operand {operand}");
 
 			_logger.Debug($"Found parser for {operand}: {parser}");

@@ -3,7 +3,7 @@ using ParserLib.Evaluation;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
-namespace hasm.Parsing.Parsers
+namespace hasm.Parsers
 {
 	internal sealed class PairParser : BaseParser
 	{
@@ -16,6 +16,7 @@ namespace hasm.Parsing.Parsers
 		}
 
 		public override OperandType OperandType => OperandType.Pair;
+
 		protected override Rule CreateMatchRule()
 		{
 			// TODO: from encoding sheet
@@ -26,7 +27,7 @@ namespace hasm.Parsing.Parsers
 			{
 				var value = s.Leafs.First().FirstValue<int>();
 				return NumberConverter(value.ToString());
-			}, y | z); 
+			}, y | z);
 		}
 	}
 }

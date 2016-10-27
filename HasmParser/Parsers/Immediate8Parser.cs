@@ -1,4 +1,4 @@
-﻿namespace hasm.Parsing.Parsers
+﻿namespace hasm.Parsers
 {
 	internal sealed class Immediate8Parser : BaseImmediateParser
 	{

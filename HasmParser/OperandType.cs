@@ -1,6 +1,6 @@
-namespace hasm.Parsing
+namespace hasm
 {
-	internal enum OperandType
+	public enum OperandType
 	{
 		Unkown,
 		Immediate6,

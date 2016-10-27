@@ -2,7 +2,7 @@
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
-namespace hasm.Parsing.Parsers
+namespace hasm.Parsers
 {
 	internal abstract class BaseGeneralRegisterParser : BaseRegisterParser
 	{
