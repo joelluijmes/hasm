@@ -66,7 +66,7 @@ namespace hasm.Parsing
 
 		private static Rule ParseOpcode(InstructionEncoding instruction)
 		{
-			var opcode = Operand.FirstValue(instruction.Grammar);
+			var opcode = Opcode.FirstValue(instruction.Grammar);
 			var encoding = OpcodeEncoding(instruction.Encoding);
 			return ConstantValue(encoding, MatchString(opcode, true)); // when it matches the opcode give its encoding 
 		}
@@ -105,14 +105,12 @@ namespace hasm.Parsing
 
 		private static string[] GetOperands(string grammar)
 		{
-			var operand = Operand.FirstValue(grammar);
+			var operand = Opcode.FirstValue(grammar);
 			return grammar.Replace(operand, "") // remove operand from grammar
 				.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries) // operands are split with a ,
 				.Select(s => s.Trim())
 				.ToArray();
 		}
-
-		// remove any whitespace 
 
 		internal static ValueRule<string> CreateMaskRule(char mask)
 		{

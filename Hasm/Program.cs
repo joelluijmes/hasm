@@ -53,7 +53,7 @@ namespace hasm
 					var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
 					consoleRule.EnableLoggingForLevel(LogLevel.Debug);
 
-					//LiveMode();
+					LiveMode();
 
 					var listing = new List<string>();
 					using (var memoryStream = new MemoryStream(Resources.listing))
@@ -116,10 +116,8 @@ namespace hasm
 				var line = Console.ReadLine();
 				if (string.IsNullOrEmpty(line))
 					break;
-
-				var rule = _hasmParser.FindRule(line);
-
-				var encoded = rule.FirstValue(line).Aggregate("0x", (a, b) => $"{a}{b:X2}");
+				
+				var encoded = _hasmParser.Encode(line).Aggregate("0x", (a, b) => $"{a}{b:X2}");
 				_logger.Info($"Parsed {line} to encoding {encoded}");
 
 				Console.WriteLine();

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using hasm.Parsing.Properties;
 using NLog;
 using OfficeOpenXml;
@@ -31,8 +32,11 @@ namespace hasm.Parsing
 
 		public ValueRule<byte[]> FindRule(string input)
 		{
-			var operand = HasmGrammar.Operand.FirstValue(input);
-			var instruction = _instructions.First(i => i.Grammar.StartsWith(operand.ToUpper()));
+			if (string.IsNullOrEmpty(input))
+				throw new ArgumentNullException(nameof(input));
+
+			var opcode = HasmGrammar.Opcode.FirstValue(FormatInput(input));
+			var instruction = _instructions.First(i => i.Grammar.StartsWith(opcode.ToUpper()));
 
 			var rule = _grammar.ParseInstruction(instruction);
 			_logger.Debug(() => $"{input} - Found rule:{Environment.NewLine}{rule.PrettyFormat()}");
@@ -42,8 +46,21 @@ namespace hasm.Parsing
 
 		public byte[] Encode(string input)
 		{
+			if (string.IsNullOrEmpty(input))
+				throw new ArgumentNullException(nameof(input));
+
+			input = FormatInput(input);
 			var rule = FindRule(input);
 			return rule.FirstValue(input);
+		}
+
+		private static string FormatInput(string input)
+		{
+			var opcode = HasmGrammar.Opcode.FirstValue(input);
+			var operands = input.Substring(opcode.Length);
+			operands = new Regex("\\s+").Replace(operands, "");
+
+			return opcode + " " + operands;
 		}
 
 		private static IEnumerable<InstructionEncoding> ParseInstructions()
