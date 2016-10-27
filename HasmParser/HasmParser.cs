@@ -15,7 +15,7 @@ namespace hasm.Parsing
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 		private readonly HasmGrammer _grammar;
-		private readonly IList<Instruction> _instructions;
+		private readonly IList<InstructionEncoding> _instructions;
 
 		public HasmParser(IDictionary<string, OperandType> defines)
 		{
@@ -39,7 +39,7 @@ namespace hasm.Parsing
 			return rule;
 		}
 
-		private static IEnumerable<Instruction> ParseInstructions()
+		private static IEnumerable<InstructionEncoding> ParseInstructions()
 		{
 			using (var stream = new MemoryStream(Resources.Instructionset))
 			{
@@ -53,7 +53,7 @@ namespace hasm.Parsing
 					for (var row = start.Row + 1; row <= end.Row; ++row)
 					{
 						var range = sheet.Cells[row, 1, row, end.Column];
-						var instruction = Instruction.Parse(range);
+						var instruction = InstructionEncoding.Parse(range);
 
 						_logger.Debug($"Added: {instruction}");
 						yield return instruction;

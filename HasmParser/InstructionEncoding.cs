@@ -3,9 +3,9 @@ using OfficeOpenXml;
 
 namespace hasm.Parsing
 {
-	internal class Instruction
+	internal class InstructionEncoding
 	{
-		public Instruction(string grammar, string description, string semantic, string encoding)
+		public InstructionEncoding(string grammar, string description, string semantic, string encoding)
 		{
 			Grammar = grammar;
 			Description = description;
@@ -21,7 +21,7 @@ namespace hasm.Parsing
 
 		public override string ToString() => $"{Grammar.Split(' ')[0]} ({Description})";
 
-		public static Instruction Parse(ExcelRange row)
+		public static InstructionEncoding Parse(ExcelRange row)
 		{
 			var rowIndex = row.Start.Row;
 			var grammar = row[rowIndex, 1].GetValue<string>();
@@ -30,7 +30,7 @@ namespace hasm.Parsing
 
 			var encoding = ParseToString(row[rowIndex, 4, rowIndex, 9].Value as object[,]);
 
-			return new Instruction(grammar, description, semantic, encoding);
+			return new InstructionEncoding(grammar, description, semantic, encoding);
 		}
 
 		private static string ParseToString(object[,] multi)

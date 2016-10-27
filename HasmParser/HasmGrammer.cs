@@ -42,7 +42,7 @@ namespace hasm.Parsing
 			_defines = defines;
 		}
 
-		public Rule ParseInstruction(Instruction instruction)
+		public Rule ParseInstruction(InstructionEncoding instruction)
 		{
 			_logger.Info($"Parsing {instruction}..");
 			var rule = ParseOpcode(instruction);
@@ -55,14 +55,14 @@ namespace hasm.Parsing
 			return Accumulate<int>((current, next) => current | next, rule);
 		}
 
-		private static Rule ParseOpcode(Instruction instruction)
+		private static Rule ParseOpcode(InstructionEncoding instruction)
 		{
 			var opcode = Operand.FirstValue(instruction.Grammar);
 			var encoding = OpcodeEncoding(instruction.Encoding);
 			return ConstantValue(encoding, MatchString(opcode, true)); // when it matches the opcode give its encoding 
 		}
 
-		private Rule ParseOperands(Instruction instruction)
+		private Rule ParseOperands(InstructionEncoding instruction)
 		{
 			var operands = GetOperands(instruction.Grammar);
 			if (!operands.Any()) // instruction without oprands

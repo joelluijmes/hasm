@@ -73,7 +73,7 @@
     <Compile Include="Parsers\SecondGeneralRegisterParser.cs" />
     <Compile Include="Parsers\FirstGeneralRegisterParser.cs" />
     <Compile Include="HasmGrammer.cs" />
-    <Compile Include="Instruction.cs" />
+    <Compile Include="InstructionEncoding.cs" />
     <Compile Include="Parsers\Immediate24Parser.cs" />
     <Compile Include="Parsers\Immediate6Parser.cs" />
     <Compile Include="Parsers\Immediate8Parser.cs" />
