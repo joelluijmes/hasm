@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using Fclp;
 using hasm.Parsing;
+using hasm.Properties;
 using NLog;
 using ParserLib.Evaluation;
 
@@ -12,26 +14,34 @@ namespace hasm
 	internal class Program
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-		private static readonly Dictionary<string, OperandType> _defines = new Dictionary<string, OperandType>
+		private static readonly HasmParser _hasmParser;
+
+		static Program()
 		{
-			["REG"] = OperandType.FirstGeneralRegister,
-			["DST"] = OperandType.FirstGeneralRegister,
-			["REG1"] = OperandType.FirstGeneralRegister,
-			["REG2"] = OperandType.SecondGeneralRegister,
-			["SRC"] = OperandType.SecondGeneralRegister,
+			var defines = new Dictionary<string, OperandType>
+			{
+				["REG"] = OperandType.FirstGeneralRegister,
+				["DST"] = OperandType.FirstGeneralRegister,
+				["REG1"] = OperandType.FirstGeneralRegister,
+				["REG2"] = OperandType.SecondGeneralRegister,
+				["SRC"] = OperandType.SecondGeneralRegister,
 
-			["SPC"] = OperandType.FirstSpecialRegister,
-			["SPC1"] = OperandType.FirstSpecialRegister,
-			["SPC2"] = OperandType.SecondSpecialRegister,
+				["SPC"] = OperandType.FirstSpecialRegister,
+				["SPC1"] = OperandType.FirstSpecialRegister,
+				["SPC2"] = OperandType.SecondSpecialRegister,
 
-			["IMM6"] = OperandType.Immediate6,
-			["IMM8"] = OperandType.Immediate8,
-			["IMM12"] = OperandType.Immediate12,
+				["IMM6"] = OperandType.Immediate6,
+				["IMM8"] = OperandType.Immediate8,
+				["IMM12"] = OperandType.Immediate12,
 
-			["c"] = OperandType.BranchIf,
-			["PAIR + IMM6"] = OperandType.PairOffset
-		};
-		
+				["c"] = OperandType.BranchIf,
+				["PAIR + IMM6"] = OperandType.PairOffset
+			};
+
+			var grammar = new HasmGrammar(defines);
+			_hasmParser = new HasmParser(grammar);
+		}
+
 		private static void Main(string[] args)
 		{
 			try
@@ -42,6 +52,18 @@ namespace hasm
 				{
 					var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
 					consoleRule.EnableLoggingForLevel(LogLevel.Debug);
+
+					//LiveMode();
+
+					var listing = new List<string>();
+					using (var memoryStream = new MemoryStream(Resources.listing))
+					using (var reader = new StreamReader(memoryStream))
+					{
+						while (!reader.EndOfStream)
+							listing.Add(reader.ReadLine());
+					}
+
+					var assembler = new Assembler(_hasmParser, listing);
 				}
 				else
 				{
@@ -66,12 +88,8 @@ namespace hasm
 						return;
 					}
 
-					var arguments = commandParser.Object;
-					if (arguments.LiveMode)
-						MenuLiveMode();
+					HandleArguments(commandParser.Object);
 				}
-				
-				MenuLiveMode();
 			}
 			catch (Exception e)
 			{
@@ -79,10 +97,18 @@ namespace hasm
 			}
 		}
 
-		private static void MenuLiveMode()
+		private static void HandleArguments(ApplicationArguments arguments)
 		{
-			var parser = new HasmParser(_defines);
+			if (arguments.LiveMode)
+				LiveMode();
+			else if (string.IsNullOrEmpty(arguments.InputFile) || string.IsNullOrEmpty(arguments.OutputFile))
+				throw new InvalidOperationException("If you haven't chosen for live mode you want to assemble a listing. Therefor you need to give the input- and output file.");
 
+			AssembleFile(arguments.InputFile, arguments.OutputFile);
+		}
+
+		private static void LiveMode()
+		{
 			while (true)
 			{
 				Console.Write("Enter instruction: ");
@@ -90,13 +116,22 @@ namespace hasm
 				if (string.IsNullOrEmpty(line))
 					break;
 
-				var rule = parser.FindRule(line);
+				var rule = _hasmParser.FindRule(line);
 
 				var encoded = rule.FirstValue<int>(line);
 				_logger.Info($"Parsed {line} to encoding {encoded:X3}");
 
 				Console.WriteLine();
 			}
+		}
+
+		private static void AssembleFile(string input, string output)
+		{
+			var listing = File.ReadAllLines(input);
+			var assembler = new Assembler(_hasmParser, listing);
+			var assembled = assembler.Process();
+
+			File.WriteAllBytes(output, assembled);
 		}
 
 		private static void UnhandledException(object sender, UnhandledExceptionEventArgs e)
