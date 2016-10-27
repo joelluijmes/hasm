@@ -1,6 +1,6 @@
 ﻿using ParserLib.Parsing.Rules;
 
-namespace hasm.Parsers
+namespace hasm.Parsing.Parsers
 {
 	internal interface IParser
 	{

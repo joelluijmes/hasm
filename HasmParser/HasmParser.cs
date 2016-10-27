@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using hasm.Properties;
+using hasm.Parsing.Properties;
 using NLog;
 using OfficeOpenXml;
 using ParserLib;
 using ParserLib.Evaluation;
 using ParserLib.Parsing.Rules;
 
-namespace hasm
+namespace hasm.Parsing
 {
 	public class HasmParser
 	{

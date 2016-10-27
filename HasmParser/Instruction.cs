@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using OfficeOpenXml;
 
-namespace hasm
+namespace hasm.Parsing
 {
 	internal class Instruction
 	{

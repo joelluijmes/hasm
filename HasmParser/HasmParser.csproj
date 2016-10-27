@@ -7,7 +7,7 @@
     <ProjectGuid>{D5BE1584-6E5C-44B7-90A6-73BC364F4DBF}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>hasm</RootNamespace>
+    <RootNamespace>hasm.Parsing</RootNamespace>
     <AssemblyName>hasm-parser</AssemblyName>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

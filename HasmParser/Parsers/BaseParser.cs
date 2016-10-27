@@ -6,7 +6,7 @@ using ParserLib.Evaluation.Rules;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
-namespace hasm.Parsers
+namespace hasm.Parsing.Parsers
 {
 	internal abstract class BaseParser : IParser
 	{

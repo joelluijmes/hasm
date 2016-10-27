@@ -1,4 +1,4 @@
-﻿namespace hasm.Parsers
+﻿namespace hasm.Parsing.Parsers
 {
 	internal abstract class BaseRegisterParser : BaseParser
 	{

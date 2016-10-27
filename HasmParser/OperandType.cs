@@ -1,4 +1,4 @@
-namespace hasm
+namespace hasm.Parsing
 {
 	public enum OperandType
 	{

@@ -1,7 +1,7 @@
 ﻿using NLog;
 using ParserLib.Parsing.Rules;
 
-namespace hasm.Parsers
+namespace hasm.Parsing.Parsers
 {
 	internal sealed class PairOffsetParser : IParser
 	{

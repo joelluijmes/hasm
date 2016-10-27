@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using hasm.Parsers;
+using hasm.Parsing.Parsers;
 using NLog;
 using ParserLib;
 using ParserLib.Evaluation;
@@ -10,7 +10,7 @@ using ParserLib.Evaluation.Rules;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
-namespace hasm
+namespace hasm.Parsing
 {
 	internal sealed class HasmGrammer : Grammar
 	{
