@@ -35,13 +35,18 @@ namespace hasm.Parsing
 			if (string.IsNullOrEmpty(input))
 				throw new ArgumentNullException(nameof(input));
 
-			var opcode = HasmGrammar.Opcode.FirstValue(FormatInput(input));
-			var instruction = _instructions.First(i => i.Grammar.StartsWith(opcode.ToUpper()));
-
+			var instruction = FindInstructionEncoding(input);
 			var rule = _grammar.ParseInstruction(instruction);
 			_logger.Debug(() => $"{input} - Found rule:{Environment.NewLine}{rule.PrettyFormat()}");
 
 			return rule;
+		}
+
+		private InstructionEncoding FindInstructionEncoding(string input)
+		{
+			var opcode = HasmGrammar.Opcode.FirstValue(FormatInput(input));
+			var instruction = _instructions.FirstOrDefault(i => i.Grammar.StartsWith(opcode.ToUpper()));
+			return instruction;
 		}
 
 		public byte[] Encode(string input)
@@ -60,14 +65,21 @@ namespace hasm.Parsing
 				throw new ArgumentNullException(nameof(input));
 
 			input = FormatInput(input);
-			var rule = FindRule(input);
+			var instruction = FindInstructionEncoding(input);
+			if (instruction == null)
+			{
+				encoded = null;
+				return false;
+			}
+
+			var rule = _grammar.ParseInstruction(instruction);
 			if (rule.Match(input))
 			{
 				encoded = rule.FirstValue(input);
 				return true;
 			}
 
-			encoded = null;
+			encoded = new byte[instruction.Count];
 			return false;
 		}
 		

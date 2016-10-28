@@ -64,7 +64,10 @@ namespace hasm
 					}
 
 					var assembler = new Assembler(_hasmParser, listing);
-					File.WriteAllBytes("test.bin", assembler.Process());
+					var assembled = assembler.Process();
+
+					var encoded = assembled.Aggregate("", (a, b) => $"{a} {b:X2}");
+					File.WriteAllText("test.bin", encoded);
 				}
 				else
 				{
@@ -130,7 +133,8 @@ namespace hasm
 			var assembler = new Assembler(_hasmParser, listing);
 			var assembled = assembler.Process();
 
-			File.WriteAllBytes(output, assembled);
+			var encoded = assembled.Aggregate("", (a, b) => $"{a} {b:X2}");
+			File.WriteAllText(output, encoded);
 		}
 
 		private static void UnhandledException(object sender, UnhandledExceptionEventArgs e)

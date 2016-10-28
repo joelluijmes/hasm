@@ -16,14 +16,19 @@
 
 	internal class EncodedInstruction : Instruction
 	{
-		public EncodedInstruction(Instruction instruction, byte[] encoded) : this(instruction.Label, instruction.Input, instruction.Comment, encoded)
-		{ }
-
-		public EncodedInstruction(string label, string input, string comment, byte[] encoded) : base(label, input, comment)
+		public EncodedInstruction(Instruction instruction, byte[] encoded, bool completed = false) : base(instruction.Label, instruction.Input, instruction.Comment)
 		{
 			Encoded = encoded;
+			Completed = completed;
 		}
 
-		internal byte[] Encoded { get;  }
+		public EncodedInstruction(string input, byte[] encoded) : base(null, input, null)
+		{
+			Encoded = encoded;
+			Completed = true;
+		}
+
+		public byte[] Encoded { get; }
+		public bool Completed { get; }
 	}
 }
