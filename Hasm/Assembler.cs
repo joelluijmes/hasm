@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using hasm.Parsing;
 using ParserLib.Evaluation;
 using ParserLib.Parsing;
@@ -32,10 +33,19 @@ namespace hasm
 			var encoded = _listing.Cast<EncodedInstruction>().ToList();
 
 			var address = 0;
-			foreach (var instruction in encoded)
+			for (int i = 0; i < encoded.Count; i++)
 			{
+				var instruction = encoded[i];
 				if (!string.IsNullOrEmpty(instruction.Label))
+				{
+					if (address%2 != 0) // not aligned on 16 - bit address -> insert nop
+					{
+						encoded.Insert(i, Encode(new Instruction(null, "nop", "")));
+						++address;
+					}
+
 					_labelLookup[instruction.Label] = address;
+				}
 
 				address += instruction.Encoded.Length;
 			}

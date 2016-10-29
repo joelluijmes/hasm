@@ -10,7 +10,7 @@
 		push r1			; push 20 on stack
 		call foo		; foo(20, 10)
 		sbis sp, 2		; clean up the stack
-		nop
+		; nop
 
 foo:	pushs y			
 		movs y, sp		; use y as base-pointer
