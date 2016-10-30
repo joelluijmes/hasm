@@ -6,10 +6,8 @@ using System.Text.RegularExpressions;
 using hasm.Parsing.Properties;
 using NLog;
 using OfficeOpenXml;
-using ParserLib;
 using ParserLib.Evaluation;
 using ParserLib.Evaluation.Rules;
-using ParserLib.Parsing.Rules;
 
 namespace hasm.Parsing
 {
@@ -18,45 +16,26 @@ namespace hasm.Parsing
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 		private readonly HasmGrammar _grammar;
 		private readonly IList<InstructionEncoding> _instructions;
+		private readonly Dictionary<string, ValueRule<byte[]>> _rules;
 
 		public HasmParser(HasmGrammar grammar)
 		{
-			_logger.Info($"{grammar.Definitions.Count} definitions");
 			foreach (var pair in grammar.Definitions)
 				_logger.Debug($"{pair.Key}: {pair.Value}");
 
 			_grammar = grammar;
 			_instructions = ParseInstructions().ToList(); // parseInstructions is deferred
-			_logger.Info($"hasm knows {_instructions.Count} instructions");
-		}
-
-		public ValueRule<byte[]> FindRule(string input)
-		{
-			if (string.IsNullOrEmpty(input))
-				throw new ArgumentNullException(nameof(input));
-
-			var instruction = FindInstructionEncoding(input);
-			var rule = _grammar.ParseInstruction(instruction);
-			_logger.Debug(() => $"{input} - Found rule:{Environment.NewLine}{rule.PrettyFormat()}");
-
-			return rule;
-		}
-
-		private InstructionEncoding FindInstructionEncoding(string input)
-		{
-			var opcode = HasmGrammar.Opcode.FirstValue(FormatInput(input));
-			var instruction = _instructions.FirstOrDefault(i => i.Grammar.StartsWith(opcode.ToUpper()));
-			return instruction;
+			_rules = new Dictionary<string, ValueRule<byte[]>>();
+			_logger.Info($"Learned {_instructions.Count} instructions");
 		}
 
 		public byte[] Encode(string input)
 		{
-			if (string.IsNullOrEmpty(input))
-				throw new ArgumentNullException(nameof(input));
+			byte[] encoded;
+			if (!TryEncode(input, out encoded))
+				throw new NotImplementedException();
 
-			input = FormatInput(input);
-			var rule = FindRule(input);
-			return rule.FirstValue(input);
+			return encoded;
 		}
 
 		public bool TryEncode(string input, out byte[] encoded)
@@ -65,24 +44,49 @@ namespace hasm.Parsing
 				throw new ArgumentNullException(nameof(input));
 
 			input = FormatInput(input);
-			var instruction = FindInstructionEncoding(input);
-			if (instruction == null)
+			var opcode = HasmGrammar.Opcode.FirstValue(input);
+
+			var rule = FindRule(opcode);
+			if (rule == null)
 			{
 				encoded = null;
 				return false;
 			}
 
-			var rule = _grammar.ParseInstruction(instruction);
 			if (rule.Match(input))
 			{
 				encoded = rule.FirstValue(input);
 				return true;
 			}
 
+			var instruction = FindInstructionEncoding(opcode);
 			encoded = new byte[instruction.Count];
 			return false;
 		}
-		
+
+		private ValueRule<byte[]> FindRule(string opcode)
+		{
+			ValueRule<byte[]> rule;
+			if (_rules.TryGetValue(opcode, out rule))
+			{
+				_logger.Debug(() => $"Found rule: {rule}");
+				return rule;
+			}
+
+			var instruction = FindInstructionEncoding(opcode);
+			if (instruction == null)
+				return null;
+
+			rule = _grammar.ParseInstruction(instruction);
+			_logger.Debug(() => $"Created rule: {rule}");
+
+			_rules[opcode] = rule;
+			return rule;
+		}
+
+		private InstructionEncoding FindInstructionEncoding(string opcode)
+			=> _instructions.FirstOrDefault(i => i.Grammar.StartsWith(opcode.ToUpper()));
+
 		private static string FormatInput(string input)
 		{
 			var opcode = HasmGrammar.Opcode.FirstValue(input);

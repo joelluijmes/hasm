@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using hasm.Parsing.Parsers;
 using NLog;
-using ParserLib;
 using ParserLib.Evaluation;
 using ParserLib.Evaluation.Rules;
 using ParserLib.Parsing;
@@ -16,14 +15,13 @@ namespace hasm.Parsing
 	public sealed partial class HasmGrammar : Grammar
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
+		private static readonly IDictionary<char, ValueRule<string>> _maskRules;
 		private static readonly IDictionary<OperandType, IParser> _knownParsers;
 		private static readonly ValueRule<string> _opcodemaskRule;
-		
-		public ReadOnlyDictionary<string, OperandType> Definitions { get; }
 
 		static HasmGrammar()
 		{
+			_maskRules = new Dictionary<char, ValueRule<string>>();
 			_knownParsers = Assembly.GetExecutingAssembly()
 				.GetTypes() // get all types
 				.Where(t => t.IsClass && !t.IsAbstract && typeof(IParser).IsAssignableFrom(t)) // which are parsers
@@ -40,18 +38,18 @@ namespace hasm.Parsing
 				throw new ArgumentNullException(nameof(definitions));
 
 			Definitions = new ReadOnlyDictionary<string, OperandType>(definitions);
+			_logger.Info($"{Definitions.Count} definitions");
 		}
+
+		public ReadOnlyDictionary<string, OperandType> Definitions { get; }
 
 		internal ValueRule<byte[]> ParseInstruction(InstructionEncoding instruction)
 		{
-			_logger.Info($"Parsing {instruction}..");
 			var rule = ParseOpcode(instruction);
 			var operands = ParseOperands(instruction);
 
 			if (operands != null)
 				rule += Whitespace + operands;
-
-			_logger.Info($"Parsed {instruction}: {rule}");
 
 			Func<Node, byte[]> converter = node =>
 			{
@@ -61,7 +59,25 @@ namespace hasm.Parsing
 
 				return encoded;
 			};
+
+			_logger.Debug($"Compiling rule for {instruction}: {instruction.Grammar}");
 			return ConvertToValue(converter, Accumulate<int>((current, next) => current | next, rule));
+		}
+
+		internal static ValueRule<string> CreateMaskRule(char mask)
+		{
+			ValueRule<string> rule;
+			if (_maskRules.TryGetValue(mask, out rule))
+				return rule;
+
+			var matched = ConstantValue(mask.ToString(), MatchChar(mask)); // matches only the mask
+			var rest = ConstantValue("0", MatchAnyChar()); // treat the rest as an zero
+
+			rule = Accumulate<string>((cur, next) => cur + next, MatchWhile(matched | rest)); // merge the encoding
+			_logger.Debug($"Created encoding-mask ('{mask}') rule");
+			_maskRules[mask] = rule;
+
+			return rule;
 		}
 
 		private static Rule ParseOpcode(InstructionEncoding instruction)
@@ -90,17 +106,13 @@ namespace hasm.Parsing
 			if (!Definitions.TryGetValue(operand, out type) || !_knownParsers.TryGetValue(type, out parser) || (type == OperandType.Unkown))
 				throw new InvalidOperationException($"Impossible to encode for operand {operand}");
 
-			_logger.Debug($"Found parser for {operand}: {parser}");
 			return parser.CreateRule(encoding);
 		}
 
 		private static int OpcodeEncoding(string encoding)
 		{
 			var opcodeBinary = _opcodemaskRule.FirstValue(encoding); // gets the binary representation of the encoding
-			var result = Convert.ToInt32(opcodeBinary, 2);
-
-			_logger.Info($"Opcode for {encoding} is {result}");
-			return result;
+			return Convert.ToInt32(opcodeBinary, 2);
 		}
 
 		private static string[] GetOperands(string grammar)
@@ -110,17 +122,6 @@ namespace hasm.Parsing
 				.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries) // operands are split with a ,
 				.Select(s => s.Trim())
 				.ToArray();
-		}
-
-		internal static ValueRule<string> CreateMaskRule(char mask)
-		{
-			var matched = ConstantValue(mask.ToString(), MatchChar(mask)); // matches only the mask
-			var rest = ConstantValue("0", MatchAnyChar()); // treat the rest as an zero
-
-			var rule = Accumulate<string>((cur, next) => cur + next, MatchWhile(matched | rest)); // merge the encoding
-			_logger.Debug(() => $"Created encoding-mask ('{mask}') rule{Environment.NewLine}{rule.PrettyFormat()}");
-
-			return rule;
 		}
 	}
 }

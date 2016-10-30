@@ -1,18 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
+using hasm.Exceptions;
 using hasm.Parsing;
+using NLog;
 using ParserLib.Evaluation;
-using ParserLib.Parsing;
 
 namespace hasm
 {
 	internal sealed class Assembler
 	{
-		private readonly HasmParser _parser;
-		private readonly IList<Instruction> _listing;
+		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 		private readonly IDictionary<string, int> _labelLookup;
+		private readonly IList<Instruction> _listing;
+		private readonly Instruction _nopInstruction;
+		private readonly HasmParser _parser;
 
 		public Assembler(HasmParser parser, IEnumerable<string> listing)
 		{
@@ -24,73 +26,89 @@ namespace hasm
 				.ToList();
 
 			_labelLookup = new Dictionary<string, int>();
+
+			_nopInstruction = new Instruction("nop");
+			SecondPass(_nopInstruction);
+
+			_logger.Info($"Instantiated Assembler with {_listing.Count} instructions");
 		}
 
-		public byte[] Process()
+		public IEnumerable<byte> Process()
 		{
-			for (var i = 0; i < _listing.Count; i++)
-				_listing[i] = TryEncode(_listing[i]);
-			var encoded = _listing.Cast<EncodedInstruction>().ToList();
-
+			_logger.Info("Started processing instructions..");
 			var address = 0;
-			for (int i = 0; i < encoded.Count; i++)
+			foreach (var instruction in _listing)
+				FirstPass(instruction, ref address);
+			_logger.Debug($"Performed first pass. Last instruction at: {address}");
+
+			// check if we didn't skip a address (due alignment)
+			for (var i = 1; i < _listing.Count; i++)
 			{
-				var instruction = encoded[i];
-				if (!string.IsNullOrEmpty(instruction.Label))
+				var instruction = _listing[i];
+				var previous = _listing[i - 1];
+				for (var j = instruction.Address - instruction.Encoding.Length; j > previous.Address; --j)
 				{
-					if (address%2 != 0) // not aligned on 16 - bit address -> insert nop
-					{
-						encoded.Insert(i, Encode(new Instruction(null, "nop", "")));
-						++address;
-					}
-
-					_labelLookup[instruction.Label] = address;
+					_logger.Info($"Address not sequential. Inserting a nop at {i}..");
+					_listing.Insert(i++, _nopInstruction);
 				}
-
-				address += instruction.Encoded.Length;
 			}
 
-			for (var i = 0; i < _listing.Count; i++)
-			{
-				if (encoded[i].Completed)
-					continue;
+			_logger.Debug($"Performing second pass..");
+			foreach (var instruction in _listing.Where(l => !l.Completed))
+				SecondPass(instruction);
 
-				_listing[i] = encoded[i] = Encode(_listing[i]);
-			}
-
-			var bytes = new List<byte>();
-			foreach (var instruction in encoded)
-				bytes.AddRange(instruction.Encoded);
-
-			return bytes.ToArray();
+			_logger.Info("Assembler done");
+			return _listing.SelectMany(l => l.Encoding);
 		}
 
-		private EncodedInstruction Encode(Instruction instruction)
+		private void SecondPass(Instruction instruction)
 		{
 			var opcode = HasmGrammar.Opcode.FirstValue(instruction.Input);
-			var operand = instruction.Input.Substring(opcode.Length + 1);	// skip the space
-			if (!Grammar.Label.Match(operand))
-				throw new NotImplementedException();
+			if (instruction.Input != opcode)
+			{
+				var operand = instruction.Input.Substring(opcode.Length + 1); // skip the space
 
-			var address = _labelLookup[operand];
-			var input = $"{opcode} {address}";
-			var encoded = _parser.Encode(input);
+				var address = _labelLookup[operand];
+				instruction.Input = $"{opcode} {address}";
+			}
 
-			return new EncodedInstruction(input, encoded);
+			instruction.Encoding = _parser.Encode(instruction.Input);
+			instruction.Completed = true;
 		}
 
-		private EncodedInstruction TryEncode(Instruction instruction)
+		private void FirstPass(Instruction instruction, ref int address)
 		{
-			var encodedInstruction = instruction as EncodedInstruction;
-			if (encodedInstruction != null)
-				return encodedInstruction;
-
 			byte[] encoded;
 			var completed = _parser.TryEncode(instruction.Input, out encoded);
 			if (encoded == null)
 				throw new NotImplementedException();
 
-			return new EncodedInstruction(instruction, encoded, completed);
+			instruction.Encoding = encoded;
+			instruction.Completed = completed;
+
+			_logger.Debug($"Instruction {instruction.Input} is fully assembled: {instruction.Completed} ({instruction.Encoding.Length*8} - bits)");
+			CheckLabel(instruction, ref address);
+		}
+
+		private void CheckLabel(Instruction instruction, ref int address)
+		{
+			if (!string.IsNullOrEmpty(instruction.Label))
+			{
+				if (address%2 != 0)
+				{
+					++address;
+					_logger.Debug("Address not aligned on 16 bit");
+				}
+
+				if (_labelLookup.ContainsKey(instruction.Label))
+					throw new AssemblerException("Label was already defined in listing");
+
+				_labelLookup[instruction.Label] = address;
+				_logger.Debug($"Fixed {instruction.Input} at {address}");
+			}
+
+			address += instruction.Encoding.Length;
+			instruction.Address = address;
 		}
 
 		private static Instruction ParseFromLine(string line)
@@ -106,15 +124,9 @@ namespace hasm
 
 			var input = line == string.Empty ? string.Empty : HasmGrammar.ListingInstruction.FirstValueOrDefault(line);
 			if (!string.IsNullOrEmpty(input))
-			{
-				line = line.Substring(input.Length).Trim();
 				input = input.Trim();
-			}
 
-			var comment = line == string.Empty ? string.Empty : HasmGrammar.ListingComment.FirstValueOrDefault(line);
-			comment = comment?.Trim();
-
-			return new Instruction(label, input, comment);
+			return new Instruction(label, input);
 		}
 	}
 }

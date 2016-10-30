@@ -1,6 +1,5 @@
 ﻿using System;
 using NLog;
-using ParserLib;
 using ParserLib.Evaluation;
 using ParserLib.Evaluation.Rules;
 using ParserLib.Parsing;
@@ -42,9 +41,7 @@ namespace hasm.Parsing.Parsers
 			};
 
 			_rule = Grammar.ConvertToValue(Name, converter, matchRule);
-			_logger.Debug(() => $"Created rule for {Name}: {_rule} with encoding {encoding}");
-			_logger.Debug(() => $"MatchRule {matchRule.PrettyFormat()}");
-			_logger.Debug(() => $"ConvertRule {_rule.PrettyFormat()}");
+			_logger.Debug($"Created parser for {Name}");
 
 			return _rule;
 		}
@@ -70,7 +67,6 @@ namespace hasm.Parsing.Parsers
 			opcodeBinary = opcodeBinary.Remove(index, length).Insert(index, value);
 			var result = Convert.ToInt32(opcodeBinary, 2);
 
-			_logger.Info($"Encoding ({Mask}) for {encoding} is {opcodeBinary} ({result})");
 			return result;
 		}
 	}

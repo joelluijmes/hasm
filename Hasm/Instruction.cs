@@ -2,33 +2,30 @@
 {
 	internal class Instruction
 	{
-		public Instruction(string label, string input, string comment)
+		public Instruction(string input)
 		{
-			Label = label;
 			Input = input;
-			Comment = comment;
 		}
 
-		public string Label { get; }
-		public string Input { get; }
-		public string Comment { get; }
-	}
-
-	internal class EncodedInstruction : Instruction
-	{
-		public EncodedInstruction(Instruction instruction, byte[] encoded, bool completed = false) : base(instruction.Label, instruction.Input, instruction.Comment)
+		public Instruction(string input, byte[] encoding)
 		{
-			Encoded = encoded;
-			Completed = completed;
-		}
-
-		public EncodedInstruction(string input, byte[] encoded) : base(null, input, null)
-		{
-			Encoded = encoded;
+			Input = input;
+			Encoding = encoding;
 			Completed = true;
 		}
 
-		public byte[] Encoded { get; }
-		public bool Completed { get; }
+		public Instruction(string label, string input, byte[] encoding = null, bool completed = false)
+		{
+			Label = label;
+			Input = input;
+			Encoding = encoding;
+			Completed = completed;
+		}
+
+		public string Label { get; }
+		public string Input { get; set; }
+		public byte[] Encoding { get; set; }
+		public bool Completed { get; set; }
+		public int Address { get; set; }
 	}
 }
