@@ -68,7 +68,10 @@ namespace hasm
 			{
 				var operand = instruction.Input.Substring(opcode.Length + 1); // skip the space
 
-				var address = _labelLookup[operand];
+				int address;
+				if (!_labelLookup.TryGetValue(operand, out address))
+					throw new AssemblerException($"Couldn't find definition for '{operand}'. Expected a label.");
+
 				instruction.Input = $"{opcode} {address}";
 			}
 
@@ -81,7 +84,7 @@ namespace hasm
 			byte[] encoded;
 			var completed = _parser.TryEncode(instruction.Input, out encoded);
 			if (encoded == null)
-				throw new NotImplementedException();
+				throw new AssemblerException($"Couldn't parse '{instruction.Input}'. Please check your grammar and/or input.");
 
 			instruction.Encoding = encoded;
 			instruction.Completed = completed;
@@ -114,13 +117,22 @@ namespace hasm
 		private static Instruction ParseFromLine(string line)
 		{
 			line = line.Trim();
+			if (string.IsNullOrEmpty(line))
+				return null;
 
-			var label = line == string.Empty ? string.Empty : HasmGrammar.ListingLabel.FirstValueOrDefault(line);
-			if (!string.IsNullOrEmpty(label))
+			var startColon = line.IndexOf(':');
+			var startSemicolon = line.IndexOf(';');
+			string label;
+			if (startColon != -1 && (startSemicolon == -1 || startColon < startSemicolon))
 			{
+				label = HasmGrammar.ListingLabel.FirstValueOrDefault(line);
+				if (string.IsNullOrEmpty(label))
+					throw new AssemblerException($"Invalid label name in {line}.");
+
 				line = line.Substring(label.Length + 1).Trim();
 				label = label.Trim();
 			}
+			else label = null;
 
 			var input = line == string.Empty ? string.Empty : HasmGrammar.ListingInstruction.FirstValueOrDefault(line);
 			if (!string.IsNullOrEmpty(input))

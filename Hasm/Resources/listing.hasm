@@ -9,7 +9,6 @@
 		mvi r1, 20
 		push r1			; push 20 on stack
 		call foo		; foo(20, 10)
-		call foo
 		sbis sp, 2		; clean up the stack
 		; nop
 

@@ -16,7 +16,7 @@ namespace hasm
 
 		private static bool Debugging =>
 #if DEBUG
-			Debugger.IsAttached;
+			System.Diagnostics.Debugger.IsAttached;
 #else
 			false;
 #endif
