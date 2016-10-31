@@ -3,12 +3,27 @@ using ParserLib.Parsing.Rules;
 
 namespace hasm.Parsing.Parsers
 {
+	/// <summary>
+	/// Provices base class for speciael purpose register parsers
+	/// </summary>
+	/// <seealso cref="hasm.Parsing.Parsers.BaseRegisterParser" />
 	internal abstract class BaseSpecialRegisterParser : BaseRegisterParser
 	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="BaseSpecialRegisterParser"/> class.
+		/// </summary>
+		/// <param name="name">The name.</param>
+		/// <param name="mask">The mask in the encoding.</param>
 		protected BaseSpecialRegisterParser(string name, char mask) : base(name, mask)
 		{
 		}
 
+		/// <summary>
+		/// Creates the match rule for the grammar.
+		/// </summary>
+		/// <returns>
+		/// The rule.
+		/// </returns>
 		protected override Rule CreateMatchRule()
 		{
 			// TODO: from encoding sheet

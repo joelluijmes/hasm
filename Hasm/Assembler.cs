@@ -8,6 +8,9 @@ using ParserLib.Evaluation;
 
 namespace hasm
 {
+	/// <summary>
+	/// Used to assemble a listing into binary data.
+	/// </summary>
 	internal sealed class Assembler
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -16,6 +19,11 @@ namespace hasm
 		private readonly Instruction _nopInstruction;
 		private readonly HasmParser _parser;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Assembler"/> class.
+		/// </summary>
+		/// <param name="parser">The parser.</param>
+		/// <param name="listing">The listing to assemble.</param>
 		public Assembler(HasmParser parser, IEnumerable<string> listing)
 		{
 			_parser = parser;
@@ -33,6 +41,10 @@ namespace hasm
 			_logger.Info($"Instantiated Assembler with {_listing.Count} instructions");
 		}
 
+		/// <summary>
+		/// Assembles the listing given in the ctor.
+		/// </summary>
+		/// <returns>Assembled listing</returns>
 		public IEnumerable<byte> Process()
 		{
 			_logger.Info("Started processing instructions..");

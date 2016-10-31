@@ -1,5 +1,8 @@
 namespace hasm.Parsing
 {
+	/// <summary>
+	/// Possible operand types to link known definitions.
+	/// </summary>
 	public enum OperandType
 	{
 		Unkown,

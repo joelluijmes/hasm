@@ -7,17 +7,38 @@ using ParserLib.Parsing.Rules;
 
 namespace hasm.Parsing.Parsers
 {
+	/// <summary>
+	/// Base class for predefined parsers
+	/// </summary>
+	/// <seealso cref="hasm.Parsing.Parsers.IParser" />
 	internal abstract class BaseParser : IParser
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 		private readonly ValueRule<string> _encodingMask;
 
+		/// <summary>
+		/// The mask of this parser in the encoding
+		/// </summary>
 		protected readonly char Mask;
+
+		/// <summary>
+		/// The name of the parser
+		/// </summary>
 		protected readonly string Name;
+
+		/// <summary>
+		/// The amount of bits it take in the encoding.
+		/// </summary>
 		protected readonly int Size;
 
 		private Rule _rule;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="BaseParser"/> class.
+		/// </summary>
+		/// <param name="name">The name of rule.</param>
+		/// <param name="mask">The mask in the encoding.</param>
+		/// <param name="size">The amount of bits in the encoding.</param>
 		protected BaseParser(string name, char mask, int size)
 		{
 			Name = name;
@@ -26,8 +47,21 @@ namespace hasm.Parsing.Parsers
 			_encodingMask = HasmGrammar.CreateMaskRule(mask);
 		}
 
+		/// <summary>
+		/// Gets the type of the operand.
+		/// </summary>
+		/// <value>
+		/// The type of the operand.
+		/// </value>
 		public abstract OperandType OperandType { get; }
 
+		/// <summary>
+		/// Creates the rule for this parser.
+		/// </summary>
+		/// <param name="encoding">The encoding.</param>
+		/// <returns>
+		/// Rule which fills in the encoding
+		/// </returns>
 		public Rule CreateRule(string encoding)
 		{
 			if (_rule != null)
@@ -46,8 +80,17 @@ namespace hasm.Parsing.Parsers
 			return _rule;
 		}
 
+		/// <summary>
+		/// Creates the match rule for the grammar.
+		/// </summary>
+		/// <returns>The rule.</returns>
 		protected abstract Rule CreateMatchRule();
 
+		/// <summary>
+		/// Converts number to binary string
+		/// </summary>
+		/// <param name="value">The value.</param>
+		/// <returns>Converted binary string.</returns>
 		protected string NumberConverter(string value)
 		{
 			var number = int.Parse(value);

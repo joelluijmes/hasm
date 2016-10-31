@@ -11,6 +11,10 @@ using ParserLib.Evaluation.Rules;
 
 namespace hasm.Parsing
 {
+	/// <summary>
+	/// This class makes it possible to parse an instruction to an encoding as specified
+	/// in the HasmGrammar.
+	/// </summary>
 	public class HasmParser
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -18,6 +22,10 @@ namespace hasm.Parsing
 		private readonly IList<InstructionEncoding> _instructions;
 		private readonly Dictionary<string, ValueRule<byte[]>> _rules;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="HasmParser"/> class.
+		/// </summary>
+		/// <param name="grammar">The grammar of the parser.</param>
 		public HasmParser(HasmGrammar grammar)
 		{
 			foreach (var pair in grammar.Definitions)
@@ -29,6 +37,12 @@ namespace hasm.Parsing
 			_logger.Info($"Learned {_instructions.Count} instructions");
 		}
 
+		/// <summary>
+		/// Encodes the specified input.
+		/// </summary>
+		/// <param name="input">The instruction to be parsed.</param>
+		/// <returns>Parsed instruction</returns>
+		/// <exception cref="System.NotImplementedException"></exception>
 		public byte[] Encode(string input)
 		{
 			byte[] encoded;
@@ -38,6 +52,14 @@ namespace hasm.Parsing
 			return encoded;
 		}
 
+		/// <summary>
+		/// Tries to encode the input, if partly-failed (due label) the encoded will still be created
+		/// as an array of the expected length.
+		/// </summary>
+		/// <param name="input">The input to be encoded.</param>
+		/// <param name="encoded">The encoded instruction.</param>
+		/// <returns>True if succeeds</returns>
+		/// <exception cref="System.ArgumentNullException">input</exception>
 		public bool TryEncode(string input, out byte[] encoded)
 		{
 			if (string.IsNullOrEmpty(input))

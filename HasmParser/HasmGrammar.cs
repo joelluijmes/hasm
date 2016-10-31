@@ -12,6 +12,10 @@ using ParserLib.Parsing.Rules;
 
 namespace hasm.Parsing
 {
+	/// <summary>
+	/// Provides type for defining the grammar with definitions for hasm
+	/// </summary>
+	/// <seealso cref="ParserLib.Parsing.Grammar" />
 	public sealed partial class HasmGrammar : Grammar
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -32,6 +36,11 @@ namespace hasm.Parsing
 			_logger.Info($"Found {_knownParsers.Count} parsers");
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="HasmGrammar"/> class.
+		/// </summary>
+		/// <param name="definitions">The definitions of how to match operands.</param>
+		/// <exception cref="System.ArgumentNullException">definitions</exception>
 		public HasmGrammar(IDictionary<string, OperandType> definitions)
 		{
 			if (definitions == null)
@@ -41,8 +50,19 @@ namespace hasm.Parsing
 			_logger.Info($"{Definitions.Count} definitions");
 		}
 
+		/// <summary>
+		/// Gets the definitions.
+		/// </summary>
+		/// <value>
+		/// The definitions.
+		/// </value>
 		public ReadOnlyDictionary<string, OperandType> Definitions { get; }
 
+		/// <summary>
+		/// Parses the instruction.
+		/// </summary>
+		/// <param name="instruction">The instruction.</param>
+		/// <returns>Rule to conver the input to a byte[]</returns>
 		internal ValueRule<byte[]> ParseInstruction(InstructionEncoding instruction)
 		{
 			var rule = ParseOpcode(instruction);
@@ -64,6 +84,11 @@ namespace hasm.Parsing
 			return ConvertToValue(converter, Accumulate<int>((current, next) => current | next, rule));
 		}
 
+		/// <summary>
+		/// Creates a rule to mask encoding format.
+		/// </summary>
+		/// <param name="mask">The mask.</param>
+		/// <returns>Rule which masks the encoding.</returns>
 		internal static ValueRule<string> CreateMaskRule(char mask)
 		{
 			ValueRule<string> rule;
