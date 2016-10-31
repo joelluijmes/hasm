@@ -32,7 +32,7 @@ namespace hasm.Parsing
 				_logger.Debug($"{pair.Key}: {pair.Value}");
 
 			_grammar = grammar;
-			_instructions = ParseInstructions().ToList(); // parseInstructions is deferred
+		    _instructions = ParseInstructions();
 			_rules = new Dictionary<string, ValueRule<byte[]>>();
 			_logger.Info($"Learned {_instructions.Count} instructions");
 		}
@@ -118,27 +118,31 @@ namespace hasm.Parsing
 			return opcode + " " + operands;
 		}
 
-		private static IEnumerable<InstructionEncoding> ParseInstructions()
+		private static IList<InstructionEncoding> ParseInstructions()
 		{
+			var encoding = new List<InstructionEncoding>();
+
 			using (var stream = new MemoryStream(Resources.Instructionset))
+			using (var package = new ExcelPackage(stream))
 			{
-				using (var package = new ExcelPackage(stream))
+				var sheet = package.Workbook.Worksheets.FirstOrDefault(w => w.Name == "Encoding");
+				if (sheet == null)
+					throw new NotImplementedException();
+
+				var start = sheet.Dimension.Start;
+				var end = sheet.Dimension.End;
+
+				for (var row = start.Row + 1; row <= end.Row; ++row)
 				{
-					var sheet = package.Workbook.Worksheets.First();
+					var range = sheet.Cells[row, 1, row, end.Column];
+					var instruction = InstructionEncoding.Parse(range);
 
-					var start = sheet.Dimension.Start;
-					var end = sheet.Dimension.End;
-
-					for (var row = start.Row + 1; row <= end.Row; ++row)
-					{
-						var range = sheet.Cells[row, 1, row, end.Column];
-						var instruction = InstructionEncoding.Parse(range);
-
-						_logger.Debug($"Added: {instruction}");
-						yield return instruction;
-					}
+					_logger.Debug($"Added: {instruction}");
+					encoding.Add(instruction);
 				}
 			}
+
+			return encoding;
 		}
 	}
 }
