@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using hasm.Exceptions;
 using hasm.Parsing;
+using hasm.Parsing.Grammars;
+using hasm.Parsing.Parsers;
 using NLog;
 using ParserLib.Evaluation;
 

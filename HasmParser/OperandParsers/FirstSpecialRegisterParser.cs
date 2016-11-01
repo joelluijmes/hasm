@@ -1,9 +1,11 @@
-﻿namespace hasm.Parsing.Parsers
+﻿using hasm.Parsing.Models;
+
+namespace hasm.Parsing.OperandParsers
 {
 	/// <summary>
 	/// First special purpose register (SPC1)
 	/// </summary>
-	/// <seealso cref="hasm.Parsing.Parsers.BaseSpecialRegisterParser" />
+	/// <seealso cref="BaseSpecialRegisterParser" />
 	internal class FirstSpecialRegisterParser : BaseSpecialRegisterParser
 	{
 		private const string NAME = "SPC1";

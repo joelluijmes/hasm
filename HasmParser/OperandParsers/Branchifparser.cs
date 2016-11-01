@@ -1,15 +1,16 @@
 ﻿using System.Linq;
+using hasm.Parsing.Models;
 using ParserLib.Evaluation;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
-namespace hasm.Parsing.Parsers
+namespace hasm.Parsing.OperandParsers
 {
 	/// <summary>
 	/// Parser for conditional branch (BRBS, BRBC)
 	/// </summary>
-	/// <seealso cref="hasm.Parsing.Parsers.BaseParser" />
-	internal sealed class BranchIfparser : BaseParser
+	/// <seealso cref="BaseOperandParser" />
+	internal sealed class BranchIfparser : BaseOperandParser
 	{
 		private const string NAME = "c";
 		private const char MASK = 'c';

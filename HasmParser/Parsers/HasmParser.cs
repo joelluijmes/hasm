@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using hasm.Parsing.Grammars;
+using hasm.Parsing.Models;
 using hasm.Parsing.Properties;
 using NLog;
 using OfficeOpenXml;
 using ParserLib.Evaluation;
 using ParserLib.Evaluation.Rules;
 
-namespace hasm.Parsing
+namespace hasm.Parsing.Parsers
 {
 	/// <summary>
 	/// This class makes it possible to parse an instruction to an encoding as specified

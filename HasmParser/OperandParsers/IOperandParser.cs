@@ -1,11 +1,12 @@
-﻿using ParserLib.Parsing.Rules;
+﻿using hasm.Parsing.Models;
+using ParserLib.Parsing.Rules;
 
-namespace hasm.Parsing.Parsers
+namespace hasm.Parsing.OperandParsers
 {
 	/// <summary>
 	/// Interface for predefined parsers
 	/// </summary>
-	internal interface IParser
+	internal interface IOperandParser
 	{
 		/// <summary>
 		/// Gets the type of the operand.

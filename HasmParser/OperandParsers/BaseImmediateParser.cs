@@ -1,13 +1,13 @@
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
-namespace hasm.Parsing.Parsers
+namespace hasm.Parsing.OperandParsers
 {
 	/// <summary>
 	/// Provides base class for immediates
 	/// </summary>
-	/// <seealso cref="hasm.Parsing.Parsers.BaseParser" />
-	internal abstract class BaseImmediateParser : BaseParser
+	/// <seealso cref="BaseOperandParser" />
+	internal abstract class BaseImmediateParser : BaseOperandParser
 	{
 		private const char MASK = 'k';
 

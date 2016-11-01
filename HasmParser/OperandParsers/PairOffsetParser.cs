@@ -1,18 +1,19 @@
-﻿using NLog;
+﻿using hasm.Parsing.Models;
+using NLog;
 using ParserLib.Parsing.Rules;
 
-namespace hasm.Parsing.Parsers
+namespace hasm.Parsing.OperandParsers
 {
 	/// <summary>
 	/// Parses operand that take offset from special pair
 	/// </summary>
-	/// <seealso cref="hasm.Parsing.Parsers.IParser" />
-	internal sealed class PairOffsetParser : IParser
+	/// <seealso cref="IOperandParser" />
+	internal sealed class PairOffsetParser : IOperandParser
 	{
 		private const string NAME = "PAIR+k";
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-		private static readonly IParser _pairParser = new PairParser();
-		private static readonly IParser _immediateParser = new Immediate6Parser();
+		private static readonly IOperandParser _pairParser = new PairParser();
+		private static readonly IOperandParser _immediateParser = new Immediate6Parser();
 		private Rule _rule;
 
 		/// <summary>

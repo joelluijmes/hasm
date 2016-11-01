@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
-using hasm.Parsing.Parsers;
+using hasm.Parsing.Models;
+using hasm.Parsing.OperandParsers;
 using NLog;
 using ParserLib.Evaluation;
 using ParserLib.Evaluation.Rules;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
-namespace hasm.Parsing
+namespace hasm.Parsing.Grammars
 {
 	/// <summary>
 	/// Provides type for defining the grammar with definitions for hasm
@@ -20,7 +21,7 @@ namespace hasm.Parsing
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 		private static readonly IDictionary<char, ValueRule<string>> _maskRules;
-		private static readonly IDictionary<OperandType, IParser> _knownParsers;
+		private static readonly IDictionary<OperandType, IOperandParser> _knownParsers;
 		private static readonly ValueRule<string> _opcodemaskRule;
 
 		static HasmGrammar()
@@ -28,8 +29,8 @@ namespace hasm.Parsing
 			_maskRules = new Dictionary<char, ValueRule<string>>();
 			_knownParsers = Assembly.GetExecutingAssembly()
 				.GetTypes() // get all types
-				.Where(t => t.IsClass && !t.IsAbstract && typeof(IParser).IsAssignableFrom(t)) // which are parsers
-				.Select(t => (IParser) Activator.CreateInstance(t)) // create an instance of them
+				.Where(t => t.IsClass && !t.IsAbstract && typeof(IOperandParser).IsAssignableFrom(t)) // which are parsers
+				.Select(t => (IOperandParser) Activator.CreateInstance(t)) // create an instance of them
 				.ToDictionary(p => p.OperandType); // and make it a dictionary :)
 
 			_opcodemaskRule = CreateMaskRule('1');
@@ -124,14 +125,14 @@ namespace hasm.Parsing
 
 		private Rule ParseOperand(string operand, string encoding)
 		{
-			IParser parser;
+			IOperandParser operandParser;
 			OperandType type;
 
 			// get the parser for this opernad type
-			if (!Definitions.TryGetValue(operand, out type) || !_knownParsers.TryGetValue(type, out parser) || (type == OperandType.Unkown))
+			if (!Definitions.TryGetValue(operand, out type) || !_knownParsers.TryGetValue(type, out operandParser) || (type == OperandType.Unkown))
 				throw new InvalidOperationException($"Impossible to encode for operand {operand}");
 
-			return parser.CreateRule(encoding);
+			return operandParser.CreateRule(encoding);
 		}
 
 		private static int OpcodeEncoding(string encoding)

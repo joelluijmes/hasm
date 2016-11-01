@@ -1,6 +1,6 @@
 ﻿using ParserLib.Evaluation.Rules;
 
-namespace hasm.Parsing
+namespace hasm.Parsing.Grammars
 {
 	public sealed partial class HasmGrammar
 	{

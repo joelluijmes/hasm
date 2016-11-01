@@ -59,33 +59,35 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HasmGrammer.Rules.cs" />
-    <Compile Include="HasmParser.cs" />
-    <Compile Include="Parsers\BaseImmediateParser.cs" />
-    <Compile Include="Parsers\BaseParser.cs" />
-    <Compile Include="Parsers\BaseSpecialRegisterParser.cs" />
-    <Compile Include="Parsers\BaseGeneralRegisterParser.cs" />
-    <Compile Include="Parsers\Branchifparser.cs" />
-    <Compile Include="Parsers\FirstSpecialRegisterParser.cs" />
-    <Compile Include="Parsers\IParser.cs" />
-    <Compile Include="Parsers\PairOffsetParser.cs" />
-    <Compile Include="Parsers\PairParser.cs" />
-    <Compile Include="Parsers\SecondSpecialRegisterParser.cs" />
-    <Compile Include="Parsers\SecondGeneralRegisterParser.cs" />
-    <Compile Include="Parsers\FirstGeneralRegisterParser.cs" />
-    <Compile Include="HasmGrammar.cs" />
-    <Compile Include="InstructionEncoding.cs" />
-    <Compile Include="Parsers\Immediate24Parser.cs" />
-    <Compile Include="Parsers\Immediate6Parser.cs" />
-    <Compile Include="Parsers\Immediate8Parser.cs" />
-    <Compile Include="OperandType.cs" />
-    <Compile Include="Parsers\BaseRegisterParser.cs" />
+    <Compile Include="Grammars\HasmGrammer.Rules.cs" />
+    <Compile Include="Parsers\HasmParser.cs" />
+    <Compile Include="Parsers\MicroHasmParser.cs" />
+    <Compile Include="OperandParsers\BaseImmediateParser.cs" />
+    <Compile Include="OperandParsers\BaseOperandParser.cs" />
+    <Compile Include="OperandParsers\BaseSpecialRegisterParser.cs" />
+    <Compile Include="OperandParsers\BaseGeneralRegisterParser.cs" />
+    <Compile Include="OperandParsers\Branchifparser.cs" />
+    <Compile Include="OperandParsers\FirstSpecialRegisterParser.cs" />
+    <Compile Include="OperandParsers\IOperandParser.cs" />
+    <Compile Include="OperandParsers\PairOffsetParser.cs" />
+    <Compile Include="OperandParsers\PairParser.cs" />
+    <Compile Include="OperandParsers\SecondSpecialRegisterParser.cs" />
+    <Compile Include="OperandParsers\SecondGeneralRegisterParser.cs" />
+    <Compile Include="OperandParsers\FirstGeneralRegisterParser.cs" />
+    <Compile Include="Grammars\HasmGrammar.cs" />
+    <Compile Include="Models\InstructionEncoding.cs" />
+    <Compile Include="OperandParsers\Immediate24Parser.cs" />
+    <Compile Include="OperandParsers\Immediate6Parser.cs" />
+    <Compile Include="OperandParsers\Immediate8Parser.cs" />
+    <Compile Include="Models\OperandType.cs" />
+    <Compile Include="OperandParsers\BaseRegisterParser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Grammars\MicroHasmGrammar.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

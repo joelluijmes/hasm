@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using hasm.Parsing.Models;
 using ParserLib.Evaluation;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
@@ -6,13 +7,13 @@ using ParserLib.Parsing.Rules;
 /// <summary>
 /// 
 /// </summary>
-namespace hasm.Parsing.Parsers
+namespace hasm.Parsing.OperandParsers
 {
 	/// <summary>
 	/// Parses an Y/Z pair
 	/// </summary>
-	/// <seealso cref="hasm.Parsing.Parsers.BaseParser" />
-	internal sealed class PairParser : BaseParser
+	/// <seealso cref="BaseOperandParser" />
+	internal sealed class PairParser : BaseOperandParser
 	{
 		private const string NAME = "Y/Z";
 		private const char MASK = 'p';

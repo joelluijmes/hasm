@@ -1,4 +1,4 @@
-namespace hasm.Parsing
+namespace hasm.Parsing.Models
 {
 	/// <summary>
 	/// Possible operand types to link known definitions.

@@ -1,9 +1,11 @@
-﻿namespace hasm.Parsing.Parsers
+﻿using hasm.Parsing.Models;
+
+namespace hasm.Parsing.OperandParsers
 {
 	/// <summary>
 	/// Second general purpose register (REG2)
 	/// </summary>
-	/// <seealso cref="hasm.Parsing.Parsers.BaseGeneralRegisterParser" />
+	/// <seealso cref="BaseGeneralRegisterParser" />
 	internal class SecondGeneralRegisterParser : BaseGeneralRegisterParser
 	{
 		private const string NAME = "REG2";

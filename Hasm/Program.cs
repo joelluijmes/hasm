@@ -4,6 +4,9 @@ using System.IO;
 using System.Linq;
 using Fclp;
 using hasm.Parsing;
+using hasm.Parsing.Grammars;
+using hasm.Parsing.Models;
+using hasm.Parsing.Parsers;
 using hasm.Properties;
 using NLog;
 

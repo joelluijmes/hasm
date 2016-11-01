@@ -1,7 +1,7 @@
-﻿using System.Text;
+using System.Text;
 using OfficeOpenXml;
 
-namespace hasm.Parsing
+namespace hasm.Parsing.Models
 {
 	/// <summary>
 	/// Model used to parse instruction with encoding from excel sheet.

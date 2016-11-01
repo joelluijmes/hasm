@@ -2,12 +2,12 @@
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
-namespace hasm.Parsing.Parsers
+namespace hasm.Parsing.OperandParsers
 {
 	/// <summary>
 	/// Provides base for general register parsers
 	/// </summary>
-	/// <seealso cref="hasm.Parsing.Parsers.BaseRegisterParser" />
+	/// <seealso cref="BaseRegisterParser" />
 	internal abstract class BaseGeneralRegisterParser : BaseRegisterParser
 	{
 		/// <summary>

@@ -1,17 +1,19 @@
 ﻿using System;
+using hasm.Parsing.Grammars;
+using hasm.Parsing.Models;
 using NLog;
 using ParserLib.Evaluation;
 using ParserLib.Evaluation.Rules;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
-namespace hasm.Parsing.Parsers
+namespace hasm.Parsing.OperandParsers
 {
 	/// <summary>
 	/// Base class for predefined parsers
 	/// </summary>
-	/// <seealso cref="hasm.Parsing.Parsers.IParser" />
-	internal abstract class BaseParser : IParser
+	/// <seealso cref="IOperandParser" />
+	internal abstract class BaseOperandParser : IOperandParser
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 		private readonly ValueRule<string> _encodingMask;
@@ -34,12 +36,12 @@ namespace hasm.Parsing.Parsers
 		private Rule _rule;
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="BaseParser"/> class.
+		/// Initializes a new instance of the <see cref="BaseOperandParser"/> class.
 		/// </summary>
 		/// <param name="name">The name of rule.</param>
 		/// <param name="mask">The mask in the encoding.</param>
 		/// <param name="size">The amount of bits in the encoding.</param>
-		protected BaseParser(string name, char mask, int size)
+		protected BaseOperandParser(string name, char mask, int size)
 		{
 			Name = name;
 			Mask = mask;

@@ -1,9 +1,11 @@
-﻿namespace hasm.Parsing.Parsers
+﻿using hasm.Parsing.Models;
+
+namespace hasm.Parsing.OperandParsers
 {
 	/// <summary>
 	/// 6 bit immediate parser
 	/// </summary>
-	/// <seealso cref="hasm.Parsing.Parsers.BaseImmediateParser" />
+	/// <seealso cref="BaseImmediateParser" />
 	internal sealed class Immediate6Parser : BaseImmediateParser
 	{
 		private const int SIZE = 6;

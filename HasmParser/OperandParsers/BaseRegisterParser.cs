@@ -1,10 +1,10 @@
-﻿namespace hasm.Parsing.Parsers
+﻿namespace hasm.Parsing.OperandParsers
 {
 	/// <summary>
 	/// Provides base for Register parsers.
 	/// </summary>
-	/// <seealso cref="hasm.Parsing.Parsers.BaseParser" />
-	internal abstract class BaseRegisterParser : BaseParser
+	/// <seealso cref="BaseOperandParser" />
+	internal abstract class BaseRegisterParser : BaseOperandParser
 	{
 		private const int SIZE_REGISTER_ENCODING = 3;
 
