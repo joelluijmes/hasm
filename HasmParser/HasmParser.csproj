@@ -60,13 +60,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Grammars\HasmGrammer.Rules.cs" />
-    <Compile Include="Models\ALU.cs" />
     <Compile Include="Models\ExcelOperand.cs" />
-    <Compile Include="Models\MicroInstruction.cs" />
     <Compile Include="OperandParsers\ExcelOperandParser.cs" />
     <Compile Include="Parsers\BaseParser.cs" />
     <Compile Include="Parsers\HasmParser.cs" />
-    <Compile Include="Parsers\MicroHasmParser.cs" />
     <Compile Include="OperandParsers\BaseImmediateParser.cs" />
     <Compile Include="OperandParsers\BaseOperandParser.cs" />
     <Compile Include="OperandParsers\BaseSpecialRegisterParser.cs" />
@@ -93,7 +90,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Grammars\MicroHasmGrammar.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
