@@ -13,7 +13,7 @@ namespace hasm.Parsing.OperandParsers
 	/// Base class for predefined parsers
 	/// </summary>
 	/// <seealso cref="IOperandParser" />
-	internal abstract class BaseOperandParser : IOperandParser
+	public abstract class BaseOperandParser : IOperandParser
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 		private readonly ValueRule<string> _encodingMask;

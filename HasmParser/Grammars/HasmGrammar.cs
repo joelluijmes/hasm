@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using hasm.Parsing.Models;
 using hasm.Parsing.OperandParsers;
+using hasm.Parsing.Parsers;
 using NLog;
 using ParserLib.Evaluation;
 using ParserLib.Evaluation.Rules;
@@ -23,6 +24,7 @@ namespace hasm.Parsing.Grammars
 		private static readonly IDictionary<char, ValueRule<string>> _maskRules;
 		private static readonly IDictionary<OperandType, IOperandParser> _knownParsers;
 		private static readonly ValueRule<string> _opcodemaskRule;
+		private static readonly OperandParser _operandParser;
 
 		static HasmGrammar()
 		{
@@ -35,6 +37,8 @@ namespace hasm.Parsing.Grammars
 
 			_opcodemaskRule = CreateMaskRule('1');
 			_logger.Info($"Found {_knownParsers.Count} parsers");
+
+			_operandParser = new OperandParser();
 		}
 
 		/// <summary>
@@ -129,10 +133,15 @@ namespace hasm.Parsing.Grammars
 			OperandType type;
 
 			// get the parser for this opernad type
-			if (!Definitions.TryGetValue(operand, out type) || !_knownParsers.TryGetValue(type, out operandParser) || (type == OperandType.Unkown))
-				throw new InvalidOperationException($"Impossible to encode for operand {operand}");
+			//if (!Definitions.TryGetValue(operand, out type) || !_knownParsers.TryGetValue(type, out operandParser) || (type == OperandType.Unkown))
+			//	throw new InvalidOperationException($"Impossible to encode for operand {operand}");
+		    var excelOperandParser = _operandParser.ExcelOperandParser.First(o => o.Operands.Contains(operand));
+		    operandParser = ExcelOperandParser.Create(excelOperandParser);
 
-			return operandParser.CreateRule(encoding);
+			var rule = operandParser.CreateRule(encoding);
+		    rule.Name = operand;    // give the name that was used to parse it :)
+
+		    return rule;
 		}
 
 		private static int OpcodeEncoding(string encoding)
