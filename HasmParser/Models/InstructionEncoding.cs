@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text;
 using OfficeOpenXml;
 
@@ -6,7 +7,7 @@ namespace hasm.Parsing.Models
 	/// <summary>
 	/// Model used to parse instruction with encoding from excel sheet.
 	/// </summary>
-	internal class InstructionEncoding
+	public class InstructionEncoding
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="InstructionEncoding"/> class.
@@ -76,25 +77,10 @@ namespace hasm.Parsing.Models
 		/// </summary>
 		/// <param name="row">The row.</param>
 		/// <returns>Row parsed in InstructionEncoding.</returns>
-		public static InstructionEncoding Parse(ExcelRange row)
+		public static InstructionEncoding Parse(string[] row)
 		{
-			var rowIndex = row.Start.Row;
-			var grammar = row[rowIndex, 1].GetValue<string>();
-			var description = row[rowIndex, 2].GetValue<string>();
-			var semantic = row[rowIndex, 3].GetValue<string>();
-
-			var encoding = ParseToString(row[rowIndex, 4, rowIndex, 9].Value as object[,]);
-
-			return new InstructionEncoding(grammar, description, semantic, encoding);
-		}
-
-		private static string ParseToString(object[,] multi)
-		{
-			var builder = new StringBuilder();
-			for (var i = 0; i < multi.GetLength(1); ++i)
-				builder.Append(multi[0, i]);
-
-			return builder.ToString();
+		    var encoding = row.Skip(3).Aggregate((a, b) => a + b);
+			return new InstructionEncoding(row[0], row[1], row[3], encoding);
 		}
 	}
 }

@@ -17,7 +17,7 @@ namespace hasm.Parsing.Parsers
 	/// This class makes it possible to parse an instruction to an encoding as specified
 	/// in the HasmGrammar.
 	/// </summary>
-	public class HasmParser
+	public class HasmParser : BaseParser<InstructionEncoding>
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 		private readonly HasmGrammar _grammar;
@@ -34,18 +34,23 @@ namespace hasm.Parsing.Parsers
 				_logger.Debug($"{pair.Key}: {pair.Value}");
 
 			_grammar = grammar;
-		    _instructions = ParseInstructions();
+		    _instructions = ParseSheet();
 			_rules = new Dictionary<string, ValueRule<byte[]>>();
 			_logger.Info($"Learned {_instructions.Count} instructions");
 		}
 
-		/// <summary>
-		/// Encodes the specified input.
-		/// </summary>
-		/// <param name="input">The instruction to be parsed.</param>
-		/// <returns>Parsed instruction</returns>
-		/// <exception cref="System.NotImplementedException"></exception>
-		public byte[] Encode(string input)
+        protected override string SheetName => "Encoding";
+
+        protected override InstructionEncoding Parse(string[] row, InstructionEncoding previous)
+            => InstructionEncoding.Parse(row);
+
+        /// <summary>
+        /// Encodes the specified input.
+        /// </summary>
+        /// <param name="input">The instruction to be parsed.</param>
+        /// <returns>Parsed instruction</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
+        public byte[] Encode(string input)
 		{
 			byte[] encoded;
 			if (!TryEncode(input, out encoded))
@@ -118,33 +123,6 @@ namespace hasm.Parsing.Parsers
 			operands = new Regex("\\s+").Replace(operands, "");
 
 			return opcode + " " + operands;
-		}
-
-		private static IList<InstructionEncoding> ParseInstructions()
-		{
-			var encoding = new List<InstructionEncoding>();
-
-			using (var stream = new MemoryStream(Resources.Instructionset))
-			using (var package = new ExcelPackage(stream))
-			{
-				var sheet = package.Workbook.Worksheets.FirstOrDefault(w => w.Name == "Encoding");
-				if (sheet == null)
-					throw new NotImplementedException();
-
-				var start = sheet.Dimension.Start;
-				var end = sheet.Dimension.End;
-
-				for (var row = start.Row + 1; row <= end.Row; ++row)
-				{
-					var range = sheet.Cells[row, 1, row, end.Column];
-					var instruction = InstructionEncoding.Parse(range);
-
-					_logger.Debug($"Added: {instruction}");
-					encoding.Add(instruction);
-				}
-			}
-
-			return encoding;
 		}
 	}
 }
