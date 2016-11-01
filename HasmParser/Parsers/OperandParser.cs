@@ -38,7 +38,8 @@ namespace hasm.Parsing.Parsers
             foreach (var group in operands.GroupBy(o => o.Operands))
             {
                 var operand = group.First();
-                operand.KeyValue = group.SelectMany(o => o.KeyValue).ToList();
+                if (operand.KeyValue != null)
+                    operand.KeyValue = group.SelectMany(o => o.KeyValue).ToList();
 
                 merged.Add(operand);
             }

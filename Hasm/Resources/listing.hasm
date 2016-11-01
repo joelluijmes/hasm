@@ -4,8 +4,7 @@
 ; which adds these numbers and returns
 ; it in r0.
 
-mov r1, r2
-add r2, r2
+mvi r1, 1
 
 
 ;		mvi r1, 10

@@ -39,11 +39,12 @@ namespace hasm.Parsing.OperandParsers
                 throw new ArgumentNullException(nameof(operand));
 
             var matchRule = Grammar.MatchAnyString(operand.Operands);
-            var rule = Grammar.Or(operand.KeyValue.Select(keyValue => Grammar.KeyValue(keyValue)));
+
+            var rule = operand.KeyValue != null
+                ? Grammar.Or(operand.KeyValue.Select(keyValue => Grammar.KeyValue(keyValue)))
+                : Grammar.Int32();
             
             var valueRule = Grammar.FirstValue<int>(rule);
-
-
             return new ExcelOperandParser(matchRule, valueRule, operand);
         }
 

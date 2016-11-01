@@ -34,9 +34,15 @@ namespace hasm.Parsing.Models
             var mask = !string.IsNullOrEmpty(row[1]) ? row[1][0] : '\0';
             var bits = !string.IsNullOrEmpty(row[2]) ? int.Parse(row[2]) : 0;
 
-            var keyValue = new KeyValuePair<string, int>(row[3], int.Parse(row[4]));
+            if (!string.IsNullOrEmpty(row[3]) && !string.IsNullOrEmpty(row[4]))
+            {
+                var keyValue = new KeyValuePair<string, int>(row[3], int.Parse(row[4]));
+                return new ExcelOperand(operand, mask, bits, keyValue);
+            }
 
-            return new ExcelOperand(operand, mask, bits, keyValue);
+            var min = int.Parse(row[5]);
+            var max = int.Parse(row[6]);
+            return new ExcelOperand(operand, mask, bits, min, max);
         }
     }
 }
