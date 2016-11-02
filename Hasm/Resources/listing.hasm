@@ -10,14 +10,13 @@
 		mvi r1, 20
 		push r1			; push 20 on stack
 		call foo		; foo(20, 10)
-		;sbis sp, 2		; clean up the stack
+		sbis sp, 2		; clean up the stack
 		; nop
 
-foo:	nop
-		;pushs y			
-		;movs y, sp		; use y as base-pointer
-		;ldd r0, y-2		; load the first argument
-		;ldd r1, y-1		; load the second argument
-		;add r0, r1		; adds
-		;pops y			; restore the Y
+foo:	pushs y			
+		movs y, sp		; use y as base-pointer
+		ldd r0, y-2		; load the first argument
+		ldd r1, y-1		; load the second argument
+		add r0, r1		; adds
+		pops y			; restore the Y
 		ret
