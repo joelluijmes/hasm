@@ -45,8 +45,8 @@
       <HintPath>..\packages\NLog.4.3.10\lib\net45\NLog.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="ParserLib, Version=1.5.76.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ParserLib-debug.1.5.76\lib\ParserLib.dll</HintPath>
+    <Reference Include="ParserLib, Version=1.5.78.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ParserLib-debug.1.5.78\lib\ParserLib.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -61,6 +61,7 @@
   <ItemGroup>
     <Compile Include="Grammars\HasmGrammer.Rules.cs" />
     <Compile Include="Models\OperandEncoding.cs" />
+    <Compile Include="Models\OperandEncodingType.cs" />
     <Compile Include="Parsers\OperandParser.cs" />
     <Compile Include="Parsers\Sheet\BaseSheetParser.cs" />
     <Compile Include="Parsers\Sheet\HasmSheetParser.cs" />

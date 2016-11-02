@@ -23,15 +23,19 @@ namespace hasm.Parsing.Grammars
         private static readonly IDictionary<char, ValueRule<string>> _maskRules;
         private static readonly IList<OperandParser> _operandParsers;
         private static readonly ValueRule<string> _opcodemaskRule;
-
+        
         static HasmGrammar()
         {
             _maskRules = new Dictionary<char, ValueRule<string>>();
             _opcodemaskRule = CreateMaskRule('1');
+            _operandParsers = new List<OperandParser>();
 
             var operandSheetParser = new OperandSheetParser();
-            _operandParsers = operandSheetParser.Items.Select(OperandParser.Create).ToList();
+            foreach (var parser in operandSheetParser.Items)
+                _operandParsers.Add(OperandParser.Create(parser));
         }
+
+        public static OperandParser FindOperandParser(string operand) => _operandParsers.First(o => o.Operands.Contains(operand));
         
         /// <summary>
         ///     Parses the instruction.
@@ -97,9 +101,9 @@ namespace hasm.Parsing.Grammars
                 .Aggregate((total, next) => total + MatchChar(',') + next); // merge the rules sepearted by a ,
         }
 
-        private Rule ParseOperand(string operand, string encoding)
+        private static Rule ParseOperand(string operand, string encoding)
         {
-            var parser = _operandParsers.First(o => o.Operands.Contains(operand));
+            var parser = FindOperandParser(operand);
 
             var rule = parser.CreateRule(encoding);
             rule.Name = operand; // give the name that was used to parse it :)

@@ -18,11 +18,11 @@ namespace hasm.Parsing.Parsers.Sheet
         {
             var parser = OperandEncoding.Parse(row);
             if (parser.Operands == null)
+            {
                 parser.Operands = previous.Operands;
-            if (parser.EncodingMask == '\0')
                 parser.EncodingMask = previous.EncodingMask;
-            if (parser.Size == 0)
                 parser.Size = previous.Size;
+            }
 
             return parser;
         }
