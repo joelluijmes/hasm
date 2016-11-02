@@ -5,14 +5,17 @@ using hasm.Parsing.Properties;
 using NLog;
 using OfficeOpenXml;
 
-namespace hasm.Parsing.Parsers
+namespace hasm.Parsing.Parsers.Sheet
 {
-    public abstract class BaseParser<T> where T : class
+    public abstract class BaseSheetParser<T> where T : class
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private IList<T> _items;
 
         protected abstract string SheetName { get; }
-        
+
+        public virtual IList<T> Items => _items ?? (_items = ParseSheet());
+
         protected abstract T Parse(string[] row, T previous);
 
         protected IList<T> ParseSheet()
