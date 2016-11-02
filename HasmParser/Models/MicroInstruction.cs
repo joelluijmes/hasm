@@ -32,7 +32,9 @@ namespace hasm.Parsing.Models
                 : HasmGrammar.Opcode.FirstValue(instruction).ToLower() + "1";
 
             var aluCell = row[1];
-            var alu = ALU.Parse(aluCell);
+            var alu = !string.IsNullOrEmpty(aluCell)
+                ? ALU.Parse(aluCell)
+                : null;
 
             var memoryCell = row[2];
             var memory = string.IsNullOrEmpty(memoryCell)

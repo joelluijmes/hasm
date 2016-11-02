@@ -60,6 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Grammars\HasmGrammer.Rules.cs" />
+    <Compile Include="Grammars\MicroHasmGrammar.cs" />
     <Compile Include="Models\ALU.cs" />
     <Compile Include="Models\MicroInstruction.cs" />
     <Compile Include="Models\OperandEncoding.cs" />
