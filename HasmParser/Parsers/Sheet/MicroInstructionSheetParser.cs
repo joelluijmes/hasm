@@ -1,23 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using hasm.Parsing.Models;
-using NLog;
 using ParserLib.Evaluation;
 using ParserLib.Parsing;
 
-namespace hasm.Parsing.Parsers
+namespace hasm.Parsing.Parsers.Sheet
 {
-    public sealed class MicroHasmParser : BaseParser<MicroInstruction>
+    public sealed class MicroInstructionSheetParser : BaseSheetParser<MicroInstruction>
     {
-
-        public MicroHasmParser()
-        {
-            Instructions = ParseSheet();
-        }
-
-        public IList<MicroInstruction> Instructions { get; }
-
         protected override string SheetName => "MicroInstructions";
+
         protected override MicroInstruction Parse(string[] row, MicroInstruction previous)
         {
             var countingLabelRule = Grammar.Text(Grammar.Letters) + Grammar.Int32();
