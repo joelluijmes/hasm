@@ -42,7 +42,7 @@ namespace hasm.Parsing.OperandParsers
 
             var rule = operand.KeyValue != null
                 ? Grammar.Or(operand.KeyValue.Select(keyValue => Grammar.KeyValue(keyValue)))
-                : Grammar.Int32();
+                : Grammar.Range(operand.Minimum, operand.Maximum, Grammar.Int32());
             
             var valueRule = Grammar.FirstValue<int>(rule);
             return new ExcelOperandParser(matchRule, valueRule, operand);
