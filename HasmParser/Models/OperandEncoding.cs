@@ -2,9 +2,9 @@
 
 namespace hasm.Parsing.Models
 {
-    public sealed class ExcelOperand
+    public sealed class OperandEncoding
     {
-        public ExcelOperand(string[] operands, char encodingMask, int size, KeyValuePair<string, int> keyValue)
+        public OperandEncoding(string[] operands, char encodingMask, int size, KeyValuePair<string, int> keyValue)
         {
             Operands = operands;
             EncodingMask = encodingMask;
@@ -12,7 +12,7 @@ namespace hasm.Parsing.Models
             KeyValue = new[] {keyValue};
         }
 
-        public ExcelOperand(string[] operands, char encodingMask, int size, int minimum, int maximum)
+        public OperandEncoding(string[] operands, char encodingMask, int size, int minimum, int maximum)
         {
             Operands = operands;
             EncodingMask = encodingMask;
@@ -28,7 +28,7 @@ namespace hasm.Parsing.Models
         public int Minimum { get; set; }
         public int Maximum { get; set; }
 
-        public static ExcelOperand Parse(string[] row)
+        public static OperandEncoding Parse(string[] row)
         {
             var operand = !string.IsNullOrEmpty(row[0]) ? row[0].Split(',') : null;
             var mask = !string.IsNullOrEmpty(row[1]) ? row[1][0] : '\0';
@@ -37,12 +37,12 @@ namespace hasm.Parsing.Models
             if (!string.IsNullOrEmpty(row[3]) && !string.IsNullOrEmpty(row[4]))
             {
                 var keyValue = new KeyValuePair<string, int>(row[3], int.Parse(row[4]));
-                return new ExcelOperand(operand, mask, bits, keyValue);
+                return new OperandEncoding(operand, mask, bits, keyValue);
             }
 
             var min = int.Parse(row[5]);
             var max = int.Parse(row[6]);
-            return new ExcelOperand(operand, mask, bits, min, max);
+            return new OperandEncoding(operand, mask, bits, min, max);
         }
     }
 }

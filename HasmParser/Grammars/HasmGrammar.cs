@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Reflection;
 using hasm.Parsing.Models;
-using hasm.Parsing.OperandParsers;
 using hasm.Parsing.Parsers;
+using hasm.Parsing.Parsers.Sheet;
 using NLog;
 using ParserLib.Evaluation;
 using ParserLib.Evaluation.Rules;
@@ -14,149 +13,113 @@ using ParserLib.Parsing.Rules;
 
 namespace hasm.Parsing.Grammars
 {
-	/// <summary>
-	/// Provides type for defining the grammar with definitions for hasm
-	/// </summary>
-	/// <seealso cref="ParserLib.Parsing.Grammar" />
-	public sealed partial class HasmGrammar : Grammar
-	{
-		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-		private static readonly IDictionary<char, ValueRule<string>> _maskRules;
-		private static readonly IDictionary<OperandType, IOperandParser> _knownParsers;
-		private static readonly ValueRule<string> _opcodemaskRule;
-		private static readonly OperandParser _operandParser;
+    /// <summary>
+    ///     Provides type for defining the grammar with definitions for hasm
+    /// </summary>
+    /// <seealso cref="ParserLib.Parsing.Grammar" />
+    public sealed partial class HasmGrammar : Grammar
+    {
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly IDictionary<char, ValueRule<string>> _maskRules;
+        private static readonly IList<OperandParser> _operandParsers;
+        private static readonly ValueRule<string> _opcodemaskRule;
 
-		static HasmGrammar()
-		{
-			_maskRules = new Dictionary<char, ValueRule<string>>();
-			_knownParsers = Assembly.GetExecutingAssembly()
-				.GetTypes() // get all types
-				.Where(t => t.IsClass && !t.IsAbstract && typeof(IOperandParser).IsAssignableFrom(t)) // which are parsers
-				.Select(t => (IOperandParser) Activator.CreateInstance(t)) // create an instance of them
-				.ToDictionary(p => p.OperandType); // and make it a dictionary :)
+        static HasmGrammar()
+        {
+            _maskRules = new Dictionary<char, ValueRule<string>>();
+            _opcodemaskRule = CreateMaskRule('1');
 
-			_opcodemaskRule = CreateMaskRule('1');
-			_logger.Info($"Found {_knownParsers.Count} parsers");
+            var operandSheetParser = new OperandSheetParser();
+            _operandParsers = operandSheetParser.Items.Select(OperandParser.Create).ToList();
+        }
+        
+        /// <summary>
+        ///     Parses the instruction.
+        /// </summary>
+        /// <param name="instruction">The instruction.</param>
+        /// <returns>Rule to conver the input to a byte[]</returns>
+        internal ValueRule<byte[]> ParseInstruction(InstructionEncoding instruction)
+        {
+            var rule = ParseOpcode(instruction);
+            var operands = ParseOperands(instruction);
 
-			_operandParser = new OperandParser();
-		}
+            if (operands != null)
+                rule += Whitespace + operands;
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="HasmGrammar"/> class.
-		/// </summary>
-		/// <param name="definitions">The definitions of how to match operands.</param>
-		/// <exception cref="System.ArgumentNullException">definitions</exception>
-		public HasmGrammar(IDictionary<string, OperandType> definitions)
-		{
-			if (definitions == null)
-				throw new ArgumentNullException(nameof(definitions));
+            Func<Node, byte[]> converter = node =>
+            {
+                var encodedAsInteger = node.FirstValue<int>();
+                var encoded = BitConverter.GetBytes(encodedAsInteger);
+                Array.Resize(ref encoded, instruction.Count);
 
-			Definitions = new ReadOnlyDictionary<string, OperandType>(definitions);
-			_logger.Info($"{Definitions.Count} definitions");
-		}
+                return encoded;
+            };
 
-		/// <summary>
-		/// Gets the definitions.
-		/// </summary>
-		/// <value>
-		/// The definitions.
-		/// </value>
-		public ReadOnlyDictionary<string, OperandType> Definitions { get; }
+            _logger.Debug($"Compiling rule for {instruction}: {instruction.Grammar}");
+            return ConvertToValue(converter, Accumulate<int>((current, next) => current | next, rule));
+        }
 
-		/// <summary>
-		/// Parses the instruction.
-		/// </summary>
-		/// <param name="instruction">The instruction.</param>
-		/// <returns>Rule to conver the input to a byte[]</returns>
-		internal ValueRule<byte[]> ParseInstruction(InstructionEncoding instruction)
-		{
-			var rule = ParseOpcode(instruction);
-			var operands = ParseOperands(instruction);
+        /// <summary>
+        ///     Creates a rule to mask encoding format.
+        /// </summary>
+        /// <param name="mask">The mask.</param>
+        /// <returns>Rule which masks the encoding.</returns>
+        internal static ValueRule<string> CreateMaskRule(char mask)
+        {
+            ValueRule<string> rule;
+            if (_maskRules.TryGetValue(mask, out rule))
+                return rule;
 
-			if (operands != null)
-				rule += Whitespace + operands;
+            var matched = ConstantValue(mask.ToString(), MatchChar(mask)); // matches only the mask
+            var rest = ConstantValue("0", MatchAnyChar()); // treat the rest as an zero
 
-			Func<Node, byte[]> converter = node =>
-			{
-				var encodedAsInteger = node.FirstValue<int>();
-				var encoded = BitConverter.GetBytes(encodedAsInteger);
-				Array.Resize(ref encoded, instruction.Count);
+            rule = Accumulate<string>((cur, next) => cur + next, MatchWhile(matched | rest)); // merge the encoding
+            _logger.Debug($"Created encoding-mask ('{mask}') rule");
+            _maskRules[mask] = rule;
 
-				return encoded;
-			};
+            return rule;
+        }
 
-			_logger.Debug($"Compiling rule for {instruction}: {instruction.Grammar}");
-			return ConvertToValue(converter, Accumulate<int>((current, next) => current | next, rule));
-		}
+        private static Rule ParseOpcode(InstructionEncoding instruction)
+        {
+            var opcode = Opcode.FirstValue(instruction.Grammar);
+            var encoding = OpcodeEncoding(instruction.Encoding);
+            return ConstantValue(encoding, MatchString(opcode, true)); // when it matches the opcode give its encoding 
+        }
 
-		/// <summary>
-		/// Creates a rule to mask encoding format.
-		/// </summary>
-		/// <param name="mask">The mask.</param>
-		/// <returns>Rule which masks the encoding.</returns>
-		internal static ValueRule<string> CreateMaskRule(char mask)
-		{
-			ValueRule<string> rule;
-			if (_maskRules.TryGetValue(mask, out rule))
-				return rule;
+        private Rule ParseOperands(InstructionEncoding instruction)
+        {
+            var operands = GetOperands(instruction.Grammar);
+            if (!operands.Any()) // instruction without oprands
+                return null;
 
-			var matched = ConstantValue(mask.ToString(), MatchChar(mask)); // matches only the mask
-			var rest = ConstantValue("0", MatchAnyChar()); // treat the rest as an zero
+            return operands.Select(o => ParseOperand(o, instruction.Encoding)) // make operand rules from the strings
+                .Aggregate((total, next) => total + MatchChar(',') + next); // merge the rules sepearted by a ,
+        }
 
-			rule = Accumulate<string>((cur, next) => cur + next, MatchWhile(matched | rest)); // merge the encoding
-			_logger.Debug($"Created encoding-mask ('{mask}') rule");
-			_maskRules[mask] = rule;
+        private Rule ParseOperand(string operand, string encoding)
+        {
+            var parser = _operandParsers.First(o => o.Operands.Contains(operand));
 
-			return rule;
-		}
+            var rule = parser.CreateRule(encoding);
+            rule.Name = operand; // give the name that was used to parse it :)
 
-		private static Rule ParseOpcode(InstructionEncoding instruction)
-		{
-			var opcode = Opcode.FirstValue(instruction.Grammar);
-			var encoding = OpcodeEncoding(instruction.Encoding);
-			return ConstantValue(encoding, MatchString(opcode, true)); // when it matches the opcode give its encoding 
-		}
+            return rule;
+        }
 
-		private Rule ParseOperands(InstructionEncoding instruction)
-		{
-			var operands = GetOperands(instruction.Grammar);
-			if (!operands.Any()) // instruction without oprands
-				return null;
+        private static int OpcodeEncoding(string encoding)
+        {
+            var opcodeBinary = _opcodemaskRule.FirstValue(encoding); // gets the binary representation of the encoding
+            return Convert.ToInt32(opcodeBinary, 2);
+        }
 
-			return operands.Select(o => ParseOperand(o, instruction.Encoding)) // make operand rules from the strings
-				.Aggregate((total, next) => total + MatchChar(',') + next); // merge the rules sepearted by a ,
-		}
-
-		private Rule ParseOperand(string operand, string encoding)
-		{
-			IOperandParser operandParser;
-			OperandType type;
-
-			// get the parser for this opernad type
-			//if (!Definitions.TryGetValue(operand, out type) || !_knownParsers.TryGetValue(type, out operandParser) || (type == OperandType.Unkown))
-			//	throw new InvalidOperationException($"Impossible to encode for operand {operand}");
-		    var excelOperandParser = _operandParser.ExcelOperandParser.First(o => o.Operands.Contains(operand));
-		    operandParser = ExcelOperandParser.Create(excelOperandParser);
-
-			var rule = operandParser.CreateRule(encoding);
-		    rule.Name = operand;    // give the name that was used to parse it :)
-
-		    return rule;
-		}
-
-		private static int OpcodeEncoding(string encoding)
-		{
-			var opcodeBinary = _opcodemaskRule.FirstValue(encoding); // gets the binary representation of the encoding
-			return Convert.ToInt32(opcodeBinary, 2);
-		}
-
-		private static string[] GetOperands(string grammar)
-		{
-			var operand = Opcode.FirstValue(grammar);
-			return grammar.Replace(operand, "") // remove operand from grammar
-				.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries) // operands are split with a ,
-				.Select(s => s.Trim())
-				.ToArray();
-		}
-	}
+        private static string[] GetOperands(string grammar)
+        {
+            var operand = Opcode.FirstValue(grammar);
+            return grammar.Replace(operand, "") // remove operand from grammar
+                .Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries) // operands are split with a ,
+                .Select(s => s.Trim())
+                .ToArray();
+        }
+    }
 }

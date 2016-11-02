@@ -1,50 +1,78 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using System.Linq;
+using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
-using NLog;
+using ParserLib.Evaluation;
+using ParserLib.Evaluation.Rules;
+using ParserLib.Parsing;
+using ParserLib.Parsing.Rules;
 
 namespace hasm.Parsing.Parsers
 {
-    public sealed class OperandParser : BaseParser<ExcelOperand>
+    public sealed class OperandParser
     {
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        public IList<ExcelOperand> ExcelOperandParser { get; }
+        private readonly ValueRule<string> _encodingRule;
+        private readonly OperandEncoding _operandEncoding;
+        private readonly ValueRule<int> _valueRule;
+        private Rule _rule;
 
         public OperandParser()
         {
-            var operands = ParseSheet();
-            ExcelOperandParser = MergeOperands(operands);
         }
 
-        protected override string SheetName => "Operands";
-
-        protected override ExcelOperand Parse(string[] row, ExcelOperand previous)
+        private OperandParser(ValueRule<int> valueRule, OperandEncoding operandEncoding)
         {
-            var parser = ExcelOperand.Parse(row);
-            if (parser.Operands == null)
-                parser.Operands = previous.Operands;
-            if (parser.EncodingMask == '\0')
-                parser.EncodingMask = previous.EncodingMask;
-            if (parser.Size == 0)
-                parser.Size = previous.Size;
-
-            return parser;
+            _valueRule = valueRule;
+            _operandEncoding = operandEncoding;
+            _encodingRule = HasmGrammar.CreateMaskRule(operandEncoding.EncodingMask);
         }
 
-        private static IList<ExcelOperand> MergeOperands(IEnumerable<ExcelOperand> operands)
-        {
-            var merged = new List<ExcelOperand>();
+        public string[] Operands => _operandEncoding.Operands;
 
-            foreach (var group in operands.GroupBy(o => o.Operands))
+        public static OperandParser Create(OperandEncoding operandEncoding)
+        {
+            if (operandEncoding == null)
+                throw new ArgumentNullException(nameof(operandEncoding));
+
+            var rule = operandEncoding.KeyValue != null
+                ? Grammar.Or(operandEncoding.KeyValue.Select(keyValue => Grammar.KeyValue(keyValue)))
+                : Grammar.Range(operandEncoding.Minimum, operandEncoding.Maximum, Grammar.Int32());
+
+            var valueRule = Grammar.FirstValue<int>(rule);
+            return new OperandParser(valueRule, operandEncoding);
+        }
+
+        public Rule CreateRule(string encoding)
+        {
+            if (_rule != null)
+                return _rule;
+
+            Func<string, int> converter = match =>
             {
-                var operand = group.First();
-                if (operand.KeyValue != null)
-                    operand.KeyValue = group.SelectMany(o => o.KeyValue).ToList();
+                var value = _valueRule.FirstValue(match);
+                return Encode(encoding, value);
+            };
 
-                merged.Add(operand);
-            }
+            _rule = Grammar.ConvertToValue(converter, _valueRule);
+            return _rule;
+        }
 
-            return merged;
+        private int Encode(string encoding, int value)
+        {
+            // TODO: make sure that value repalces the mask (i.e. masked encoding isn't required to be after each other)
+            var opcodeBinary = _encodingRule.FirstValue(encoding); // gets the binary representation of the encoding
+            var index = opcodeBinary.IndexOf(_operandEncoding.EncodingMask); // finds the first occurance of the mask
+            var nextIndex = opcodeBinary.IndexOf('0', index); // and the last
+            if (nextIndex == -1)
+                nextIndex = opcodeBinary.Length; // could be that it ended with the mask so we set it to the length of total encoding
+
+            var length = nextIndex - index;
+            var bin = Convert.ToString(value, 2).PadLeft(_operandEncoding.Size, '0');
+
+            opcodeBinary = opcodeBinary.Remove(index, length).Insert(index, bin);
+            var result = Convert.ToInt32(opcodeBinary, 2);
+
+            return result;
         }
     }
 }
