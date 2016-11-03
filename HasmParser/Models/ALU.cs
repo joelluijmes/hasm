@@ -1,15 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using hasm.Parsing.Grammars;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Microsoft.SqlServer.Server;
 using NLog;
 using ParserLib.Evaluation;
+using ParserLib.Parsing;
 
 namespace hasm.Parsing.Models
 {
     public sealed class ALU
     {
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private static readonly Dictionary<string, AluOperation> _operations = new Dictionary<string, AluOperation>
         {
             ["-"] = AluOperation.Minus,
@@ -27,38 +27,52 @@ namespace hasm.Parsing.Models
         public string Shift { get; set; }
         public AluOperation Operation { get; set; }
 
-        public static ALU Parse(string input)
+        public static ALU Parse(Node aluNode)
         {
-            input = new Regex("\\s+").Replace(input, "");
-            if (string.IsNullOrEmpty(input))
-                throw new ArgumentNullException(nameof(input));
+            var alu = new ALU
+            {
+                Target = aluNode.FirstValueByNameOrDefault<string>("target"),
+                Left = aluNode.FirstValueByNameOrDefault<string>("left"),
+                Right = aluNode.FirstValueByNameOrDefault<string>("right"),
+                Carry = aluNode.FirstValueByNameOrDefault<string>("carry") != null,
+                StackPointer = aluNode.FirstValueByNameOrDefault<string>("SP") != null,
+                Shift = aluNode.FirstValueByNameOrDefault<string>("shift")
+            };
 
-            var alu = new ALU();
-            var parsed = MicroHasmGrammar.Alu.ParseTree(input);
-
-            alu.Target = parsed.FirstValueByNameOrDefault<string>("target");
-            alu.Left = parsed.FirstValueByNameOrDefault<string>("left");
-            var op = parsed.FirstValueByNameOrDefault<string>("op");
+            var op = aluNode.FirstValueByNameOrDefault<string>("op");
             if (op != null)
                 alu.Operation = _operations[op];
-
-            alu.Right = parsed.FirstValueByNameOrDefault<string>("right");
-            alu.Carry = parsed.FirstValueByNameOrDefault<string>("carry") != null;
-            alu.StackPointer = parsed.FirstValueByNameOrDefault<string>("SP") != null;
-            alu.Shift = parsed.FirstValueByNameOrDefault<string>("shift");
             
-            return null;
+            return alu;
         }
-    }
 
-    public enum AluOperation
-    {
-        Clear = 0,
-        Minus = 1 << 1,
-        Plus = (1 << 1) | (1 << 0),
-        Xor = 1 << 2,
-        Or = (1 << 2) | (1 << 0),
-        And = (1 << 2) | (1 << 1),
-        Preset = (1 << 2) | (1 << 1) | (1 << 0)
+        public override string ToString()
+        {
+            var builder = new StringBuilder();
+
+            if (!string.IsNullOrEmpty(Target))
+                builder.Append($"{Target}=");
+            if (StackPointer)
+                builder.Append("SP=");
+            if (!string.IsNullOrEmpty(Left))
+                builder.Append(Left);
+
+            if (Operation == AluOperation.Clear)
+                return builder.ToString();
+
+            var sign = _operations.FirstOrDefault(f => f.Value == Operation).Key;
+            if (!string.IsNullOrEmpty(sign))
+                builder.Append(sign);
+
+            builder.Append(Right);
+
+            if (Carry && !string.IsNullOrEmpty(sign))
+                builder.Append($"{sign}C");
+
+            if (!string.IsNullOrEmpty(Shift))
+                builder.Append($"{Shift}1");
+
+            return builder.ToString();
+        }
     }
 }

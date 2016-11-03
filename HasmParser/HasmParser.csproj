@@ -62,6 +62,9 @@
     <Compile Include="Grammars\HasmGrammer.Rules.cs" />
     <Compile Include="Grammars\MicroHasmGrammar.cs" />
     <Compile Include="Models\ALU.cs" />
+    <Compile Include="Models\AluOperation.cs" />
+    <Compile Include="Models\Condition.cs" />
+    <Compile Include="Models\MemoryOperation.cs" />
     <Compile Include="Models\MicroInstruction.cs" />
     <Compile Include="Models\OperandEncoding.cs" />
     <Compile Include="Models\OperandEncodingType.cs" />
