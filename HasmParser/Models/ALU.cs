@@ -24,7 +24,17 @@ namespace hasm.Parsing.Models
                     throw new ArgumentNullException(nameof(input));
 
             var parsed = MicroHasmGrammar.Alu.ParseTree(input);
-            _logger.Debug($"{input}:{Environment.NewLine}{parsed.PrettyFormat()}");
+
+            var target = parsed.FirstValueByNameOrDefault<string>("target");
+            var left = parsed.FirstValueByNameOrDefault<string>("left");
+            var op = parsed.FirstValueByNameOrDefault<string>("op");
+            var right = parsed.FirstValueByNameOrDefault<string>("right");
+            var carry = parsed.FirstValueByNameOrDefault<string>("carry");
+            var sp = parsed.FirstValueByNameOrDefault<string>("SP");
+            var shift = parsed.FirstValueByNameOrDefault<string>("shift");
+            var status = parsed.FirstValueByNameOrDefault<string>("status");
+            var cond = parsed.FirstValueByNameOrDefault<string>("cond");
+            var nop = parsed.FirstValueByNameOrDefault<string>("nop");
 
             return null;
         }

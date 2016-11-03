@@ -1,26 +1,28 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
+using hasm.Parsing.Grammars;
 using hasm.Parsing.Parsers.Sheet;
 using NLog;
+using ParserLib;
 
 namespace hasm
 {
-    internal class Program
-    {
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+	internal class Program
+	{
+		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-        private static bool Debugging =>
+		private static bool Debugging =>
 #if DEBUG
-            Debugger.IsAttached;
+			Debugger.IsAttached;
 #else
 			false;
 #endif
 
-        private static void Main(string[] args)
-        {
+		private static void Main(string[] args)
+		{
 #if DEBUG
-            MainImpl(args);
+			MainImpl(args);
 #else
 			try
 			{
@@ -35,42 +37,50 @@ namespace hasm
 				UnhandledException(e);
 			}
 #endif
-        }
+		}
 
-        private static void MainImpl(string[] args)
-        {
-            if (Debugging)
-            {
-                var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
-                consoleRule.EnableLoggingForLevel(LogLevel.Debug);
-            }
+		private static void MainImpl(string[] args)
+		{
+			if (Debugging)
+			{
+				var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
+				consoleRule.EnableLoggingForLevel(LogLevel.Debug);
+			}
 
-            var microParser = new MicroInstructionSheetParser();
-            var p = microParser.Items;
-        }
+			//var rule = MicroHasmGrammar.Alu;
+			//Console.WriteLine(rule.PrettyFormat());
+			//Console.WriteLine();
 
-        private static void UnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            var exception = e.ExceptionObject as Exception;
-            if (exception == null)
-            {
-                _logger.Fatal($"ExceptionObject is not an exception: {e.ExceptionObject}");
-                Environment.Exit(-1);
-            }
-            else UnhandledException(exception);
-        }
+			//var tree = rule.ParseTree("0xFF-DST");
 
-        private static void UnhandledException(Exception e)
-        {
-            _logger.Fatal(e, "Unhandled exception");
-            Environment.Exit(-1);
-        }
+			//Console.WriteLine(tree.PrettyFormat());
 
-        private static void IfDebugging(Action action)
-        {
+			var microParser = new MicroInstructionSheetParser();
+			var p = microParser.Items;
+		}
+
+		private static void UnhandledException(object sender, UnhandledExceptionEventArgs e)
+		{
+			var exception = e.ExceptionObject as Exception;
+			if (exception == null)
+			{
+				_logger.Fatal($"ExceptionObject is not an exception: {e.ExceptionObject}");
+				Environment.Exit(-1);
+			}
+			else UnhandledException(exception);
+		}
+
+		private static void UnhandledException(Exception e)
+		{
+			_logger.Fatal(e, "Unhandled exception");
+			Environment.Exit(-1);
+		}
+
+		private static void IfDebugging(Action action)
+		{
 #if DEBUG
-            action();
+			action();
 #endif
-        }
-    }
+		}
+	}
 }
