@@ -32,6 +32,9 @@ namespace hasm.Parsing.Models
                 : HasmGrammar.Opcode.FirstValue(instruction).ToLower() + "1";
 
             var aluCell = row[1];
+            var status = parsed.FirstValueByNameOrDefault<string>("status");
+            var cond = parsed.FirstValueByNameOrDefault<string>("cond");
+
             var alu = !string.IsNullOrEmpty(aluCell)
                 ? ALU.Parse(aluCell)
                 : null;

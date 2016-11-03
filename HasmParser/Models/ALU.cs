@@ -16,15 +16,15 @@ namespace hasm.Parsing.Models
             ["+"] = AluOperation.Plus,
             ["&"] = AluOperation.And,
             ["|"] = AluOperation.Or,
-            ["^"] = AluOperation.Xor,
-            ["nop"] = AluOperation.Clear,
-            [""] = AluOperation.Clear
+            ["^"] = AluOperation.Xor
         };
 
         public string Target { get; set; }
         public string Left { get; set; }
         public string Right { get; set; }
         public bool Carry { get; set; }
+        public bool StackPointer { get; set; }
+        public string Shift { get; set; }
         public AluOperation Operation { get; set; }
 
         public static ALU Parse(string input)
@@ -36,20 +36,17 @@ namespace hasm.Parsing.Models
             var alu = new ALU();
             var parsed = MicroHasmGrammar.Alu.ParseTree(input);
 
-            var target = parsed.FirstValueByNameOrDefault<string>("target");
-            var left = parsed.FirstValueByNameOrDefault<string>("left");
+            alu.Target = parsed.FirstValueByNameOrDefault<string>("target");
+            alu.Left = parsed.FirstValueByNameOrDefault<string>("left");
             var op = parsed.FirstValueByNameOrDefault<string>("op");
             if (op != null)
                 alu.Operation = _operations[op];
 
-            var right = parsed.FirstValueByNameOrDefault<string>("right");
-            var carry = parsed.FirstValueByNameOrDefault<string>("carry");
-            var sp = parsed.FirstValueByNameOrDefault<string>("SP");
-            var shift = parsed.FirstValueByNameOrDefault<string>("shift");
-            var status = parsed.FirstValueByNameOrDefault<string>("status");
-            var cond = parsed.FirstValueByNameOrDefault<string>("cond");
-            var nop = parsed.FirstValueByNameOrDefault<string>("nop");
-
+            alu.Right = parsed.FirstValueByNameOrDefault<string>("right");
+            alu.Carry = parsed.FirstValueByNameOrDefault<string>("carry") != null;
+            alu.StackPointer = parsed.FirstValueByNameOrDefault<string>("SP") != null;
+            alu.Shift = parsed.FirstValueByNameOrDefault<string>("shift");
+            
             return null;
         }
     }

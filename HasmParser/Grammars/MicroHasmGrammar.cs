@@ -18,6 +18,6 @@ namespace hasm.Parsing.Grammars
         public static readonly Rule Nop = Text("nop", MatchString("nop", true) | End());
         public static readonly Rule Shift = Text("shift", MatchString("<<") | MatchString(">>")) + MatchChar('1');
 
-        public static readonly Rule Alu = If.Optional + (MultiTarget + Left + Optional(Operation + Right + Optional(Carry) | Shift)) | (Left + Operation + Right + Optional(Carry)) | Nop;
+        public static readonly Rule Alu = (MultiTarget + Left + Optional(Operation + Right + Optional(Carry) | Shift)) | (Left + Operation + Right + Optional(Carry));
     }
 }
