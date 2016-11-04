@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace hasm.Parsing.Models
 {
@@ -63,6 +65,15 @@ namespace hasm.Parsing.Models
             }
 
             throw new NotImplementedException();
+        }
+
+        public override string ToString()
+        {
+            var builder = new StringBuilder();
+            builder.Append(Operands.Aggregate((a, b) => $"{a},{b}"));
+            builder.Append($" {EncodingType}");
+
+            return builder.ToString();
         }
     }
 }

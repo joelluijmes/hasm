@@ -89,7 +89,7 @@ namespace hasm.Parsing.Models
             builder.Append($"{ALU};");
 
             if (Memory != MemoryOperation.None)
-                builder.Append($"{Memory};");
+                builder.Append($" {Memory};");
 
             if (LastInstruction)
                 builder.Append(" next;");
