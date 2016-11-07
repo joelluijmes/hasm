@@ -30,10 +30,10 @@ namespace hasm.Parsing.Parsers
                 throw new ArgumentNullException(nameof(operandEncoding));
 
             Rule rule;
-            switch (operandEncoding.EncodingType)
+            switch (operandEncoding.Type)
             {
                 case OperandEncodingType.KeyValue:
-                    rule = Grammar.Or(operandEncoding.KeyValue.Select(keyValue => Grammar.KeyValue(keyValue)));
+                    rule = Grammar.Or(operandEncoding.Pairs.Select(keyValue => Grammar.KeyValue(keyValue)));
                     break;
                 case OperandEncodingType.Range:
                     rule = Grammar.Range(operandEncoding.Minimum, operandEncoding.Maximum, Grammar.Int32());
@@ -56,7 +56,7 @@ namespace hasm.Parsing.Parsers
 
         public Rule CreateRule(string encoding)
         {
-            if (OperandEncoding.EncodingType != OperandEncodingType.Aggregation)
+            if (OperandEncoding.Type != OperandEncodingType.Aggregation)
                 return CreateConverterRule(ValueRule, encoding);
 
             var operands = OperandEncoding.Operands.Single().Split(new[] { '+', ' ' }, StringSplitOptions.RemoveEmptyEntries);

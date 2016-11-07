@@ -35,7 +35,7 @@ namespace hasm.Parsing.Grammars
                 _operandParsers.Add(OperandParser.Create(parser));
         }
 
-        public static OperandParser FindOperandParser(string operand) => _operandParsers.First(o => o.Operands.Contains(operand));
+        public static OperandParser FindOperandParser(string operand) => _operandParsers.FirstOrDefault(o => o.Operands.Contains(operand));
         
         /// <summary>
         ///     Parses the instruction.
