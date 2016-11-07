@@ -20,7 +20,6 @@ namespace hasm.Parsing.Models
             ["N"] = Condition.Negative
         };
 
-        public string Label { get; set; }
         public ALU ALU { get; set; }
         public MemoryOperation Memory { get; set; }
         public bool LastInstruction { get; set; }
@@ -28,9 +27,8 @@ namespace hasm.Parsing.Models
         public Condition Condition { get; set; }
         public bool InvertedCondition { get; set; }
 
-        public MicroInstruction(string label, ALU alu, MemoryOperation memory, bool lastInstruction, bool statusEnabled, Condition condition, bool invertedCondition)
+        public MicroInstruction(ALU alu, MemoryOperation memory, bool lastInstruction, bool statusEnabled, Condition condition, bool invertedCondition)
         {
-            Label = label;
             ALU = alu;
             Memory = memory;
             LastInstruction = lastInstruction;
@@ -41,11 +39,6 @@ namespace hasm.Parsing.Models
 
         public static MicroInstruction Parse(string[] row)
         {
-            var instruction = row[0];
-            var label = string.IsNullOrEmpty(instruction)
-                ? string.Empty 
-                : HasmGrammar.Opcode.FirstValue(instruction).ToLower() + "1";
-
             var operation = new Regex("\\s+").Replace(row[1], "");
             var parsed = MicroHasmGrammar.Operation.ParseTree(operation);
 
@@ -75,14 +68,13 @@ namespace hasm.Parsing.Models
             var statusCell = row[4];
             var statusEnabled = statusCell == "1";
             
-            return new MicroInstruction(label, alu, memory, lastInstruction, statusEnabled, condition, inverted);
+            return new MicroInstruction(alu, memory, lastInstruction, statusEnabled, condition, inverted);
         }
 
         public override string ToString()
         {
             var builder = new StringBuilder();
 
-            builder.Append($"{Label}: ");
             if (Condition != Condition.None)
                 builder.Append($"if {Condition} = {(InvertedCondition ? "0" : "1")}: ");
 

@@ -65,10 +65,11 @@
     <Compile Include="Models\AluOperation.cs" />
     <Compile Include="Models\Condition.cs" />
     <Compile Include="Models\MemoryOperation.cs" />
+    <Compile Include="Models\MicroFunction.cs" />
     <Compile Include="Models\MicroInstruction.cs" />
     <Compile Include="Models\OperandEncoding.cs" />
     <Compile Include="Models\OperandEncodingType.cs" />
-    <Compile Include="Parsers\Sheet\MicroInstructionSheetParser.cs" />
+    <Compile Include="Parsers\Sheet\MicroFunctionSheetParser.cs" />
     <Compile Include="Parsers\OperandParser.cs" />
     <Compile Include="Parsers\Sheet\BaseSheetParser.cs" />
     <Compile Include="Parsers\Sheet\HasmSheetParser.cs" />
