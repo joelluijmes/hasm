@@ -75,5 +75,16 @@ namespace hasm.Parsing.Models
 
             return builder.ToString();
         }
+
+        public ALU Clone() => new ALU
+        {
+            Carry = Carry,
+            Left = Left,
+            Operation = Operation,
+            Right = Right,
+            Shift = Shift,
+            StackPointer = StackPointer,
+            Target = Target
+        };
     }
 }
