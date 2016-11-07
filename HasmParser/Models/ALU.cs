@@ -57,17 +57,18 @@ namespace hasm.Parsing.Models
             if (!string.IsNullOrEmpty(Left))
                 builder.Append(Left);
 
-            if (Operation == AluOperation.Clear)
-                return builder.ToString();
+            if (Operation != AluOperation.Clear)
+            {
+                var sign = _operations.FirstOrDefault(f => f.Value == Operation)
+                                      .Key;
+                if (!string.IsNullOrEmpty(sign))
+                    builder.Append(sign);
 
-            var sign = _operations.FirstOrDefault(f => f.Value == Operation).Key;
-            if (!string.IsNullOrEmpty(sign))
-                builder.Append(sign);
+                builder.Append(Right);
 
-            builder.Append(Right);
-
-            if (Carry && !string.IsNullOrEmpty(sign))
-                builder.Append($"{sign}C");
+                if (Carry && !string.IsNullOrEmpty(sign))
+                    builder.Append($"{sign}C");
+            }
 
             if (!string.IsNullOrEmpty(Shift))
                 builder.Append($"{Shift}1");
