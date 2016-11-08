@@ -21,7 +21,6 @@ namespace hasm
         public void Generate()
         {
             var list = new List<MicroFunction>();
-            long total = 0;
             foreach (var microFunction in _microFunctions)
             {
                 var operands = HasmGrammar.GetOperands(microFunction.Instruction)
@@ -38,7 +37,6 @@ namespace hasm
 
                         foreach (var instruction in function.MicroInstructions)
                         {
-                            ++total;
                             var alu = instruction.ALU;
                             if (alu == null)
                                 continue;
@@ -55,6 +53,8 @@ namespace hasm
                     list.Add(function);
                 }
             }
+
+            var c = list.Sum(s => s.MicroInstructions.Count);
         }
 
         private static IEnumerable<ALU> Permute(ALU alu)
@@ -106,8 +106,13 @@ namespace hasm
             case OperandEncodingType.Range:
                 return Enumerable.Range(encoding.Minimum, encoding.Maximum - encoding.Minimum + 1).Select(i => i.ToString());
             case OperandEncodingType.Aggregation:
-                    return new string[] { null };// throw new NotImplementedException();
-                default:
+            {
+                var splitted = operand.Split(new[] {' ', '+'}, StringSplitOptions.RemoveEmptyEntries);
+                var operands = splitted.Select(PermuteOperands);
+
+                return operands.CartesianProduct().Select(x => x.Aggregate((current, y) => $"{current}+{y}"));
+            }
+            default:
                 throw new ArgumentOutOfRangeException();
             }
         }
