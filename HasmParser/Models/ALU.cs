@@ -231,12 +231,10 @@ namespace hasm.Parsing.Models
                 get { return _operand; }
                 set
                 {
-                    if (_operand == value)
-                        return;
-
                     _operand = value;
-                    if (!_parser.Operands.Contains(_operand))
-                        Convert = _parser?.Parse(Operand) ?? 0;
+
+                    if (_operand != value)  // if changes -> reset the converted value
+                        _converted = null;
                 }
             }
 
@@ -246,10 +244,11 @@ namespace hasm.Parsing.Models
             { // operand can be null
                 _operand = operand;
                 _parser = HasmGrammar.FindOperandParser(operand);
-                Convert = 0;
+                _converted = null;
             }
 
-            public long Convert { get; private set; }
+            private long? _converted;
+            public long Convert => _converted ?? (_converted = _parser?.Parse(Operand)) ?? 0;
 
             public override string ToString() => $"{Operand}: {Convert}";
 
