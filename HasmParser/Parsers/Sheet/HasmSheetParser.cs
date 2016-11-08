@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -18,7 +19,7 @@ namespace hasm.Parsing.Parsers.Sheet
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly HasmGrammar _grammar;
-        private readonly Dictionary<string, ValueRule<byte[]>> _rules;
+        private readonly IDictionary<string, ValueRule<byte[]>> _rules;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="HasmSheetParser" /> class.
@@ -27,7 +28,7 @@ namespace hasm.Parsing.Parsers.Sheet
         public HasmSheetParser(HasmGrammar grammar)
         {
             _grammar = grammar;
-            _rules = new Dictionary<string, ValueRule<byte[]>>();
+            _rules = new ConcurrentDictionary<string, ValueRule<byte[]>>();
             _logger.Info($"Learned {Items.Count} instructions");
         }
 

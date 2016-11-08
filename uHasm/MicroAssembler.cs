@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
 using hasm.Parsing.Parsers.Sheet;
@@ -27,7 +29,7 @@ namespace hasm
 
             var sw = Stopwatch.StartNew();
             var program = _microProgram;
-            var microFunctions = GenerateMicroInstructions(program).ToList();
+            var microFunctions = GenerateMicroInstructions(program);
             sw.Stop();
 
             _logger.Info($"Generated {microFunctions.Count} micro-functions in {sw.Elapsed}");
@@ -48,22 +50,27 @@ namespace hasm
             _logger.Info($"Encoded {microFunctions.Count} micro-functions (in total {instructions} micro-instructions) in {sw.Elapsed}");
         }
 
-        private static IEnumerable<MicroFunction> GenerateMicroInstructions(IEnumerable<MicroFunction> microFunctions)
+        private static IList<MicroFunction> GenerateMicroInstructions(IEnumerable<MicroFunction> microFunctions)
         {
-            foreach (var microFunction in microFunctions)
+            var concurrentBag = new ConcurrentBag<MicroFunction>();
+
+            //foreach (var microFunction in microFunctions)
+            Parallel.ForEach(microFunctions, microFunction =>
             {
                 var operands = HasmGrammar.GetOperands(microFunction.Instruction)
                                           .Select(type => PermuteOperands(type) // generate all permutations of operand
-                                                      .Select(operand => new KeyValuePair<string, string>(type, operand))); // put it in a key:value
+                                              .Select(operand => new KeyValuePair<string, string>(type, operand))); // put it in a key:value
 
-                foreach (var permutation in operands.CartesianProduct())
+                Parallel.ForEach(operands.CartesianProduct(), permutation =>
                 {
                     var function = microFunction.Clone();
                     PermuteFunction(permutation, function);
 
-                    yield return function;
-                }
-            }
+                    concurrentBag.Add(function);
+                });
+            });
+
+            return concurrentBag.ToList();
         }
 
         private static void PermuteFunction(IEnumerable<KeyValuePair<string, string>> permutation, MicroFunction function)
