@@ -35,7 +35,33 @@ namespace hasm.Parsing.Grammars
                 _operandParsers.Add(OperandParser.Create(parser));
         }
 
-        public static OperandParser FindOperandParser(string operand) => _operandParsers.FirstOrDefault(o => o.Operands.Contains(operand));
+        public static OperandParser FindOperandParser(string operand)
+        {
+            foreach (var parser in _operandParsers)
+            {
+                if (parser.Operands.Contains(operand))
+                    return parser;
+
+                var encoding = parser.OperandEncoding;
+                switch (encoding.Type)
+                {
+                case OperandEncodingType.KeyValue:
+                    if (encoding.Pairs.Any(p => p.Key == operand))
+                        return parser;
+
+                    break;
+
+                case OperandEncodingType.Range:
+                    int operandAsNumber;
+                    if (int.TryParse(operand, out operandAsNumber) && operandAsNumber >= encoding.Minimum && operandAsNumber <= encoding.Maximum)
+                        return parser;
+
+                    break;
+                }
+            }
+
+            return null;
+        }
 
         public static string[] GetOperands(string grammar)
         {
