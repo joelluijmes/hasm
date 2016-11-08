@@ -38,8 +38,8 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="ParserLib, Version=1.5.79.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ParserLib-debug.1.5.79\lib\ParserLib.dll</HintPath>
-      <Private>True</Private>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\ParserLib\ParserLib\bin\Debug\ParserLib.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
 using NLog;
@@ -111,9 +110,9 @@ namespace hasm.Parsing.Parsers.Sheet
 
         private static string FormatInput(string input)
         {
-            var opcode = HasmGrammar.Opcode.FirstValue(input);
+            var opcode = input.Split(' ')[0];
             var operands = input.Substring(opcode.Length);
-            operands = new Regex("\\s+").Replace(operands, "");
+            operands = string.Join("", operands.Split(default(string[]), StringSplitOptions.RemoveEmptyEntries));
             operands = operands.Replace("+-", "-");
 
             return opcode + " " + operands;

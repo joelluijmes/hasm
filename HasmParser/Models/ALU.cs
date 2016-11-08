@@ -59,10 +59,10 @@ namespace hasm.Parsing.Models
 
         public Alu(string target, string left, string right, AluOperation operation, bool carry, bool stackPointer, bool rightShift)
         {
+            _targetOperand = new OperandConverter(target);
             _leftOperand = new OperandConverter(left);
             _rightOperand = new OperandConverter(right);
-            _targetOperand = new OperandConverter(target);
-
+            
             // immediates must be placed on B bus (right), so for certain cases we have to swap the operands
             // so that the right is the immediate
             if (_leftOperand.IsImmediate)
@@ -89,28 +89,39 @@ namespace hasm.Parsing.Models
             Operation = operation;
         }
 
+        private Alu(OperandConverter target, OperandConverter left, OperandConverter right, AluOperation operation, bool carry, bool stackPointer, bool rightShift)
+        {
+            _targetOperand = target;
+            _leftOperand = left;
+            _rightOperand = right;
+            Carry = carry;
+            StackPointer = stackPointer;
+            RightShift = rightShift;
+            Operation = operation;
+        }
+
         public long Encode()
         {
             long result = 0;
 
             result |= (string.IsNullOrEmpty(Target)
                             ? 0xFFL
-                            : _targetOperand.Convert()) << ENCODING_C;
+                            : _targetOperand.Convert) << ENCODING_C;
 
             result |= (string.IsNullOrEmpty(Left)
                             ? 0xFFL
-                            : _leftOperand.Convert()) << ENCODING_A;
+                            : _leftOperand.Convert) << ENCODING_A;
 
 
             if (!string.IsNullOrEmpty(Right))
             {
                 if (_rightOperand.IsImmediate)
                 {
-                    result |= (_rightOperand.Convert() >> 1) << ENCODING_IMM; // we put only max 11 bits in the microencoding, last one comes from decoder
+                    result |= (_rightOperand.Convert>> 1) << ENCODING_IMM; // we put only max 11 bits in the microencoding, last one comes from decoder
                     result |= 1L << ENCODING_IMM_EN; // enable immediate
                     result |= 0xFFL << ENCODING_B; // disable register from B
                 }
-                else result |= _rightOperand.Convert() << ENCODING_B;
+                else result |= _rightOperand.Convert<< ENCODING_B;
             }
             else result |= 0xFFL << ENCODING_B;
 
@@ -208,24 +219,39 @@ namespace hasm.Parsing.Models
             }
         }
 
-        public Alu Clone() => new Alu(Target, Left, Right, Operation, Carry, StackPointer, RightShift);
+        public Alu Clone() => new Alu(_targetOperand, _leftOperand, _rightOperand, Operation, Carry, StackPointer, RightShift);
 
         private struct OperandConverter
         {
             private readonly OperandParser _parser;
+            private string _operand;
 
-            public string Operand { get; set; }
+            public string Operand
+            {
+                get { return _operand; }
+                set
+                {
+                    if (_operand == value)
+                        return;
+
+                    _operand = value;
+                    if (!_parser.Operands.Contains(_operand))
+                        Convert = _parser?.Parse(Operand) ?? 0;
+                }
+            }
+
             public bool IsImmediate => this != default(OperandConverter) && ( _parser == null || _parser.OperandEncoding?.Type == OperandEncodingType.Range);
 
             public OperandConverter(string operand)
             { // operand can be null
-                Operand = operand;
+                _operand = operand;
                 _parser = HasmGrammar.FindOperandParser(operand);
+                Convert = 0;
             }
 
-            public long Convert() => _parser?.Parse(Operand) ?? 0;
+            public long Convert { get; private set; }
 
-            public override string ToString() => $"{Operand}: {Convert()}";
+            public override string ToString() => $"{Operand}: {Convert}";
 
             public bool Equals(OperandConverter other) => Equals(_parser, other._parser) && string.Equals(Operand, other.Operand);
 

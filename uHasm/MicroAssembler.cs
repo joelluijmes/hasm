@@ -31,7 +31,7 @@ namespace hasm
             var program = _microProgram;
             var microFunctions = GenerateMicroInstructions(program);
             sw.Stop();
-
+                
             _logger.Info($"Generated {microFunctions.Count} micro-functions in {sw.Elapsed}");
             _logger.Info("Encoding all possible instructions..");
 
@@ -54,20 +54,19 @@ namespace hasm
         {
             var concurrentBag = new ConcurrentBag<MicroFunction>();
 
-            //foreach (var microFunction in microFunctions)
             Parallel.ForEach(microFunctions, microFunction =>
             {
                 var operands = HasmGrammar.GetOperands(microFunction.Instruction)
                                           .Select(type => PermuteOperands(type) // generate all permutations of operand
                                               .Select(operand => new KeyValuePair<string, string>(type, operand))); // put it in a key:value
 
-                Parallel.ForEach(operands.CartesianProduct(), permutation =>
+                foreach (var permutation in operands.CartesianProduct())
                 {
                     var function = microFunction.Clone();
                     PermuteFunction(permutation, function);
 
                     concurrentBag.Add(function);
-                });
+                };
             });
 
             return concurrentBag.ToList();
