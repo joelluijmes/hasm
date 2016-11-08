@@ -28,7 +28,7 @@ namespace hasm
             _logger.Info("Generating all possible instructions..");
 
             var sw = Stopwatch.StartNew();
-            var program = _microProgram;
+            var program = _microProgram.Skip(22);
             var microFunctions = GenerateMicroInstructions(program);
             sw.Stop();
                 
@@ -37,24 +37,48 @@ namespace hasm
 
             sw.Restart();
             long instructions = 0;
-            foreach (var function in microFunctions)
-            {
-                foreach (var instruction in function.MicroInstructions)
-                {
-                    instruction.Encode();
-                    ++instructions;
-                }
-            }
+            FitMicroFunctions(microFunctions);
+            //foreach (var function in microFunctions)
+            //{
+            //    foreach (var instruction in function.MicroInstructions)
+            //    {
+                    
+            //        instruction.Encode();
+            //        ++instructions;
+            //    }
+            //}
 
             sw.Stop();
             _logger.Info($"Encoded {microFunctions.Count} micro-functions (in total {instructions} micro-instructions) in {sw.Elapsed}");
+        }
+
+        private void FitMicroFunctions(IList<MicroFunction> microFunctions)
+        {
+            var address = 0;
+            foreach (var function in microFunctions)
+            {
+                if (function.MicroInstructions.Count == 1)  // single instruction functions already have address
+                    return;
+
+                for (var i = 1; i < function.MicroInstructions.Count; ++i)
+                {
+                    var instruction = function.MicroInstructions[i];
+
+                    instruction.Location = (1 << 9 | address++) << 6;
+                    if (instruction.Location > 0xFFFF)
+                        throw new NotImplementedException();
+
+                    function.MicroInstructions[i - 1].NextInstruction = instruction.Location;
+                }
+            }
         }
 
         private static IList<MicroFunction> GenerateMicroInstructions(IEnumerable<MicroFunction> microFunctions)
         {
             var concurrentBag = new ConcurrentBag<MicroFunction>();
 
-            Parallel.ForEach(microFunctions, microFunction =>
+            //Parallel.ForEach(microFunctions, microFunction =>
+            foreach (var microFunction in microFunctions)
             {
                 var operands = HasmGrammar.GetOperands(microFunction.Instruction)
                                           .Select(type => PermuteOperands(type) // generate all permutations of operand
@@ -67,7 +91,7 @@ namespace hasm
 
                     concurrentBag.Add(function);
                 };
-            });
+            };
 
             return concurrentBag.ToList();
         }
@@ -96,7 +120,7 @@ namespace hasm
             var encoded = _sheetParser.Encode(function.Instruction);
             Array.Resize(ref encoded, 4);
             var address = BitConverter.ToInt32(encoded, 0);
-            function.MicroInstructions.First().Address = address;
+            function.MicroInstructions.First().Location = address;
         }
 
         private static IEnumerable<KeyValuePair<string, string>> SplitAggregated(KeyValuePair<string, string> keyValue)

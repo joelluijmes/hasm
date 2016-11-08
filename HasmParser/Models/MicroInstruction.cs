@@ -27,7 +27,8 @@ namespace hasm.Parsing.Models
             ["N"] = Condition.Negative
         };
 
-        public int Address { get; set; }
+        public int Location { get; set; }
+        public int NextInstruction { get; set; }
         public Alu ALU { get; set; }
         public MemoryOperation Memory { get; set; }
         public bool LastInstruction { get; set; }
@@ -62,7 +63,10 @@ namespace hasm.Parsing.Models
             result |= (long) Memory << ENCODING_MEMORY;
 
             if (!LastInstruction)
-                result |= 1L << ENCODING_NEXT;  
+            {
+                result |= 1L << ENCODING_NEXT;
+                result |= (long) NextInstruction << ENCODING_ADDR;
+            }
 
             return result;
         }
