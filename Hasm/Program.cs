@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Fclp;
+using hasm.Parsing;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
 using hasm.Parsing.Parsers.Sheet;
@@ -65,7 +66,7 @@ namespace hasm
                     }
                 }
 
-                var assembler = new Assembler(_hasmSheetParser, listing);
+                var assembler = new HasmAssembler(listing);
                 var assembled = assembler.Process();
 
                 var encoded = assembled.Aggregate("", (a, b) => $"{a} {b:X2}");
@@ -134,7 +135,7 @@ namespace hasm
         private static void AssembleFile(string input, string output)
         {
             var listing = File.ReadAllLines(input);
-            var assembler = new Assembler(_hasmSheetParser, listing);
+            var assembler = new HasmAssembler(listing);
             var assembled = assembler.Process();
 
             var encoded = assembled.Aggregate("", (a, b) => $"{a} {b:X2}");

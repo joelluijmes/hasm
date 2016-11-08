@@ -3,22 +3,58 @@ using System.Collections.Generic;
 using System.Linq;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
+using NLog;
 
 namespace hasm
 {
-    internal sealed class Assembler
+    internal sealed class MicroAssembler
     {
-        private readonly IList<MicroInstruction> _microInstructions;
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-        public Assembler(IList<MicroInstruction> microInstructions)
+        private readonly IList<MicroFunction> _microFunctions;
+
+        public MicroAssembler(IList<MicroFunction> microFunctions)
         {
-            _microInstructions = microInstructions;
+            _microFunctions = microFunctions;
         }
 
         public void Generate()
         {
-            var instruction = _microInstructions.Skip(40).First();
-            var permutes = Permute(instruction.ALU).ToList();
+            var list = new List<MicroFunction>();
+            long total = 0;
+            foreach (var microFunction in _microFunctions)
+            {
+                var operands = HasmGrammar.GetOperands(microFunction.Instruction)
+                    .Select(type => PermuteOperands(type).Select(operand => new KeyValuePair<string, string>(type, operand)));
+                var operandPermutations = operands.CartesianProduct();
+
+                foreach (var permutation in operandPermutations)
+                {
+                    var function = microFunction.Clone();
+
+                    foreach (var operand in permutation)
+                    {
+                        function.Instruction = function.Instruction.Replace(operand.Key, operand.Value);
+
+                        foreach (var instruction in function.MicroInstructions)
+                        {
+                            ++total;
+                            var alu = instruction.ALU;
+                            if (alu == null)
+                                continue;
+
+                            if (!string.IsNullOrEmpty(alu.Left))
+                                alu.Left = alu.Left.Replace(operand.Key, operand.Value);
+                            if (!string.IsNullOrEmpty(alu.Right))
+                                alu.Right = alu.Right.Replace(operand.Key, operand.Value);
+                            if (!string.IsNullOrEmpty(alu.Target))
+                                alu.Target = alu.Target.Replace(operand.Key, operand.Value);
+                        }
+                    }
+
+                    list.Add(function);
+                }
+            }
         }
 
         private static IEnumerable<ALU> Permute(ALU alu)
@@ -70,8 +106,8 @@ namespace hasm
             case OperandEncodingType.Range:
                 return Enumerable.Range(encoding.Minimum, encoding.Maximum - encoding.Minimum + 1).Select(i => i.ToString());
             case OperandEncodingType.Aggregation:
-                throw new NotImplementedException();
-            default:
+                    return new string[] { null };// throw new NotImplementedException();
+                default:
                 throw new ArgumentOutOfRangeException();
             }
         }

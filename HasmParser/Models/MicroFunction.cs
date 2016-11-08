@@ -5,7 +5,7 @@ namespace hasm.Parsing.Models
 {
     public sealed class MicroFunction
     {
-        public string Instruction { get; }
+        public string Instruction { get; set; }
         public IList<MicroInstruction> MicroInstructions { get; }
 
         public MicroFunction(string instruction, IEnumerable<MicroInstruction> microInstructions)

@@ -11,22 +11,20 @@ namespace hasm
     /// <summary>
     ///     Used to assemble a listing into binary data.
     /// </summary>
-    internal sealed class Assembler
+    internal sealed class HasmAssembler
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly HasmSheetParser _sheetParser = new HasmSheetParser(new HasmGrammar());
         private readonly IDictionary<string, int> _labelLookup;
         private readonly IList<Instruction> _listing;
         private readonly Instruction _nopInstruction;
-        private readonly HasmSheetParser _sheetParser;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="Assembler" /> class.
+        ///     Initializes a new instance of the <see cref="HasmAssembler" /> class.
         /// </summary>
-        /// <param name="sheetParser">The parser.</param>
         /// <param name="listing">The listing to assemble.</param>
-        public Assembler(HasmSheetParser sheetParser, IEnumerable<string> listing)
+        public HasmAssembler(IEnumerable<string> listing)
         {
-            _sheetParser = sheetParser;
             _listing = listing
                 .Where(l => !string.IsNullOrWhiteSpace(l))
                 .Select(ParseFromLine)
@@ -144,9 +142,13 @@ namespace hasm
                 line = line.Substring(label.Length + 1).Trim();
                 label = label.Trim();
             }
-            else label = null;
+            else
+                label = null;
 
-            var input = line == string.Empty ? string.Empty : HasmGrammar.ListingInstruction.FirstValueOrDefault(line);
+            var input = line == string.Empty
+                ? string.Empty
+                : HasmGrammar.ListingInstruction.FirstValueOrDefault(line);
+
             if (!string.IsNullOrEmpty(input))
                 input = input.Trim();
 

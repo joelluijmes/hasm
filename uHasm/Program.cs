@@ -56,10 +56,9 @@ namespace hasm
 			//Console.WriteLine(tree.PrettyFormat());
 
 			var microParser = new MicroFunctionSheetParser();
-		    var x = microParser.Items.ToList();
-		    //var assembler = new Assembler(microParser.Items);
-		    //         assembler.Generate();
-		}
+            var assembler = new MicroAssembler(microParser.Items);
+            assembler.Generate();
+        }
 
 		private static void UnhandledException(object sender, UnhandledExceptionEventArgs e)
 		{

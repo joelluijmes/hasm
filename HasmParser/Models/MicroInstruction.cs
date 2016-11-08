@@ -91,6 +91,6 @@ namespace hasm.Parsing.Models
             return builder.ToString();
         }
 
-        public MicroInstruction Clone() => new MicroInstruction(ALU.Clone(), Memory, LastInstruction, StatusEnabled, Condition, InvertedCondition);
+        public MicroInstruction Clone() => new MicroInstruction(ALU?.Clone(), Memory, LastInstruction, StatusEnabled, Condition, InvertedCondition);
     }
 }
