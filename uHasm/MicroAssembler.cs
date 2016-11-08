@@ -57,19 +57,20 @@ namespace hasm
             var address = 0;
             foreach (var function in microFunctions)
             {
-                if (function.MicroInstructions.Count == 1)  // single instruction functions already have address
-                    return;
-
-                for (var i = 1; i < function.MicroInstructions.Count; ++i)
+                if (function.MicroInstructions.Count != 1) // single instruction functions already have address
                 {
-                    var instruction = function.MicroInstructions[i];
+                    for (var i = 1; i < function.MicroInstructions.Count; ++i)
+                    {
+                        var instruction = function.MicroInstructions[i];
 
-                    instruction.Location = (1 << 9 | address++) << 6;
-                    if (instruction.Location > 0xFFFF)
-                        throw new NotImplementedException();
+                        instruction.Location = (1 << 9 | address++) << 6;
 
-                    function.MicroInstructions[i - 1].NextInstruction = instruction.Location;
+                        function.MicroInstructions[i - 1].NextInstruction = instruction.Location;
+                    }
                 }
+
+                foreach (var instruciton in function.MicroInstructions)
+                    instruciton.Encode();
             }
         }
 
