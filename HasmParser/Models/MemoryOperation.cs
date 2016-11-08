@@ -3,7 +3,7 @@
     public enum MemoryOperation
     {
         None,
-        Read,
-        Write
+        Read = 1 << 0,
+        Write = 1 << 1
     }
 }

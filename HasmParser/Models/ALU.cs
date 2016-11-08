@@ -11,6 +11,16 @@ namespace hasm.Parsing.Models
 {
     public sealed class Alu
     {
+        private const int ENCODING_IMM = 18;
+        private const int ENCODING_IMM_EN = 30;
+        private const int ENCODING_A = 31;
+        private const int ENCODING_B = 36;
+        private const int ENCODING_C = 41;
+        private const int ENCODING_SP = 45;
+        private const int ENCODING_ALU = 46;
+        private const int ENCODING_CARRY = 50;
+        private const int ENCODING_SHIFT = 51;
+
         private static readonly Dictionary<string, AluOperation> _operations = new Dictionary<string, AluOperation>
         {
             ["-"] = AluOperation.Minus,
@@ -83,44 +93,35 @@ namespace hasm.Parsing.Models
         {
             long result = 0;
 
-            var disable = DisableLines.None;
-            if (string.IsNullOrEmpty(Target))
-                disable |= DisableLines.Target;
-            else
-                result |= _targetOperand.Convert() << 40;
+            result |= (string.IsNullOrEmpty(Target)
+                            ? 0xFFL
+                            : _targetOperand.Convert()) << ENCODING_C;
 
-            if (string.IsNullOrEmpty(Left))
-                disable |= DisableLines.Left;
-            else
-                result |= _leftOperand.Convert() << 31;
+            result |= (string.IsNullOrEmpty(Left)
+                            ? 0xFFL
+                            : _leftOperand.Convert()) << ENCODING_A;
 
-            if (string.IsNullOrEmpty(Right))
-                disable |= DisableLines.Right;
-            else
+
+            if (!string.IsNullOrEmpty(Right))
             {
                 if (_rightOperand.IsImmediate)
                 {
-                    result |= _rightOperand.Convert() << 18;
-                    disable |= DisableLines.Right;
+                    result |= (_rightOperand.Convert() >> 1) << ENCODING_IMM; // we put only max 11 bits in the microencoding, last one comes from decoder
+                    result |= 1L << ENCODING_IMM_EN; // enable immediate
+                    result |= 0xFFL << ENCODING_B; // disable register from B
                 }
-                else
-                {
-                    result |= _rightOperand.Convert() << 36;
-                    disable |= DisableLines.Immediate;
-                }
+                else result |= _rightOperand.Convert() << ENCODING_B;
             }
+            else result |= 0xFFL << ENCODING_B;
 
             if (StackPointer)
-                result |= 1L << 45;
+                result |= 1L << ENCODING_SP;
             if (Carry)
-                result |= 1L << 55;
+                result |= 1L << ENCODING_CARRY;
             if (RightShift)
-                result |= 1L << 56;
+                result |= 1L << ENCODING_SHIFT;
 
-            if (disable == DisableLines.None) // not everything can be enabled
-                throw new NotImplementedException();
-
-            result |= (long) disable << 46;
+            result |= 1L << ENCODING_ALU;
 
             return result;
         }

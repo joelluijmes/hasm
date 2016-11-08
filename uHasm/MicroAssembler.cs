@@ -11,39 +11,37 @@ namespace hasm
     internal sealed class MicroAssembler
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private readonly IList<MicroFunction> _microFunctions;
+        private readonly IList<MicroFunction> _microProgram;
 
-        public MicroAssembler(IList<MicroFunction> microFunctions)
+        public MicroAssembler(IList<MicroFunction> microProgram)
         {
-            _microFunctions = microFunctions;
+            _microProgram = microProgram;
         }
 
         public void Generate()
         {
-            _logger.Info($"Generating all possible instructions..");
+            _logger.Info("Generating all possible instructions..");
 
             var sw = Stopwatch.StartNew();
-            var list = GenerateMicroInstructions(_microFunctions).ToList();
+            var microFunctions = GenerateMicroInstructions(_microProgram).ToList();
             sw.Stop();
 
-            _logger.Info($"Generated {list.Count} micro-functions in {sw.Elapsed}");
-            _logger.Info($"Encoding all possible instructions..");
+            _logger.Info($"Generated {microFunctions.Count} micro-functions in {sw.Elapsed}");
+            _logger.Info("Encoding all possible instructions..");
 
             sw.Restart();
-            long functions = 0, instructions = 0;
-            foreach (var function in list)
+            long instructions = 0;
+            foreach (var function in microFunctions)
             {
                 foreach (var instruction in function.MicroInstructions)
                 {
                     instruction.Encode();
                     ++instructions;
                 }
-
-                ++functions;
             }
 
             sw.Stop();
-            _logger.Info($"Encoded {functions} micro-functions (in total {instructions} micro-instructions) in {sw.Elapsed}");
+            _logger.Info($"Encoded {microFunctions.Count} micro-functions (in total {instructions} micro-instructions) in {sw.Elapsed}");
         }
 
         private static IEnumerable<MicroFunction> GenerateMicroInstructions(IEnumerable<MicroFunction> microFunctions)
@@ -88,8 +86,8 @@ namespace hasm
 
         private static IEnumerable<KeyValuePair<string, string>> SplitAggregated(KeyValuePair<string, string> keyValue)
         {
-            var keys = keyValue.Key.Split(new[] { ' ', '+' }, StringSplitOptions.RemoveEmptyEntries);
-            var values = keyValue.Value.Split(new[] { ' ', '+' }, StringSplitOptions.RemoveEmptyEntries);
+            var keys = keyValue.Key.Split(new[] {' ', '+'}, StringSplitOptions.RemoveEmptyEntries);
+            var values = keyValue.Value.Split(new[] {' ', '+'}, StringSplitOptions.RemoveEmptyEntries);
 
             if (keys.Length != values.Length)
                 throw new NotImplementedException();

@@ -11,6 +11,13 @@ namespace hasm.Parsing.Models
 {
     public sealed class MicroInstruction
     {
+        private const int ENCODING_NEXT = 0;
+        private const int ENCODING_ADDR = 1;
+        private const int ENCODING_CONDITION = 11;
+        private const int ENCODING_STATUS_EN = 15;
+        private const int ENCODING_MEMORY = 16;
+        private const int ENCODING_CONDITION_INVERTED = 14;
+
         private static readonly Dictionary<string, Condition> _conditions = new Dictionary<string, Condition>
         {
             ["C"] = Condition.Carry,
@@ -39,8 +46,22 @@ namespace hasm.Parsing.Models
 
         public long Encode()
         {
-            long result = ALU?.Encode() ?? 0;
+            long result = 0;
 
+            if (ALU != null)
+                result |= ALU.Encode();
+
+            result |= (long)Condition << ENCODING_CONDITION;
+            if (InvertedCondition)
+                result |= 1L << ENCODING_CONDITION_INVERTED;
+                
+            if (StatusEnabled)
+                result |= 1L << ENCODING_STATUS_EN;
+
+            result |= (long) Memory << ENCODING_MEMORY;
+
+            if (!LastInstruction)
+                result |= 1L << ENCODING_NEXT;  
 
             return result;
         }
