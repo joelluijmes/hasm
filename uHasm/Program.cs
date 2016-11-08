@@ -41,11 +41,11 @@ namespace hasm
 
 		private static void MainImpl(string[] args)
 		{
-			if (Debugging)
-			{
-				var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
-				consoleRule.EnableLoggingForLevel(LogLevel.Debug);
-			}
+			//if (Debugging)
+			//{
+			//	var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
+			//	consoleRule.EnableLoggingForLevel(LogLevel.Debug);
+			//}
 
 			//var rule = MicroHasmGrammar.Alu;
 			//Console.WriteLine(rule.PrettyFormat());

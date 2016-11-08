@@ -27,6 +27,7 @@ namespace hasm.Parsing.Models
             ["N"] = Condition.Negative
         };
 
+        public int Address { get; set; }
         public Alu ALU { get; set; }
         public MemoryOperation Memory { get; set; }
         public bool LastInstruction { get; set; }

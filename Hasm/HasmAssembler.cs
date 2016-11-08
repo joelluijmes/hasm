@@ -11,7 +11,7 @@ namespace hasm
     /// <summary>
     ///     Used to assemble a listing into binary data.
     /// </summary>
-    internal sealed class HasmAssembler
+    public sealed class HasmAssembler
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private static readonly HasmSheetParser _sheetParser = new HasmSheetParser(new HasmGrammar());

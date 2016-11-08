@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
+using hasm.Parsing.Parsers.Sheet;
 using NLog;
 
 namespace hasm
@@ -11,6 +12,8 @@ namespace hasm
     internal sealed class MicroAssembler
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly HasmSheetParser _sheetParser = new HasmSheetParser(new HasmGrammar());
+
         private readonly IList<MicroFunction> _microProgram;
 
         public MicroAssembler(IList<MicroFunction> microProgram)
@@ -23,7 +26,8 @@ namespace hasm
             _logger.Info("Generating all possible instructions..");
 
             var sw = Stopwatch.StartNew();
-            var microFunctions = GenerateMicroInstructions(_microProgram).ToList();
+            var program = _microProgram;
+            var microFunctions = GenerateMicroInstructions(program).ToList();
             sw.Stop();
 
             _logger.Info($"Generated {microFunctions.Count} micro-functions in {sw.Elapsed}");
@@ -82,6 +86,11 @@ namespace hasm
                         alu.Target = alu.Target.Replace(operand.Key, operand.Value);
                 }
             }
+
+            var encoded = _sheetParser.Encode(function.Instruction);
+            Array.Resize(ref encoded, 4);
+            var address = BitConverter.ToInt32(encoded, 0);
+            function.MicroInstructions.First().Address = address;
         }
 
         private static IEnumerable<KeyValuePair<string, string>> SplitAggregated(KeyValuePair<string, string> keyValue)

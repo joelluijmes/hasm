@@ -113,6 +113,7 @@ namespace hasm.Parsing.Parsers.Sheet
             var opcode = HasmGrammar.Opcode.FirstValue(input);
             var operands = input.Substring(opcode.Length);
             operands = new Regex("\\s+").Replace(operands, "");
+            operands = operands.Replace("+-", "-");
 
             return opcode + " " + operands;
         }
