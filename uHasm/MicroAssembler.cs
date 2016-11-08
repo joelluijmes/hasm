@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
@@ -19,12 +20,30 @@ namespace hasm
 
         public void Generate()
         {
-            var microFunc = _microFunctions.Skip(60).Take(1);
-            var list = GenerateMicroInstructions(_microFunctions);
+            _logger.Info($"Generating all possible instructions..");
 
+            var sw = Stopwatch.StartNew();
+            var list = GenerateMicroInstructions(_microFunctions).ToList();
+            sw.Stop();
+
+            _logger.Info($"Generated {list.Count} micro-functions in {sw.Elapsed}");
+            _logger.Info($"Encoding all possible instructions..");
+
+            sw.Restart();
+            long functions = 0, instructions = 0;
             foreach (var function in list)
+            {
                 foreach (var instruction in function.MicroInstructions)
+                {
                     instruction.Encode();
+                    ++instructions;
+                }
+
+                ++functions;
+            }
+
+            sw.Stop();
+            _logger.Info($"Encoded {functions} micro-functions (in total {instructions} micro-instructions) in {sw.Elapsed}");
         }
 
         private static IEnumerable<MicroFunction> GenerateMicroInstructions(IEnumerable<MicroFunction> microFunctions)
