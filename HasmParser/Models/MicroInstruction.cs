@@ -91,6 +91,36 @@ namespace hasm.Parsing.Models
             return builder.ToString();
         }
 
+        private bool Equals(MicroInstruction other)
+        {
+            return Equals(ALU, other.ALU) && Memory == other.Memory && LastInstruction == other.LastInstruction && StatusEnabled == other.StatusEnabled && Condition == other.Condition && InvertedCondition == other.InvertedCondition;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+                return false;
+            if (ReferenceEquals(this, obj))
+                return true;
+
+            var other = obj as MicroInstruction;
+            return other != null && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = ALU?.GetHashCode() ?? 0;
+                hashCode = (hashCode*397) ^ (int) Memory;
+                hashCode = (hashCode*397) ^ LastInstruction.GetHashCode();
+                hashCode = (hashCode*397) ^ StatusEnabled.GetHashCode();
+                hashCode = (hashCode*397) ^ (int) Condition;
+                hashCode = (hashCode*397) ^ InvertedCondition.GetHashCode();
+                return hashCode;
+            }
+        }
+
         public MicroInstruction Clone() => new MicroInstruction(ALU?.Clone(), Memory, LastInstruction, StatusEnabled, Condition, InvertedCondition);
     }
 }

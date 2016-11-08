@@ -76,6 +76,37 @@ namespace hasm.Parsing.Models
             return builder.ToString();
         }
 
+        private bool Equals(ALU other)
+        {
+            return string.Equals(Target, other.Target) && string.Equals(Left, other.Left) && string.Equals(Right, other.Right) && Carry == other.Carry && StackPointer == other.StackPointer && string.Equals(Shift, other.Shift) && Operation == other.Operation;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+                return false;
+            if (ReferenceEquals(this, obj))
+                return true;
+
+            var other = obj as ALU;
+            return other != null && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = Target?.GetHashCode() ?? 0;
+                hashCode = (hashCode*397) ^ (Left?.GetHashCode() ?? 0);
+                hashCode = (hashCode*397) ^ (Right?.GetHashCode() ?? 0);
+                hashCode = (hashCode*397) ^ Carry.GetHashCode();
+                hashCode = (hashCode*397) ^ StackPointer.GetHashCode();
+                hashCode = (hashCode*397) ^ (Shift?.GetHashCode() ?? 0);
+                hashCode = (hashCode*397) ^ (int) Operation;
+                return hashCode;
+            }
+        }
+
         public ALU Clone() => new ALU
         {
             Carry = Carry,

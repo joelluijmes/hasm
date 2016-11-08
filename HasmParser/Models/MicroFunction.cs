@@ -21,5 +21,29 @@ namespace hasm.Parsing.Models
         }
 
         public MicroFunction Clone() => new MicroFunction(Instruction, MicroInstructions.Select(i => i.Clone()));
+
+        private bool Equals(MicroFunction other)
+        {
+            return string.Equals(Instruction, other.Instruction) && Equals(MicroInstructions, other.MicroInstructions);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+                return false;
+            if (ReferenceEquals(this, obj))
+                return true;
+
+            var other = obj as MicroFunction;
+            return other != null && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return ((Instruction?.GetHashCode() ?? 0)*397) ^ (MicroInstructions?.GetHashCode() ?? 0);
+            }
+        }
     }
 }
