@@ -2,11 +2,11 @@
 {
     public enum Condition
     {
-        None,
-        Carry,
-        Overflow,
-        Zero,
-        Negative,
-        Sign
+        None = 7,
+        Carry = 0,
+        Overflow = 3,
+        Zero = 1,
+        Negative = 2,
+        Sign = 4
     }
 }

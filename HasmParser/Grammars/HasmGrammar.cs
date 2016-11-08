@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using hasm.Parsing.Models;
 using hasm.Parsing.Parsers;
@@ -37,6 +38,9 @@ namespace hasm.Parsing.Grammars
 
         public static OperandParser FindOperandParser(string operand)
         {
+            if (operand == null)
+                return null;
+
             foreach (var parser in _operandParsers)
             {
                 if (parser.Operands.Contains(operand))
@@ -53,8 +57,11 @@ namespace hasm.Parsing.Grammars
 
                 case OperandEncodingType.Range:
                     int operandAsNumber;
-                    if (int.TryParse(operand, out operandAsNumber) && operandAsNumber >= encoding.Minimum && operandAsNumber <= encoding.Maximum)
-                        return parser;
+                    if (int.TryParse(operand, out operandAsNumber) || int.TryParse(operand.Replace("0x", ""), NumberStyles.HexNumber, null, out operandAsNumber))
+                    {
+                        if (operandAsNumber >= encoding.Minimum && operandAsNumber <= encoding.Maximum)
+                            return parser;
+                    }
 
                     break;
                 }

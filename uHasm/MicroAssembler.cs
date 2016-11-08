@@ -10,7 +10,6 @@ namespace hasm
     internal sealed class MicroAssembler
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
         private readonly IList<MicroFunction> _microFunctions;
 
         public MicroAssembler(IList<MicroFunction> microFunctions)
@@ -20,74 +19,63 @@ namespace hasm
 
         public void Generate()
         {
-            var list = new List<MicroFunction>();
-            foreach (var microFunction in _microFunctions)
-            {
-                var operands = HasmGrammar.GetOperands(microFunction.Instruction)
-                    .Select(type => PermuteOperands(type).Select(operand => new KeyValuePair<string, string>(type, operand)));
-                var operandPermutations = operands.CartesianProduct();
+            var microFunc = _microFunctions.Skip(60).Take(1);
+            var list = GenerateMicroInstructions(_microFunctions);
 
-                foreach (var permutation in operandPermutations)
-                {
-                    var function = microFunction.Clone();
-
-                    foreach (var operand in permutation)
-                    {
-                        function.Instruction = function.Instruction.Replace(operand.Key, operand.Value);
-
-                        foreach (var instruction in function.MicroInstructions)
-                        {
-                            var alu = instruction.ALU;
-                            if (alu == null)
-                                continue;
-
-                            if (!string.IsNullOrEmpty(alu.Left))
-                                alu.Left = alu.Left.Replace(operand.Key, operand.Value);
-                            if (!string.IsNullOrEmpty(alu.Right))
-                                alu.Right = alu.Right.Replace(operand.Key, operand.Value);
-                            if (!string.IsNullOrEmpty(alu.Target))
-                                alu.Target = alu.Target.Replace(operand.Key, operand.Value);
-                        }
-                    }
-
-                    list.Add(function);
-                }
-            }
-
-            var c = list.Sum(s => s.MicroInstructions.Count);
+            foreach (var function in list)
+                foreach (var instruction in function.MicroInstructions)
+                    instruction.Encode();
         }
 
-        private static IEnumerable<ALU> Permute(ALU alu)
+        private static IEnumerable<MicroFunction> GenerateMicroInstructions(IEnumerable<MicroFunction> microFunctions)
         {
-            if (alu == null)
-                return Enumerable.Empty<ALU>();
-
-            Func<string, string, string, ALU> creator =
-                (target, left, right) => new ALU
-                {
-                    Target = target,
-                    Left = left,
-                    Right = right,
-                    Operation = alu.Operation,
-                    Shift = alu.Shift,
-                    Carry = alu.Carry,
-                    StackPointer = alu.StackPointer
-                };
-
-            var targets = PermuteOperands(alu.Target);
-            if (alu.Target == alu.Left && string.IsNullOrWhiteSpace(alu.Right))
+            foreach (var microFunction in microFunctions)
             {
-                return from t in targets
-                       select creator(t, t, null);
+                var operands = HasmGrammar.GetOperands(microFunction.Instruction)
+                                          .Select(type => PermuteOperands(type) // generate all permutations of operand
+                                                      .Select(operand => new KeyValuePair<string, string>(type, operand))); // put it in a key:value
+
+                foreach (var permutation in operands.CartesianProduct())
+                {
+                    var function = microFunction.Clone();
+                    PermuteFunction(permutation, function);
+
+                    yield return function;
+                }
             }
+        }
 
-            var lefts = PermuteOperands(alu.Left);
-            var rights = PermuteOperands(alu.Right);
+        private static void PermuteFunction(IEnumerable<KeyValuePair<string, string>> permutation, MicroFunction function)
+        {
+            foreach (var operand in permutation.SelectMany(SplitAggregated))
+            {
+                function.Instruction = function.Instruction.Replace(operand.Key, operand.Value);
 
-            return from t in targets
-                   from l in lefts
-                   from r in rights
-                   select creator(t, l, r);
+                foreach (var instruction in function.MicroInstructions)
+                {
+                    var alu = instruction.ALU;
+                    if (alu == null)
+                        continue;
+
+                    if (!string.IsNullOrEmpty(alu.Left))
+                        alu.Left = alu.Left.Replace(operand.Key, operand.Value);
+                    if (!string.IsNullOrEmpty(alu.Right))
+                        alu.Right = alu.Right.Replace(operand.Key, operand.Value);
+                    if (!string.IsNullOrEmpty(alu.Target))
+                        alu.Target = alu.Target.Replace(operand.Key, operand.Value);
+                }
+            }
+        }
+
+        private static IEnumerable<KeyValuePair<string, string>> SplitAggregated(KeyValuePair<string, string> keyValue)
+        {
+            var keys = keyValue.Key.Split(new[] { ' ', '+' }, StringSplitOptions.RemoveEmptyEntries);
+            var values = keyValue.Value.Split(new[] { ' ', '+' }, StringSplitOptions.RemoveEmptyEntries);
+
+            if (keys.Length != values.Length)
+                throw new NotImplementedException();
+
+            return keys.Zip(values, (key, value) => new KeyValuePair<string, string>(key, value));
         }
 
         private static IEnumerable<string> PermuteOperands(string operand)
@@ -104,13 +92,13 @@ namespace hasm
             case OperandEncodingType.KeyValue:
                 return encoding.Pairs.Select(p => p.Key);
             case OperandEncodingType.Range:
-                return Enumerable.Range(encoding.Minimum, encoding.Maximum - encoding.Minimum + 1).Select(i => i.ToString());
+                return Enumerable.Range(encoding.Minimum, encoding.Maximum - encoding.Minimum).Select(i => i.ToString());
             case OperandEncodingType.Aggregation:
             {
                 var splitted = operand.Split(new[] {' ', '+'}, StringSplitOptions.RemoveEmptyEntries);
                 var operands = splitted.Select(PermuteOperands);
 
-                return operands.CartesianProduct().Select(x => x.Aggregate((current, y) => $"{current}+{y}"));
+                return operands.CartesianProduct().Select(x => x.Aggregate((current, y) => $"{current} {y}"));
             }
             default:
                 throw new ArgumentOutOfRangeException();

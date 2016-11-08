@@ -54,7 +54,7 @@ namespace hasm
 
                 Init();
 
-//					LiveMode();
+					LiveMode();
 
                 var listing = new List<string>();
                 using (var memoryStream = new MemoryStream(Resources.listing))

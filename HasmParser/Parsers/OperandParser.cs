@@ -54,6 +54,8 @@ namespace hasm.Parsing.Parsers
             return new OperandParser(valueRule, operandEncoding);
         }
 
+        public int Parse(string operand) => ValueRule.FirstValue(operand);
+
         public Rule CreateRule(string encoding)
         {
             if (OperandEncoding.Type != OperandEncodingType.Aggregation)

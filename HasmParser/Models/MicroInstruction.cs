@@ -20,14 +20,14 @@ namespace hasm.Parsing.Models
             ["N"] = Condition.Negative
         };
 
-        public ALU ALU { get; set; }
+        public Alu ALU { get; set; }
         public MemoryOperation Memory { get; set; }
         public bool LastInstruction { get; set; }
         public bool StatusEnabled { get; set; }
         public Condition Condition { get; set; }
         public bool InvertedCondition { get; set; }
 
-        public MicroInstruction(ALU alu, MemoryOperation memory, bool lastInstruction, bool statusEnabled, Condition condition, bool invertedCondition)
+        public MicroInstruction(Alu alu, MemoryOperation memory, bool lastInstruction, bool statusEnabled, Condition condition, bool invertedCondition)
         {
             ALU = alu;
             Memory = memory;
@@ -35,6 +35,14 @@ namespace hasm.Parsing.Models
             StatusEnabled = statusEnabled;
             Condition = condition;
             InvertedCondition = invertedCondition;
+        }
+
+        public long Encode()
+        {
+            long result = ALU?.Encode() ?? 0;
+
+
+            return result;
         }
 
         public static MicroInstruction Parse(string[] row)
@@ -54,7 +62,7 @@ namespace hasm.Parsing.Models
 
             var aluNode = parsed.FirstNodeByNameOrDefault("alu");
             var alu = aluNode != null
-                ? ALU.Parse(aluNode)
+                ? Alu.Parse(aluNode)
                 : null;
 
             var memoryCell = row[2];
