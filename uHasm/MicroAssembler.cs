@@ -28,21 +28,22 @@ namespace hasm
             _logger.Info("Generating all possible instructions..");
 
             var sw = Stopwatch.StartNew();
-            var program = _microProgram.Skip(20).Take(1);
+            var program = _microProgram.Take(2);
             var microFunctions = GenerateMicroInstructions(program);
             sw.Stop();
-                
+
             _logger.Info($"Generated {microFunctions.Count} micro-functions in {sw.Elapsed}");
             _logger.Info("Encoding all possible instructions..");
 
             sw.Restart();
-            long instructions = 0;
+            
             FitMicroFunctions(microFunctions);
+            long instructions = microFunctions.SelectMany(s => s.MicroInstructions).Distinct().Count();
             //foreach (var function in microFunctions)
             //{
             //    foreach (var instruction in function.MicroInstructions)
             //    {
-                    
+
             //        instruction.Encode();
             //        ++instructions;
             //    }
@@ -54,6 +55,8 @@ namespace hasm
 
         private void FitMicroFunctions(IList<MicroFunction> microFunctions)
         {
+            var instructions = new List<MicroInstruction>();
+
             var address = 0;
             foreach (var function in microFunctions)
             {
@@ -63,9 +66,16 @@ namespace hasm
                     {
                         var instruction = function.MicroInstructions[i];
 
-                        instruction.Location = address++ << 6;
+                        var cached = instructions.FirstOrDefault(x => x.Equals(instruction));
+                        if (cached != null) // reuse a previous created microinstruction
+                            function.MicroInstructions[i] = cached;
+                        else
+                            function.MicroInstructions[i].Location = address++ << 6;
 
-                        function.MicroInstructions[i - 1].NextInstruction = instruction.Location;
+                        function.MicroInstructions[i - 1].NextInstruction = function.MicroInstructions[i].Location;
+
+                        if (cached == null)
+                            instructions.Add(instruction);
                     }
                 }
 

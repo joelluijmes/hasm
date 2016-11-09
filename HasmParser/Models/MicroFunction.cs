@@ -22,7 +22,7 @@ namespace hasm.Parsing.Models
 
         public MicroFunction Clone() => new MicroFunction(Instruction, MicroInstructions.Select(i => i.Clone()));
 
-        private bool Equals(MicroFunction other)
+        public bool Equals(MicroFunction other)
         {
             return string.Equals(Instruction, other.Instruction) && Equals(MicroInstructions, other.MicroInstructions);
         }
