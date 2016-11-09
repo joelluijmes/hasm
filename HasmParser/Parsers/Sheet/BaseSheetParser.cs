@@ -26,6 +26,9 @@ namespace hasm.Parsing.Parsers.Sheet
             foreach (var row in EnumerateRows(SheetName))
             {
                 var current = Parse(row, previous);
+                if (EqualityComparer<T>.Default.Equals(current, previous))
+                    continue;
+
                 previous = current;
 
                 list.Add(current);
