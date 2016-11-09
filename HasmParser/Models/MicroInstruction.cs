@@ -125,9 +125,9 @@ namespace hasm.Parsing.Models
             return builder.ToString();
         }
 
-        private bool Equals(MicroInstruction other)
+        public bool Equals(MicroInstruction other)
         {
-            return Equals(ALU, other.ALU) && Memory == other.Memory && LastInstruction == other.LastInstruction && StatusEnabled == other.StatusEnabled && Condition == other.Condition && InvertedCondition == other.InvertedCondition;
+            return ALU.Equals(other.ALU) && Memory == other.Memory && LastInstruction == other.LastInstruction && StatusEnabled == other.StatusEnabled && Condition == other.Condition && InvertedCondition == other.InvertedCondition;
         }
 
         public override bool Equals(object obj)

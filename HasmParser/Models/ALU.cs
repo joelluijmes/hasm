@@ -198,7 +198,7 @@ namespace hasm.Parsing.Models
             return builder.ToString();
         }
 
-        private bool Equals(Alu other)
+        public bool Equals(Alu other)
         {
             return string.Equals(Target, other.Target) && string.Equals(Left, other.Left) && string.Equals(Right, other.Right) && (Carry == other.Carry) && (StackPointer == other.StackPointer) && Equals(RightShift, other.RightShift) && (Operation == other.Operation);
         }
