@@ -9,17 +9,17 @@ using ParserLib.Parsing;
 
 namespace hasm.Parsing.Models
 {
-    public sealed class Alu
+    public sealed class ALU
     {
-        private const int ENCODING_IMM = 18;
-        private const int ENCODING_IMM_EN = 30;
-        private const int ENCODING_A = 31;
-        private const int ENCODING_B = 36;
-        private const int ENCODING_C = 41;
-        private const int ENCODING_SP = 45;
-        private const int ENCODING_ALU = 46;
-        private const int ENCODING_CARRY = 50;
-        private const int ENCODING_SHIFT = 51;
+        private const int ENCODING_IMM = 17;
+        private const int ENCODING_IMM_EN = 29;
+        private const int ENCODING_A = 30;
+        private const int ENCODING_B = 34;
+        private const int ENCODING_C = 38;
+        private const int ENCODING_SP = 42;
+        private const int ENCODING_ALU = 43;
+        private const int ENCODING_CARRY = 46;
+        private const int ENCODING_SHIFT = 47;
 
         private static readonly Dictionary<string, AluOperation> _operations = new Dictionary<string, AluOperation>
         {
@@ -34,7 +34,7 @@ namespace hasm.Parsing.Models
         private OperandConverter _rightOperand;
         private OperandConverter _targetOperand;
 
-        public Alu(string target, string left, string right, AluOperation operation, bool carry, bool stackPointer, bool rightShift)
+        public ALU(string target, string left, string right, AluOperation operation, bool carry, bool stackPointer, bool rightShift)
         {
             _targetOperand = new OperandConverter(target);
             _leftOperand = new OperandConverter(left);
@@ -63,14 +63,16 @@ namespace hasm.Parsing.Models
                         throw new NotImplementedException();
                 }
             }
-
+            
             Carry = carry;
             StackPointer = stackPointer;
             RightShift = rightShift;
-            Operation = operation;
+            Operation = (Left == null && Right != null) || (Left != null && Right == null)
+                ? AluOperation.Assignment   // encoded as addition
+                : operation;
         }
 
-        private Alu(OperandConverter target, OperandConverter left, OperandConverter right, AluOperation operation, bool carry, bool stackPointer, bool rightShift)
+        private ALU(OperandConverter target, OperandConverter left, OperandConverter right, AluOperation operation, bool carry, bool stackPointer, bool rightShift)
         {
             _targetOperand = target;
             _leftOperand = left;
@@ -109,40 +111,40 @@ namespace hasm.Parsing.Models
             long result = 0;
 
             result |= (string.IsNullOrEmpty(Target)
-                          ? 0xFFL
+                          ? 0xFL
                           : _targetOperand.Value) << ENCODING_C;
 
             result |= (string.IsNullOrEmpty(Left)
-                          ? 0xFFL
+                          ? 0xFL
                           : _leftOperand.Value) << ENCODING_A;
 
             if (!string.IsNullOrEmpty(Right))
             {
                 if (_rightOperand.IsImmediate)
                 {
-                    result |= (_rightOperand.Value >> 1) << ENCODING_IMM; // we put only max 11 bits in the microencoding, last one comes from decoder
+                    result |= _rightOperand.Value << ENCODING_IMM; // we put only max 11 bits in the microencoding, last one comes from decoder
                     result |= 1L << ENCODING_IMM_EN; // enable immediate
-                    result |= 0xFFL << ENCODING_B; // disable register from B
+                    result |= 0xFL << ENCODING_B; // disable register from B
                 }
                 else
                     result |= _rightOperand.Value << ENCODING_B;
             }
             else
-                result |= 0xFFL << ENCODING_B;
+                result |= 0xFL << ENCODING_B;
 
-            if (StackPointer)
+            if (!StackPointer)  // stackpointter is disable in encoding
                 result |= 1L << ENCODING_SP;
             if (Carry)
                 result |= 1L << ENCODING_CARRY;
             if (RightShift)
                 result |= 1L << ENCODING_SHIFT;
 
-            result |= 1L << ENCODING_ALU;
+            result |= (long)Operation << ENCODING_ALU;
 
             return result;
         }
 
-        public static Alu Parse(Node aluNode)
+        public static ALU Parse(Node aluNode)
         {
             var target = aluNode.FirstValueByNameOrDefault<string>("target");
             var left = aluNode.FirstValueByNameOrDefault<string>("left");
@@ -157,7 +159,7 @@ namespace hasm.Parsing.Models
             if (op != null)
                 _operations.TryGetValue(op, out operation);
 
-            return new Alu(target, left, right, operation, carry, stackPointer, shift);
+            return new ALU(target, left, right, operation, carry, stackPointer, shift);
         }
 
         public override string ToString()
@@ -173,20 +175,19 @@ namespace hasm.Parsing.Models
             {
                 if (!string.IsNullOrEmpty(Left))
                     builder.Append(Left);
+                else if (!string.IsNullOrEmpty(Right))
+                    builder.Append(Right);
 
-                else
+                if (Operation != AluOperation.Clear && Operation != AluOperation.Assignment)
                 {
-                    if (Operation != AluOperation.Clear)
-                    {
-                        var sign = _operations.FirstOrDefault(f => f.Value == Operation).Key;
-                        if (!string.IsNullOrEmpty(sign))
-                            builder.Append(sign);
+                    var sign = _operations.FirstOrDefault(f => f.Value == Operation).Key;
+                    if (!string.IsNullOrEmpty(sign))
+                        builder.Append(sign);
 
-                        builder.Append(Right);
+                    builder.Append(Right);
 
-                        if (Carry && !string.IsNullOrEmpty(sign))
-                            builder.Append($"{sign}C");
-                    }
+                    if (Carry && !string.IsNullOrEmpty(sign))
+                        builder.Append($"{sign}C");
                 }
             }
             else
@@ -198,7 +199,7 @@ namespace hasm.Parsing.Models
             return builder.ToString();
         }
 
-        public bool Equals(Alu other)
+        public bool Equals(ALU other)
         {
             return string.Equals(Target, other.Target) && string.Equals(Left, other.Left) && string.Equals(Right, other.Right) && (Carry == other.Carry) && (StackPointer == other.StackPointer) && Equals(RightShift, other.RightShift) && (Operation == other.Operation);
         }
@@ -210,7 +211,7 @@ namespace hasm.Parsing.Models
             if (ReferenceEquals(this, obj))
                 return true;
 
-            var other = obj as Alu;
+            var other = obj as ALU;
             return (other != null) && Equals(other);
         }
 
@@ -229,7 +230,7 @@ namespace hasm.Parsing.Models
             }
         }
 
-        public Alu Clone() => new Alu(_targetOperand, _leftOperand, _rightOperand, Operation, Carry, StackPointer, RightShift);
+        public ALU Clone() => new ALU(_targetOperand, _leftOperand, _rightOperand, Operation, Carry, StackPointer, RightShift);
 
         private struct OperandConverter
         {

@@ -13,10 +13,10 @@ namespace hasm.Parsing.Models
     {
         private const int ENCODING_NEXT = 0;
         private const int ENCODING_ADDR = 1;
-        private const int ENCODING_CONDITION = 11;
-        private const int ENCODING_STATUS_EN = 15;
-        private const int ENCODING_MEMORY = 16;
-        private const int ENCODING_CONDITION_INVERTED = 14;
+        private const int ENCODING_CONDITION = 10;
+        private const int ENCODING_CONDITION_INVERTED = 13;
+        private const int ENCODING_STATUS_EN = 14;
+        private const int ENCODING_MEMORY = 15;
 
         private static readonly Dictionary<string, Condition> _conditions = new Dictionary<string, Condition>
         {
@@ -29,14 +29,14 @@ namespace hasm.Parsing.Models
 
         public int Location { get; set; }
         public int NextInstruction { get; set; }
-        public Alu ALU { get; set; }
+        public ALU ALU { get; set; }
         public MemoryOperation Memory { get; set; }
         public bool LastInstruction { get; set; }
         public bool StatusEnabled { get; set; }
         public Condition Condition { get; set; }
         public bool InvertedCondition { get; set; }
 
-        public MicroInstruction(Alu alu, MemoryOperation memory, bool lastInstruction, bool statusEnabled, Condition condition, bool invertedCondition)
+        public MicroInstruction(ALU alu, MemoryOperation memory, bool lastInstruction, bool statusEnabled, Condition condition, bool invertedCondition)
         {
             ALU = alu;
             Memory = memory;
@@ -88,7 +88,7 @@ namespace hasm.Parsing.Models
 
             var aluNode = parsed.FirstNodeByNameOrDefault("alu");
             var alu = aluNode != null
-                ? Alu.Parse(aluNode)
+                ? ALU.Parse(aluNode)
                 : null;
 
             var memoryCell = row[2];
