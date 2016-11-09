@@ -34,6 +34,53 @@ namespace hasm.Parsing.Models
         private OperandConverter _rightOperand;
         private OperandConverter _targetOperand;
 
+        public Alu(string target, string left, string right, AluOperation operation, bool carry, bool stackPointer, bool rightShift)
+        {
+            _targetOperand = new OperandConverter(target);
+            _leftOperand = new OperandConverter(left);
+            _rightOperand = new OperandConverter(right);
+
+            // immediates must be placed on B bus (right), so for certain cases we have to swap the operands
+            // so that the right is the immediate
+            if (_leftOperand.IsImmediate)
+            {
+                if (_rightOperand == default(OperandConverter)) // assignment
+                {
+                    _rightOperand = _leftOperand;
+                    _leftOperand = default(OperandConverter);
+                }
+                else
+                {
+                    if (operation == AluOperation.Minus) // com, neg (immedate - register)
+                    {
+                        var temp = _rightOperand;
+                        _rightOperand = _leftOperand;
+                        _leftOperand = temp;
+
+                        operation = AluOperation.InverseMinus;
+                    }
+                    else
+                        throw new NotImplementedException();
+                }
+            }
+
+            Carry = carry;
+            StackPointer = stackPointer;
+            RightShift = rightShift;
+            Operation = operation;
+        }
+
+        private Alu(OperandConverter target, OperandConverter left, OperandConverter right, AluOperation operation, bool carry, bool stackPointer, bool rightShift)
+        {
+            _targetOperand = target;
+            _leftOperand = left;
+            _rightOperand = right;
+            Carry = carry;
+            StackPointer = stackPointer;
+            RightShift = rightShift;
+            Operation = operation;
+        }
+
         public string Target
         {
             get { return _targetOperand.Operand; }
@@ -57,73 +104,31 @@ namespace hasm.Parsing.Models
         public bool RightShift { get; set; }
         public AluOperation Operation { get; set; }
 
-        public Alu(string target, string left, string right, AluOperation operation, bool carry, bool stackPointer, bool rightShift)
-        {
-            _targetOperand = new OperandConverter(target);
-            _leftOperand = new OperandConverter(left);
-            _rightOperand = new OperandConverter(right);
-            
-            // immediates must be placed on B bus (right), so for certain cases we have to swap the operands
-            // so that the right is the immediate
-            if (_leftOperand.IsImmediate)
-            {
-                if (_rightOperand == default(OperandConverter)) // assignment
-                {
-                    _rightOperand = _leftOperand;
-                    _leftOperand = default(OperandConverter);
-                }
-                else if (operation == AluOperation.Minus) // com, neg (immedate - register)
-                {
-                    var temp = _rightOperand;
-                    _rightOperand =  _leftOperand;
-                    _leftOperand = temp;
-                    
-                    operation = AluOperation.InverseMinus;
-                }
-                else throw new NotImplementedException();
-            }
-
-            Carry = carry;
-            StackPointer = stackPointer;
-            RightShift = rightShift;
-            Operation = operation;
-        }
-
-        private Alu(OperandConverter target, OperandConverter left, OperandConverter right, AluOperation operation, bool carry, bool stackPointer, bool rightShift)
-        {
-            _targetOperand = target;
-            _leftOperand = left;
-            _rightOperand = right;
-            Carry = carry;
-            StackPointer = stackPointer;
-            RightShift = rightShift;
-            Operation = operation;
-        }
-
         public long Encode()
         {
             long result = 0;
 
             result |= (string.IsNullOrEmpty(Target)
-                            ? 0xFFL
-                            : _targetOperand.Convert) << ENCODING_C;
+                          ? 0xFFL
+                          : _targetOperand.Value) << ENCODING_C;
 
             result |= (string.IsNullOrEmpty(Left)
-                            ? 0xFFL
-                            : _leftOperand.Convert) << ENCODING_A;
-
+                          ? 0xFFL
+                          : _leftOperand.Value) << ENCODING_A;
 
             if (!string.IsNullOrEmpty(Right))
             {
                 if (_rightOperand.IsImmediate)
                 {
-                    result |= (_rightOperand.Convert>> 1) << ENCODING_IMM; // we put only max 11 bits in the microencoding, last one comes from decoder
+                    result |= (_rightOperand.Value >> 1) << ENCODING_IMM; // we put only max 11 bits in the microencoding, last one comes from decoder
                     result |= 1L << ENCODING_IMM_EN; // enable immediate
                     result |= 0xFFL << ENCODING_B; // disable register from B
                 }
-                else result |= _rightOperand.Convert<< ENCODING_B;
+                else
+                    result |= _rightOperand.Value << ENCODING_B;
             }
-            else result |= 0xFFL << ENCODING_B;
+            else
+                result |= 0xFFL << ENCODING_B;
 
             if (StackPointer)
                 result |= 1L << ENCODING_SP;
@@ -163,24 +168,29 @@ namespace hasm.Parsing.Models
                 builder.Append($"{Target}=");
             if (StackPointer)
                 builder.Append("SP=");
-            if (!string.IsNullOrEmpty(Left))
-                builder.Append(Left);
 
-            if (Operation == AluOperation.InverseMinus)
+            if (Operation != AluOperation.InverseMinus)
             {
+                if (!string.IsNullOrEmpty(Left))
+                    builder.Append(Left);
+
+                else
+                {
+                    if (Operation != AluOperation.Clear)
+                    {
+                        var sign = _operations.FirstOrDefault(f => f.Value == Operation).Key;
+                        if (!string.IsNullOrEmpty(sign))
+                            builder.Append(sign);
+
+                        builder.Append(Right);
+
+                        if (Carry && !string.IsNullOrEmpty(sign))
+                            builder.Append($"{sign}C");
+                    }
+                }
+            }
+            else
                 builder.Append($"{Right}-{Left}");
-            }
-            else if (Operation != AluOperation.Clear)
-            {
-                var sign = _operations.FirstOrDefault(f => f.Value == Operation).Key;
-                if (!string.IsNullOrEmpty(sign))
-                    builder.Append(sign);
-
-                builder.Append(Right);
-
-                if (Carry && !string.IsNullOrEmpty(sign))
-                    builder.Append($"{sign}C");
-            }
 
             if (RightShift)
                 builder.Append(">>1");
@@ -190,7 +200,7 @@ namespace hasm.Parsing.Models
 
         private bool Equals(Alu other)
         {
-            return string.Equals(Target, other.Target) && string.Equals(Left, other.Left) && string.Equals(Right, other.Right) && (Carry == other.Carry) && (StackPointer == other.StackPointer) && string.Equals(RightShift, other.RightShift) && (Operation == other.Operation);
+            return string.Equals(Target, other.Target) && string.Equals(Left, other.Left) && string.Equals(Right, other.Right) && (Carry == other.Carry) && (StackPointer == other.StackPointer) && Equals(RightShift, other.RightShift) && (Operation == other.Operation);
         }
 
         public override bool Equals(object obj)
@@ -233,24 +243,24 @@ namespace hasm.Parsing.Models
                 {
                     _operand = value;
 
-                    if (_operand != value)  // if changes -> reset the converted value
-                        _converted = null;
+                    if (_operand != value) // if changes -> reset the converted value
+                        _value = null;
                 }
             }
 
-            public bool IsImmediate => this != default(OperandConverter) && ( _parser == null || _parser.OperandEncoding?.Type == OperandEncodingType.Range);
+            public bool IsImmediate => (this != default(OperandConverter)) && ((_parser == null) || (_parser.OperandEncoding?.Type == OperandEncodingType.Range));
 
             public OperandConverter(string operand)
             { // operand can be null
                 _operand = operand;
                 _parser = HasmGrammar.FindOperandParser(operand);
-                _converted = null;
+                _value = null;
             }
 
-            private long? _converted;
-            public long Convert => _converted ?? (_converted = _parser?.Parse(Operand)) ?? 0;
+            private long? _value;
+            public long Value => _value ?? (_value = _parser?.Parse(Operand)) ?? 0;
 
-            public override string ToString() => $"{Operand}: {Convert}";
+            public override string ToString() => $"{Operand}: {Value}";
 
             public bool Equals(OperandConverter other) => Equals(_parser, other._parser) && string.Equals(Operand, other.Operand);
 
