@@ -28,7 +28,7 @@ namespace hasm
             _logger.Info("Generating all possible instructions..");
 
             var sw = Stopwatch.StartNew();
-            var program = _microProgram.Skip(22);
+            var program = _microProgram.Skip(20).Take(1);
             var microFunctions = GenerateMicroInstructions(program);
             sw.Stop();
                 
@@ -63,7 +63,7 @@ namespace hasm
                     {
                         var instruction = function.MicroInstructions[i];
 
-                        instruction.Location = (1 << 9 | address++) << 6;
+                        instruction.Location = address++ << 6;
 
                         function.MicroInstructions[i - 1].NextInstruction = instruction.Location;
                     }

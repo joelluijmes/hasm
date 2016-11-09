@@ -41,21 +41,21 @@ namespace hasm
 
 		private static void MainImpl(string[] args)
 		{
-			//if (Debugging)
-			//{
-			//	var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
-			//	consoleRule.EnableLoggingForLevel(LogLevel.Debug);
-			//}
+            if (Debugging)
+            {
+                var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
+                consoleRule.EnableLoggingForLevel(LogLevel.Debug);
+            }
 
-			//var rule = MicroHasmGrammar.Alu;
-			//Console.WriteLine(rule.PrettyFormat());
-			//Console.WriteLine();
+            //var rule = MicroHasmGrammar.Alu;
+            //Console.WriteLine(rule.PrettyFormat());
+            //Console.WriteLine();
 
-			//var tree = rule.ParseTree("0xFF-DST");
+            //var tree = rule.ParseTree("0xFF-DST");
 
-			//Console.WriteLine(tree.PrettyFormat());
+            //Console.WriteLine(tree.PrettyFormat());
 
-			var microParser = new MicroFunctionSheetParser();
+            var microParser = new MicroFunctionSheetParser();
             var assembler = new MicroAssembler(microParser.Items);
             assembler.Generate();
         }

@@ -45,9 +45,9 @@
       <HintPath>..\packages\NLog.4.3.11\lib\net45\NLog.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="ParserLib, Version=1.5.79.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\ParserLib\ParserLib\bin\Debug\ParserLib.dll</HintPath>
+    <Reference Include="ParserLib, Version=1.5.80.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ParserLib-debug.1.5.80\lib\ParserLib.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
