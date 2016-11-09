@@ -35,7 +35,7 @@ namespace hasm.Parsing.Grammars
             foreach (var parser in operandSheetParser.Items)
                 _operandParsers.Add(OperandParser.Create(parser));
         }
-
+        
         public static OperandParser FindOperandParser(string operand)
         {
             if (operand == null)

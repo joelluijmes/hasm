@@ -28,7 +28,7 @@ namespace hasm
             _logger.Info("Generating all possible instructions..");
 
             var sw = Stopwatch.StartNew();
-            var program = _microProgram.Take(2);
+            var program = _microProgram;
             var microFunctions = GenerateMicroInstructions(program);
             sw.Stop();
 
@@ -55,7 +55,7 @@ namespace hasm
 
         private void FitMicroFunctions(IList<MicroFunction> microFunctions)
         {
-            var instructions = new List<MicroInstruction>();
+            var instructions = new Dictionary<MicroInstruction, MicroInstruction>();
 
             var address = 0;
             foreach (var function in microFunctions)
@@ -66,7 +66,9 @@ namespace hasm
                     {
                         var instruction = function.MicroInstructions[i];
 
-                        var cached = instructions.FirstOrDefault(x => x.Equals(instruction));
+                        MicroInstruction cached;
+                        instructions.TryGetValue(instruction, out cached);
+
                         if (cached != null) // reuse a previous created microinstruction
                             function.MicroInstructions[i] = cached;
                         else
@@ -75,7 +77,7 @@ namespace hasm
                         function.MicroInstructions[i - 1].NextInstruction = function.MicroInstructions[i].Location;
 
                         if (cached == null)
-                            instructions.Add(instruction);
+                            instructions.Add(instruction, instruction);
                     }
                 }
 
@@ -88,21 +90,22 @@ namespace hasm
         {
             var concurrentBag = new ConcurrentBag<MicroFunction>();
 
-            //Parallel.ForEach(microFunctions, microFunction =>
-            foreach (var microFunction in microFunctions)
-            {
-                var operands = HasmGrammar.GetOperands(microFunction.Instruction)
-                                          .Select(type => PermuteOperands(type) // generate all permutations of operand
-                                              .Select(operand => new KeyValuePair<string, string>(type, operand))); // put it in a key:value
-
-                foreach (var permutation in operands.CartesianProduct())
+            Parallel.ForEach(microFunctions, microFunction =>
+                //foreach (var microFunction in microFunctions)
                 {
-                    var function = microFunction.Clone();
-                    PermuteFunction(permutation, function);
+                    var operands = HasmGrammar.GetOperands(microFunction.Instruction)
+                                              .Select(type => PermuteOperands(type) // generate all permutations of operand
+                                                  .Select(operand => new KeyValuePair<string, string>(type, operand))); // put it in a key:value
 
-                    concurrentBag.Add(function);
-                };
-            };
+                    foreach (var permutation in operands.CartesianProduct())
+                    {
+                        var function = microFunction.Clone();
+                        PermuteFunction(permutation, function);
+
+                        concurrentBag.Add(function);
+                    }
+                });
+            //}
 
             return concurrentBag.ToList();
         }

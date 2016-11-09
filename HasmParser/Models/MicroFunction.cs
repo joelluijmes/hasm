@@ -45,5 +45,7 @@ namespace hasm.Parsing.Models
                 return ((Instruction?.GetHashCode() ?? 0)*397) ^ (MicroInstructions?.GetHashCode() ?? 0);
             }
         }
+
+        public override string ToString() => Instruction;
     }
 }
