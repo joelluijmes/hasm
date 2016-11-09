@@ -125,8 +125,14 @@ namespace hasm
                 if (string.IsNullOrEmpty(line))
                     break;
 
-                var encoded = _hasmSheetParser.Encode(line).Aggregate("0x", (a, b) => $"{a}{b:X2}");
-                _logger.Info($"Parsed {line} to encoding {encoded}");
+                var encoded = _hasmSheetParser.Encode(line);
+                var value = encoded.Length == 1
+                    ? encoded[0]
+                    : encoded.Length == 2
+                        ? BitConverter.ToInt16(encoded, 0)
+                        : 0;
+
+                _logger.Info($"Parsed {line} to encoding {Convert.ToString(value, 2).PadLeft(16, '0')}");
 
                 Console.WriteLine();
             }

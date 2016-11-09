@@ -29,7 +29,7 @@ namespace hasm
             _logger.Info("Generating all possible instructions..");
 
             var sw = Stopwatch.StartNew();
-            var program = _microProgram.Skip(20).Take(3);
+            var program = new[] {_microProgram.ElementAt(0), _microProgram.ElementAt(40)};
             var microFunctions = GenerateMicroInstructions(program);
             sw.Stop();
 
@@ -44,12 +44,18 @@ namespace hasm
             sw.Stop();
             _logger.Info($"Encoded {microFunctions.Count} micro-functions (in total {instructions} micro-instructions) in {sw.Elapsed}");
 
+            var set = new HashSet<MicroInstruction>();
             foreach (var function in microFunctions)
             {
                 _logger.Debug(function);
 
                 foreach (var instruction in function.MicroInstructions)
                 {
+                    if (set.Contains(instruction))
+                        continue;
+
+                    set.Add(instruction);
+
                     var encoded = Convert.ToString(instruction.Encode(), 2).PadLeft(48, '0');
                     encoded = Regex.Replace(encoded, ".{4}", "$0 ");
 
@@ -68,29 +74,26 @@ namespace hasm
             var address = 0;
             foreach (var function in microFunctions)
             {
-                if (function.MicroInstructions.Count != 1) // single instruction functions already have address
+                if (function.MicroInstructions.Count == 1)
+                    continue;
+
+                for (var i = 1; i < function.MicroInstructions.Count; ++i)
                 {
-                    for (var i = 1; i < function.MicroInstructions.Count; ++i)
-                    {
-                        var instruction = function.MicroInstructions[i];
+                    var instruction = function.MicroInstructions[i];
 
-                        MicroInstruction cached;
-                        instructions.TryGetValue(instruction, out cached);
+                    MicroInstruction cached;
+                    instructions.TryGetValue(instruction, out cached);
 
-                        if (cached != null) // reuse a previous created microinstruction
-                            function.MicroInstructions[i] = cached;
-                        else
-                            function.MicroInstructions[i].Location = address++ << 6;
+                    if (cached != null) // reuse a previous created microinstruction
+                        function.MicroInstructions[i] = cached;
+                    else
+                        function.MicroInstructions[i].Location = address++ << 6;
 
-                        function.MicroInstructions[i - 1].NextInstruction = function.MicroInstructions[i].Location >> 6;
+                    function.MicroInstructions[i - 1].NextInstruction = function.MicroInstructions[i].Location >> 6;
 
-                        if (cached == null)
-                            instructions.Add(instruction, instruction);
-                    }
+                    if (cached == null)
+                        instructions.Add(instruction, instruction);
                 }
-
-                foreach (var instruciton in function.MicroInstructions)
-                    instruciton.Encode();
             }
         }
 
@@ -112,7 +115,7 @@ namespace hasm
 
                         concurrentBag.Add(function);
                     }
-                //});
+            //    });
             }
 
             return concurrentBag.ToList();
