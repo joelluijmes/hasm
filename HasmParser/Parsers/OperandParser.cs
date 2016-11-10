@@ -68,18 +68,21 @@ namespace hasm.Parsing.Parsers
 
         private Rule CreateConverterRule(ValueRule<int> rule, string encoding)
         {
+            var binaryRule = Grammar.ConvertBinary(rule, OperandEncoding.Size);
             Func<string, int> converter = match =>
             {
-                var value = rule.FirstValue(match);
+                var value = binaryRule.FirstValue(match);
                 return Encode(encoding, value);
             };
 
-            return Grammar.ConvertToValue(converter, rule);
+            return Grammar.ConvertToValue(converter, binaryRule);
         }
 
-        private int Encode(string encoding, int value)
+        private int Encode(string encoding, string value)
         {
-            // TODO: make sure that value repalces the mask (i.e. masked encoding isn't required to be after each other)
+            if (value.Length != OperandEncoding.Size)
+                throw new NotImplementedException();
+
             var opcodeBinary = EncodingRule.FirstValue(encoding); // gets the binary representation of the encoding
             var index = opcodeBinary.IndexOf(OperandEncoding.EncodingMask); // finds the first occurance of the mask
             var nextIndex = opcodeBinary.IndexOf('0', index); // and the last
@@ -87,9 +90,9 @@ namespace hasm.Parsing.Parsers
                 nextIndex = opcodeBinary.Length; // could be that it ended with the mask so we set it to the length of total encoding
 
             var length = nextIndex - index;
-            var bin = Convert.ToString(value, 2).PadLeft(OperandEncoding.Size, '0');
+            //var bin = Convert.ToString(value, 2).PadLeft(OperandEncoding.Size, '0');
 
-            opcodeBinary = opcodeBinary.Remove(index, length).Insert(index, bin);
+            opcodeBinary = opcodeBinary.Remove(index, length).Insert(index, value);
             var result = Convert.ToInt32(opcodeBinary, 2);
 
             return result;

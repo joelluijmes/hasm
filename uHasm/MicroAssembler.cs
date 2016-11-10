@@ -29,7 +29,7 @@ namespace hasm
             _logger.Info("Generating all possible instructions..");
 
             var sw = Stopwatch.StartNew();
-            var program = new[] {_microProgram.ElementAt(0)};
+            var program = new[] {_microProgram.ElementAt(29)};
             var microFunctions = GenerateMicroInstructions(program);
             sw.Stop();
 
@@ -44,26 +44,26 @@ namespace hasm
             sw.Stop();
             _logger.Info($"Encoded {microFunctions.Count} micro-functions (in total {instructions} micro-instructions) in {sw.Elapsed}");
 
-            var set = new HashSet<MicroInstruction>();
+            var count = 0;
             foreach (var function in microFunctions)
             {
                 _logger.Debug(function);
 
                 foreach (var instruction in function.MicroInstructions)
                 {
-                    if (set.Contains(instruction))
-                        continue;
+                    var encoded = Regex.Replace(Convert.ToString(instruction.Encode(), 2).PadLeft(48, '0'), ".{4}", "$0 ");
+                    var address = Regex.Replace(Convert.ToString(instruction.Location, 2).PadLeft(24, '0'), ".{4}", "$0 ");
 
-                    set.Add(instruction);
-
-                    var encoded = Convert.ToString(instruction.Encode(), 2).PadLeft(48, '0');
-                    encoded = Regex.Replace(encoded, ".{4}", "$0 ");
-
-                    _logger.Debug(Convert.ToString(instruction.Location, 16).PadLeft(8, '0') + "h" +
+                    _logger.Debug(address +
                                   $" {instruction.ToString().PadRight(25)}" +
                                   $" {encoded}" +
                                   $" {(instruction.LastInstruction ? "" : Convert.ToString(instruction.NextInstruction, 16).PadLeft(3, '0') + "h")}");
+
+                    ++count;
                 }
+
+                if (count > 20)
+                    break;
             }
         }
 

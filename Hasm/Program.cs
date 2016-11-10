@@ -126,11 +126,7 @@ namespace hasm
                     break;
 
                 var encoded = _hasmSheetParser.Encode(line);
-                var value = encoded.Length == 1
-                    ? encoded[0]
-                    : encoded.Length == 2
-                        ? BitConverter.ToInt16(encoded, 0)
-                        : 0;
+                var value = ConvertToInt(encoded);
 
                 _logger.Info($"Parsed {line} to encoding {Convert.ToString(value, 2).PadLeft(16, '0')}");
 
@@ -165,6 +161,15 @@ namespace hasm
             Environment.Exit(-1);
         }
 
+        private static int ConvertToInt(byte[] array)
+        {
+            var result = 0;
+            for (var i = 0; i < array.Length; i++)
+                result |= array[i] << (i * 8);
+
+            return result;
+        }
+
         private static void IfDebugging(Action action)
         {
 #if DEBUG
@@ -178,5 +183,6 @@ namespace hasm
             public string OutputFile { get; set; }
             public bool LiveMode { get; set; }
         }
+
     }
 }
