@@ -68,7 +68,7 @@ namespace hasm.Parsing.Models
             StackPointer = stackPointer;
             RightShift = rightShift;
             Operation = (Left == null && Right != null) || (Left != null && Right == null)
-                ? AluOperation.Assignment   // encoded as addition
+                ? AluOperation.Plus   // hardware uses addition with 0 to assign
                 : operation;
         }
 
@@ -178,7 +178,7 @@ namespace hasm.Parsing.Models
                 else if (!string.IsNullOrEmpty(Right))
                     builder.Append(Right);
 
-                if (Operation != AluOperation.Clear && Operation != AluOperation.Assignment)
+                if (Operation != AluOperation.Clear && !IsAssignment())
                 {
                     var sign = _operations.FirstOrDefault(f => f.Value == Operation).Key;
                     if (!string.IsNullOrEmpty(sign))
@@ -231,6 +231,8 @@ namespace hasm.Parsing.Models
         }
 
         public ALU Clone() => new ALU(_targetOperand, _leftOperand, _rightOperand, Operation, Carry, StackPointer, RightShift);
+
+        private bool IsAssignment() => Operation == AluOperation.Plus && (Left == null && Right != null) || (Left != null && Right == null);
 
         private struct OperandConverter
         {
