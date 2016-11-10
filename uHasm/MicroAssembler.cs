@@ -144,9 +144,8 @@ namespace hasm
             {
                 function.Instruction = function.Instruction.Replace(operand.Key, operand.Value);
 
-                foreach (var instruction in function.MicroInstructions)
+                foreach (var alu in function.MicroInstructions.Select(s => s.ALU))
                 {
-                    var alu = instruction.ALU;
                     if (alu == null)
                         continue;
 
@@ -159,10 +158,14 @@ namespace hasm
                 }
             }
 
+            // first microinstruction/function address is the assembled (macro)instruction
             var encoded = _sheetParser.Encode(function.Instruction);
-            Array.Resize(ref encoded, 4);
-            var address = BitConverter.ToInt32(encoded, 0);
-            function.MicroInstructions.First().Location = address;
+            var len = 24 - encoded.Length * 8;
+            if (len < 0)
+                throw new NotImplementedException();
+
+            var address = ConvertToInt(encoded) << len;
+            function.MicroInstructions[0].Location = address;
         }
 
         private static IEnumerable<KeyValuePair<string, string>> SplitAggregated(KeyValuePair<string, string> keyValue)
@@ -201,6 +204,15 @@ namespace hasm
             default:
                 throw new ArgumentOutOfRangeException();
             }
+        }
+
+        private static int ConvertToInt(byte[] array)
+        {
+            var result = 0;
+            for (var i = 0; i < array.Length; i++)
+                result |= array[i] << (i*8);
+
+            return result;
         }
     }
 }
