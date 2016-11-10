@@ -39,30 +39,6 @@ namespace hasm.Parsing.Models
             _targetOperand = new OperandConverter(target);
             _leftOperand = new OperandConverter(left);
             _rightOperand = new OperandConverter(right);
-
-            // immediates must be placed on B bus (right), so for certain cases we have to swap the operands
-            // so that the right is the immediate
-            if (_leftOperand.IsImmediate)
-            {
-                if (_rightOperand == default(OperandConverter)) // assignment
-                {
-                    _rightOperand = _leftOperand;
-                    _leftOperand = default(OperandConverter);
-                }
-                else
-                {
-                    if (operation == AluOperation.Minus) // com, neg (immedate - register)
-                    {
-                        var temp = _rightOperand;
-                        _rightOperand = _leftOperand;
-                        _leftOperand = temp;
-
-                        operation = AluOperation.InverseMinus;
-                    }
-                    else
-                        throw new NotImplementedException();
-                }
-            }
             
             Carry = carry;
             StackPointer = stackPointer;
@@ -70,6 +46,55 @@ namespace hasm.Parsing.Models
             Operation = (Left == null && Right != null) || (Left != null && Right == null)
                 ? AluOperation.Plus   // hardware uses addition with 0 to assign
                 : operation;
+
+            FixOperands();
+        }
+
+        private void FixOperands()
+        {
+            // we can't put negative on the bus, so we inverse the plus or minus and inverse the operand to fix this 
+            FixImmediateOperand(ref _rightOperand);
+            FixImmediateOperand(ref _leftOperand);
+            
+            // immediates must be placed on B bus (right), so for certain cases we have to swap the operands
+            // so that the right is the immediate
+            if (!_leftOperand.IsImmediate)
+                return;
+
+            if (_rightOperand == default(OperandConverter)) // assignment
+            {
+                _rightOperand = _leftOperand;
+                _leftOperand = default(OperandConverter);
+            }
+            else
+            {
+                if (Operation == AluOperation.Minus) // com, neg (immedate - register)
+                {
+                    var temp = _rightOperand;
+                    _rightOperand = _leftOperand;
+                    _leftOperand = temp;
+
+                    Operation = AluOperation.InverseMinus;
+                }
+                else
+                    throw new NotImplementedException();
+            }
+        }
+
+        private void FixImmediateOperand(ref OperandConverter operand)
+        {
+            int value;
+            if (!operand.IsImmediate || !int.TryParse(operand.Operand, out value) || value > 0)
+                return;
+
+            operand.Operand = (value*-1).ToString();
+
+            if (Operation == AluOperation.Minus)
+                Operation = AluOperation.Plus;
+            else if (Operation == AluOperation.Plus)
+                Operation = AluOperation.Minus;
+            else
+                throw new NotImplementedException();
         }
 
         private ALU(OperandConverter target, OperandConverter left, OperandConverter right, AluOperation operation, bool carry, bool stackPointer, bool rightShift)
@@ -92,13 +117,21 @@ namespace hasm.Parsing.Models
         public string Left
         {
             get { return _leftOperand.Operand; }
-            set { _leftOperand.Operand = value; }
+            set
+            {
+                _leftOperand.Operand = value; 
+                FixImmediateOperand(ref _leftOperand);
+            }
         }
 
         public string Right
         {
             get { return _rightOperand.Operand; }
-            set { _rightOperand.Operand = value; }
+            set
+            {
+                _rightOperand.Operand = value;
+                FixImmediateOperand(ref _rightOperand);
+            }
         }
 
         public bool Carry { get; set; }
@@ -247,7 +280,7 @@ namespace hasm.Parsing.Models
                     _operand = value;
 
                     if (_operand != value) // if changes -> reset the converted value
-                        _value = null;
+                        this._value = null;
                 }
             }
 
@@ -260,7 +293,7 @@ namespace hasm.Parsing.Models
                 _value = null;
             }
 
-            private long? _value;
+            public long? _value;
             public long Value => _value ?? (_value = _parser?.Parse(Operand)) ?? 0;
 
             public override string ToString() => $"{Operand}: {Value}";
