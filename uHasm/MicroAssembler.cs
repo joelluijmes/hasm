@@ -29,7 +29,7 @@ namespace hasm
             _logger.Info("Generating all possible instructions..");
 
             var sw = Stopwatch.StartNew();
-            var program = new[] {_microProgram.ElementAt(0), _microProgram.ElementAt(40)};
+            var program = new[] {_microProgram.ElementAt(0)};
             var microFunctions = GenerateMicroInstructions(program);
             sw.Stop();
 
@@ -99,26 +99,43 @@ namespace hasm
 
         private static IList<MicroFunction> GenerateMicroInstructions(IEnumerable<MicroFunction> microFunctions)
         {
-            var concurrentBag = new ConcurrentBag<MicroFunction>();
+#if PARALLEL
+            var concurrentQueue = new ConcurrentQueue<MicroFunction>();
+            Parallel.ForEach(microFunctions, microFunction =>
+            {
+                var operands = HasmGrammar.GetOperands(microFunction.Instruction)
+                                          .Select(type => PermuteOperands(type) // generate all permutations of operand
+                                              .Select(operand => new KeyValuePair<string, string>(type, operand))); // put it in a key:value
 
-            //Parallel.ForEach(microFunctions, microFunction =>
-                foreach (var microFunction in microFunctions)
+                foreach (var permutation in operands.CartesianProduct())
                 {
-                    var operands = HasmGrammar.GetOperands(microFunction.Instruction)
-                                              .Select(type => PermuteOperands(type) // generate all permutations of operand
-                                                  .Select(operand => new KeyValuePair<string, string>(type, operand))); // put it in a key:value
+                    var function = microFunction.Clone();
+                    PermuteFunction(permutation, function);
 
-                    foreach (var permutation in operands.CartesianProduct())
-                    {
-                        var function = microFunction.Clone();
-                        PermuteFunction(permutation, function);
+                    concurrentQueue.Enqueue(function);
+                }
+            });
 
-                        concurrentBag.Add(function);
-                    }
-            //    });
-            }
+            return concurrentQueue.ToList();
+#else
+            var list = new List<MicroFunction>();
+            Parallel.ForEach(microFunctions, microFunction =>
+            {
+                var operands = HasmGrammar.GetOperands(microFunction.Instruction)
+                                          .Select(type => PermuteOperands(type) // generate all permutations of operand
+                                              .Select(operand => new KeyValuePair<string, string>(type, operand))); // put it in a key:value
 
-            return concurrentBag.ToList();
+                foreach (var permutation in operands.CartesianProduct())
+                {
+                    var function = microFunction.Clone();
+                    PermuteFunction(permutation, function);
+
+                    list.Add(function);
+                }
+            });
+
+            return list;
+#endif
         }
 
         private static void PermuteFunction(IEnumerable<KeyValuePair<string, string>> permutation, MicroFunction function)
