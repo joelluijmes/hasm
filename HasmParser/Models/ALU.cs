@@ -122,7 +122,7 @@ namespace hasm.Parsing.Models
             {
                 if (_rightOperand.IsImmediate)
                 {
-                    result |= _rightOperand.Value << ENCODING_IMM; // we put only max 11 bits in the microencoding, last one comes from decoder
+                    result |= (_rightOperand.Value << ENCODING_IMM) & 0xFFFL; // encode maximum of 12 bits in the encoding
                     result |= 1L << ENCODING_IMM_EN; // enable immediate
                     result |= 0xFL << ENCODING_B; // disable register from B
                 }
