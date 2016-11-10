@@ -119,8 +119,8 @@ namespace hasm
             return concurrentQueue.ToList();
 #else
             var list = new List<MicroFunction>();
-            Parallel.ForEach(microFunctions, microFunction =>
-            {
+            foreach (var microFunction in microFunctions)
+            { 
                 var operands = HasmGrammar.GetOperands(microFunction.Instruction)
                                           .Select(type => PermuteOperands(type) // generate all permutations of operand
                                               .Select(operand => new KeyValuePair<string, string>(type, operand))); // put it in a key:value
@@ -132,7 +132,7 @@ namespace hasm
 
                     list.Add(function);
                 }
-            });
+            }
 
             return list;
 #endif
