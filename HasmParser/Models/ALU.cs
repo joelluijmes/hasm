@@ -12,14 +12,13 @@ namespace hasm.Parsing.Models
     public sealed class ALU
     {
         private const int ENCODING_IMM = 17;
-        private const int ENCODING_IMM_EN = 29;
-        private const int ENCODING_A = 30;
-        private const int ENCODING_B = 34;
-        private const int ENCODING_C = 38;
-        private const int ENCODING_SP = 42;
-        private const int ENCODING_ALU = 43;
-        private const int ENCODING_CARRY = 46;
-        private const int ENCODING_SHIFT = 47;
+        private const int ENCODING_A = 19;
+        private const int ENCODING_B = 23;
+        private const int ENCODING_C = 27;
+        private const int ENCODING_SP = 31;
+        private const int ENCODING_ALU = 32;
+        private const int ENCODING_CARRY = 35;
+        private const int ENCODING_SHIFT = 36;
 
         private static readonly Dictionary<string, AluOperation> _operations = new Dictionary<string, AluOperation>
         {
@@ -138,6 +137,7 @@ namespace hasm.Parsing.Models
         public bool StackPointer { get; set; }
         public bool RightShift { get; set; }
         public AluOperation Operation { get; set; }
+        public bool ExternalImmediate { get; set; }
 
         public long Encode()
         {
@@ -155,15 +155,17 @@ namespace hasm.Parsing.Models
             {
                 if (_rightOperand.IsImmediate)
                 {
-                    result |= (_rightOperand.Value & 0xFFFFL) << ENCODING_IMM; // encode maximum of 12 bits in the encoding
-                    result |= 1L << ENCODING_IMM_EN; // enable immediate
-                    result |= 0xFL << ENCODING_B; // disable register from B
+                    result |= (_rightOperand.Value & 0x3L) << ENCODING_IMM; // encode maximum of 12 bits in the encoding
+                    result |= 0x9L << ENCODING_B; // internal immediate
                 }
                 else
                     result |= _rightOperand.Value << ENCODING_B;
             }
             else
                 result |= 0xFL << ENCODING_B;
+
+            if (ExternalImmediate)
+                result |= 0xAL << ENCODING_B;   // external immediate
 
             if (!StackPointer)  // stackpointter is disable in encoding
                 result |= 1L << ENCODING_SP;
@@ -193,6 +195,20 @@ namespace hasm.Parsing.Models
                 _operations.TryGetValue(op, out operation);
 
             return new ALU(target, left, right, operation, carry, stackPointer, shift);
+        }
+
+        public void CheckImmediate()
+        {
+            if (_leftOperand.IsImmediate)
+            {
+                _leftOperand = new OperandConverter();
+                ExternalImmediate = true;
+            }
+            if (_rightOperand.IsImmediate)
+            {
+                _rightOperand = new OperandConverter();
+                ExternalImmediate = true;
+            }
         }
 
         public override string ToString()

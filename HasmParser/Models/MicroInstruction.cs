@@ -31,7 +31,7 @@ namespace hasm.Parsing.Models
         public int NextInstruction { get; set; }
         public ALU ALU { get; set; }
         public MemoryOperation Memory { get; set; }
-        public bool LastInstruction { get; set; }
+        public bool LastInstruction { get; }
         public bool StatusEnabled { get; set; }
         public Condition Condition { get; set; }
         public bool InvertedCondition { get; set; }
@@ -85,7 +85,7 @@ namespace hasm.Parsing.Models
                 if (_conditions.TryGetValue(status, out condition))
                      inverted = parsed.FirstValueByNameOrDefault<string>("cond") == "0";
             }
-
+            
             var aluNode = parsed.FirstNodeByNameOrDefault("alu");
             var alu = aluNode != null
                 ? ALU.Parse(aluNode)

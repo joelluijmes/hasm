@@ -29,7 +29,7 @@ namespace hasm
             _logger.Info("Generating all possible instructions..");
 
             var sw = Stopwatch.StartNew();
-            var program = new[] {_microProgram.ElementAt(29)};
+            var program = new[] {_microProgram.ElementAt(0)};
             var microFunctions = GenerateMicroInstructions(program);
             sw.Stop();
 
@@ -51,8 +51,8 @@ namespace hasm
 
                 foreach (var instruction in function.MicroInstructions)
                 {
-                    var encoded = Regex.Replace(Convert.ToString(instruction.Encode(), 2).PadLeft(48, '0'), ".{4}", "$0 ");
-                    var address = Regex.Replace(Convert.ToString(instruction.Location, 2).PadLeft(24, '0'), ".{4}", "$0 ");
+                    var encoded = Regex.Replace(Convert.ToString(instruction.Encode(), 2).PadLeft(37, '0'), ".{4}", "$0 ");
+                    var address = Regex.Replace(Convert.ToString(instruction.Location, 2).PadLeft(16, '0'), ".{4}", "$0 ");
 
                     _logger.Debug(address +
                                   $" {instruction.ToString().PadRight(25)}" +
@@ -62,7 +62,7 @@ namespace hasm
                     ++count;
                 }
 
-                if (count > 20)
+                if (count > 200)
                     break;
             }
         }
@@ -87,7 +87,7 @@ namespace hasm
                     if (cached != null) // reuse a previous created microinstruction
                         function.MicroInstructions[i] = cached;
                     else
-                        function.MicroInstructions[i].Location = address++ << 6;
+                        function.MicroInstructions[i].Location = (address++ << 6) >> 1; // last bit doesn't count
 
                     function.MicroInstructions[i - 1].NextInstruction = function.MicroInstructions[i].Location >> 6;
 
@@ -157,15 +157,16 @@ namespace hasm
                         alu.Target = alu.Target.Replace(operand.Key, operand.Value);
                 }
             }
-
+            
             // first microinstruction/function address is the assembled (macro)instruction
-            var encoded = _sheetParser.Encode(function.Instruction);
-            var len = 24 - encoded.Length * 8;
+            var encoded = _sheetParser.Encode(function.Instruction).Take(2).ToArray();
+            var len = 16 - encoded.Length * 8;
             if (len < 0)
                 throw new NotImplementedException();
 
             var address = ConvertToInt(encoded) << len;
-            function.MicroInstructions[0].Location = address;
+            function.MicroInstructions[0].Location = address >> 1; // last bit doesn't count
+            function.MicroInstructions[0].ALU.CheckImmediate();
         }
 
         private static IEnumerable<KeyValuePair<string, string>> SplitAggregated(KeyValuePair<string, string> keyValue)
