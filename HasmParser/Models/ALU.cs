@@ -33,6 +33,8 @@ namespace hasm.Parsing.Models
         private OperandConverter _rightOperand;
         private OperandConverter _targetOperand;
 
+        private string _grammar;
+
         public ALU(string target, string left, string right, AluOperation operation, bool carry, bool stackPointer, bool rightShift)
         {
             _targetOperand = new OperandConverter(target);
@@ -47,6 +49,7 @@ namespace hasm.Parsing.Models
                 : operation;
 
             FixOperands();
+            _grammar = ToString();
         }
 
         private void FixOperands()
@@ -83,7 +86,7 @@ namespace hasm.Parsing.Models
         private void FixImmediateOperand(ref OperandConverter operand)
         {
             int value;
-            if (!operand.IsImmediate || !int.TryParse(operand.Operand, out value) || value > 0)
+            if (!operand.IsImmediate || !int.TryParse(operand.Operand, out value) || value >= 0)
                 return;
 
             operand.Operand = (value*-1).ToString();
@@ -92,7 +95,7 @@ namespace hasm.Parsing.Models
                 Operation = AluOperation.Plus;
             else if (Operation == AluOperation.Plus)
                 Operation = AluOperation.Minus;
-            else
+            else if (!IsAssignment())
                 throw new NotImplementedException();
         }
 
@@ -161,11 +164,10 @@ namespace hasm.Parsing.Models
                 else
                     result |= _rightOperand.Value << ENCODING_B;
             }
-            else
-                result |= 0xFL << ENCODING_B;
-
-            if (ExternalImmediate)
+            else if (ExternalImmediate)
                 result |= 0xAL << ENCODING_B;   // external immediate
+            else
+                result |= 0xFL << ENCODING_B;   // disable b 
 
             if (!StackPointer)  // stackpointter is disable in encoding
                 result |= 1L << ENCODING_SP;
@@ -197,18 +199,16 @@ namespace hasm.Parsing.Models
             return new ALU(target, left, right, operation, carry, stackPointer, shift);
         }
 
-        public void CheckImmediate()
+        public void SetExternalImmediate()
         {
             if (_leftOperand.IsImmediate)
-            {
                 _leftOperand = new OperandConverter();
-                ExternalImmediate = true;
-            }
-            if (_rightOperand.IsImmediate)
-            {
+            else if (_rightOperand.IsImmediate)
                 _rightOperand = new OperandConverter();
-                ExternalImmediate = true;
-            }
+            else
+                throw new NotImplementedException();
+
+            ExternalImmediate = true;
         }
 
         public override string ToString()
@@ -279,7 +279,7 @@ namespace hasm.Parsing.Models
             }
         }
 
-        public ALU Clone() => new ALU(_targetOperand, _leftOperand, _rightOperand, Operation, Carry, StackPointer, RightShift);
+        public ALU Clone() => new ALU(_targetOperand, _leftOperand, _rightOperand, Operation, Carry, StackPointer, RightShift) { _grammar = _grammar };
 
         private bool IsAssignment() => Operation == AluOperation.Plus && (Left == null && Right != null) || (Left != null && Right == null);
 

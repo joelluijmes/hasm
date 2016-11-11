@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -29,7 +30,12 @@ namespace hasm
             _logger.Info("Generating all possible instructions..");
 
             var sw = Stopwatch.StartNew();
-            var program = new[] {_microProgram.ElementAt(0)};
+            var nop = _microProgram.First(m => m.Instruction == "NOP").MicroInstructions[0];
+#if DEBUG
+            var program =   new[] { _microProgram.ElementAt(29) };
+#else
+            var program = _microProgram;
+#endif
             var microFunctions = GenerateMicroInstructions(program);
             sw.Stop();
 
@@ -39,22 +45,68 @@ namespace hasm
             sw.Restart();
 
             FitMicroFunctions(microFunctions);
-            var instructions = microFunctions.SelectMany(s => s.MicroInstructions).Distinct().Count();
+            var microInstructions = microFunctions
+                .SelectMany(s => s.MicroInstructions)
+                .GroupBy(s => s.Location)
+                .Select(g => g.First())
+                .Distinct()
+                .OrderBy(i => i.Location);
+
+            var count = microInstructions.Distinct().Count();
 
             sw.Stop();
-            _logger.Info($"Encoded {microFunctions.Count} micro-functions (in total {instructions} micro-instructions) in {sw.Elapsed}");
+            _logger.Info($"Encoded {microFunctions.Count} micro-functions (in total {count} micro-instructions) in {sw.Elapsed}");
 
-            var count = 0;
+            _logger.Info("Started writing to out.txt");
+            sw.Restart();
+            using (var writer = new StreamWriter("out.txt"))
+            {
+                Action<MicroInstruction, StreamWriter> writeLine = (instr, writ) =>
+                {
+                    var encoded = Regex.Replace(Convert.ToString(instr.Encode(), 2).PadLeft(37, '0'), ".{4}", "$0 ");
+                    var address = Regex.Replace(Convert.ToString(instr.Location, 2).PadLeft(16, '0'), ".{4}", "$0 ");
+
+                    writ.WriteLine($"{address}: {encoded} {instr}");
+                };
+
+                MicroInstruction previous = null;
+                foreach (var instruction in microInstructions)
+                {
+                    if (previous != null)
+                    {
+                        for (var i = 1; i < instruction.Location - previous.Location; ++i)
+                        {
+                            if (previous.ALU.ExternalImmediate && instruction.ALU.ExternalImmediate)
+                            {
+                                previous.Location = ++previous.Location;
+                                writeLine(previous, writer);
+                            }
+                            else
+                            {
+                                nop.Location = previous.Location + i;
+                                writeLine(nop, writer);
+                            }
+                        }
+                    }
+
+                    writeLine(instruction, writer);
+                    previous = instruction;
+                }
+            }
+
+            sw.Stop();
+            _logger.Info($"Completed in {sw.Elapsed}");
+
             foreach (var function in microFunctions)
             {
-                _logger.Debug(function);
+                _logger.Info(function);
 
                 foreach (var instruction in function.MicroInstructions)
                 {
                     var encoded = Regex.Replace(Convert.ToString(instruction.Encode(), 2).PadLeft(37, '0'), ".{4}", "$0 ");
                     var address = Regex.Replace(Convert.ToString(instruction.Location, 2).PadLeft(16, '0'), ".{4}", "$0 ");
 
-                    _logger.Debug(address +
+                    _logger.Info(address +
                                   $" {instruction.ToString().PadRight(25)}" +
                                   $" {encoded}" +
                                   $" {(instruction.LastInstruction ? "" : Convert.ToString(instruction.NextInstruction, 16).PadLeft(3, '0') + "h")}");
@@ -62,7 +114,7 @@ namespace hasm
                     ++count;
                 }
 
-                if (count > 200)
+                if (count > 400)
                     break;
             }
         }
@@ -87,13 +139,16 @@ namespace hasm
                     if (cached != null) // reuse a previous created microinstruction
                         function.MicroInstructions[i] = cached;
                     else
-                        function.MicroInstructions[i].Location = (address++ << 6) >> 1; // last bit doesn't count
+                        function.MicroInstructions[i].Location = (address++ << 6) | 1 << 15; // last bit doesn't count | first bit to say we are internal
 
                     function.MicroInstructions[i - 1].NextInstruction = function.MicroInstructions[i].Location >> 6;
 
                     if (cached == null)
                         instructions.Add(instruction, instruction);
                 }
+
+                if (address > 512)
+                    throw new NotImplementedException();
             }
         }
 
@@ -140,8 +195,12 @@ namespace hasm
 
         private static void PermuteFunction(IEnumerable<KeyValuePair<string, string>> permutation, MicroFunction function)
         {
+            var externalImmediate = false;
             foreach (var operand in permutation.SelectMany(SplitAggregated))
             {
+                if (operand.Key.StartsWith("IMM"))
+                    externalImmediate = true;
+
                 function.Instruction = function.Instruction.Replace(operand.Key, operand.Value);
 
                 foreach (var alu in function.MicroInstructions.Select(s => s.ALU))
@@ -159,14 +218,20 @@ namespace hasm
             }
             
             // first microinstruction/function address is the assembled (macro)instruction
-            var encoded = _sheetParser.Encode(function.Instruction).Take(2).ToArray();
-            var len = 16 - encoded.Length * 8;
-            if (len < 0)
+            var encoded = _sheetParser.Encode(function.Instruction);
+
+            if (encoded.Length == 1)
+                encoded = new byte[] { 0x00, encoded[0]};
+            else if (encoded.Length == 3)
+                encoded = new[] {encoded[1], encoded[2]};
+            else if (encoded.Length != 2)
                 throw new NotImplementedException();
 
-            var address = ConvertToInt(encoded) << len;
+            var address = ConvertToInt(encoded);
             function.MicroInstructions[0].Location = address >> 1; // last bit doesn't count
-            function.MicroInstructions[0].ALU.CheckImmediate();
+
+            if (externalImmediate)
+                function.MicroInstructions[0].ALU.SetExternalImmediate();
         }
 
         private static IEnumerable<KeyValuePair<string, string>> SplitAggregated(KeyValuePair<string, string> keyValue)

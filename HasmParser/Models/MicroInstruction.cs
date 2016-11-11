@@ -28,6 +28,7 @@ namespace hasm.Parsing.Models
         };
 
         public int Location { get; set; }
+
         public int NextInstruction { get; set; }
         public ALU ALU { get; set; }
         public MemoryOperation Memory { get; set; }
