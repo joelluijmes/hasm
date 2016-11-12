@@ -36,17 +36,35 @@
   <PropertyGroup>
     <StartupObject />
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug_Parallel|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug_Parallel\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release_Parallel|AnyCPU'">
+    <OutputPath>bin\Release_Parallel\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="EPPlus, Version=4.1.0.0, Culture=neutral, PublicKeyToken=ea159fdaa78159a1, processorArchitecture=MSIL">
       <HintPath>..\packages\EPPlus.4.1.0\lib\net40\EPPlus.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
-      <HintPath>..\packages\NLog.4.3.10\lib\net45\NLog.dll</HintPath>
+      <HintPath>..\packages\NLog.4.3.11\lib\net45\NLog.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="ParserLib, Version=1.5.78.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ParserLib-debug.1.5.78\lib\ParserLib.dll</HintPath>
+    <Reference Include="ParserLib, Version=1.6.85.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ParserLib-debug.1.6.85\lib\ParserLib.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -60,8 +78,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Grammars\HasmGrammer.Rules.cs" />
+    <Compile Include="Grammars\MicroHasmGrammar.cs" />
+    <Compile Include="Models\ALU.cs" />
+    <Compile Include="Models\AluOperation.cs" />
+    <Compile Include="Models\Condition.cs" />
+    <Compile Include="Models\DisableLines.cs" />
+    <Compile Include="Models\MemoryOperation.cs" />
+    <Compile Include="Models\MicroFunction.cs" />
+    <Compile Include="Models\MicroInstruction.cs" />
     <Compile Include="Models\OperandEncoding.cs" />
     <Compile Include="Models\OperandEncodingType.cs" />
+    <Compile Include="Parsers\Sheet\MicroFunctionSheetParser.cs" />
     <Compile Include="Parsers\OperandParser.cs" />
     <Compile Include="Parsers\Sheet\BaseSheetParser.cs" />
     <Compile Include="Parsers\Sheet\HasmSheetParser.cs" />

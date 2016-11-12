@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using hasm.Parsing.Models;
 using hasm.Parsing.Parsers;
@@ -34,9 +35,50 @@ namespace hasm.Parsing.Grammars
             foreach (var parser in operandSheetParser.Items)
                 _operandParsers.Add(OperandParser.Create(parser));
         }
-
-        public static OperandParser FindOperandParser(string operand) => _operandParsers.First(o => o.Operands.Contains(operand));
         
+        public static OperandParser FindOperandParser(string operand)
+        {
+            if (operand == null)
+                return null;
+
+            foreach (var parser in _operandParsers)
+            {
+                if (parser.Operands.Contains(operand))
+                    return parser;
+
+                var encoding = parser.OperandEncoding;
+                switch (encoding.Type)
+                {
+                case OperandEncodingType.KeyValue:
+                    if (encoding.Pairs.Any(p => p.Key == operand))
+                        return parser;
+
+                    break;
+
+                case OperandEncodingType.Range:
+                    int operandAsNumber;
+                    if (int.TryParse(operand, out operandAsNumber) || int.TryParse(operand.Replace("0x", ""), NumberStyles.HexNumber, null, out operandAsNumber))
+                    {
+                        if (operandAsNumber >= encoding.Minimum && operandAsNumber <= encoding.Maximum)
+                            return parser;
+                    }
+
+                    break;
+                }
+            }
+
+            return null;
+        }
+
+        public static string[] GetOperands(string grammar)
+        {
+            var operand = Opcode.FirstValue(grammar);
+            return grammar.Replace(operand, "") // remove operand from grammar
+                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries) // operands are split with a ,
+                .Select(s => s.Trim())
+                .ToArray();
+        }
+
         /// <summary>
         ///     Parses the instruction.
         /// </summary>
@@ -115,15 +157,6 @@ namespace hasm.Parsing.Grammars
         {
             var opcodeBinary = _opcodemaskRule.FirstValue(encoding); // gets the binary representation of the encoding
             return Convert.ToInt32(opcodeBinary, 2);
-        }
-
-        private static string[] GetOperands(string grammar)
-        {
-            var operand = Opcode.FirstValue(grammar);
-            return grammar.Replace(operand, "") // remove operand from grammar
-                .Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries) // operands are split with a ,
-                .Select(s => s.Trim())
-                .ToArray();
         }
     }
 }
