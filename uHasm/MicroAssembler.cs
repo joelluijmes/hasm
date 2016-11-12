@@ -49,10 +49,10 @@ namespace hasm
                 .SelectMany(s => s.MicroInstructions)
                 .GroupBy(s => s.Location)
                 .Select(g => g.First())
-                .Distinct()
-                .OrderBy(i => i.Location);
+                .OrderBy(i => i.Location)
+                .ToList();
 
-            var count = microInstructions.Distinct().Count();
+            var count = microInstructions.Count();
 
             sw.Stop();
             _logger.Info($"Encoded {microFunctions.Count} micro-functions (in total {count} micro-instructions) in {sw.Elapsed}");
@@ -69,6 +69,10 @@ namespace hasm
                     writ.WriteLine($"{address}: {encoded} {instr}");
                 };
 
+                var nopCopy = nop.Clone();
+                nopCopy.Location = 0xFFFF;
+                microInstructions.Add(nopCopy);
+
                 MicroInstruction previous = null;
                 foreach (var instruction in microInstructions)
                 {
@@ -76,16 +80,16 @@ namespace hasm
                     {
                         for (var i = 1; i < instruction.Location - previous.Location; ++i)
                         {
-                            if (previous.ALU.ExternalImmediate && instruction.ALU.ExternalImmediate)
-                            {
+                            //if (previous.ALU.ExternalImmediate && instruction.ALU.ExternalImmediate)
+                            //{
                                 previous.Location = ++previous.Location;
                                 writeLine(previous, writer);
-                            }
-                            else
-                            {
-                                nop.Location = previous.Location + i;
-                                writeLine(nop, writer);
-                            }
+                            //}
+                            //else
+                            //{
+                            //    nop.Location = previous.Location + i;
+                            //    writeLine(nop, writer);
+                            //}
                         }
                     }
 
@@ -139,7 +143,10 @@ namespace hasm
                     if (cached != null) // reuse a previous created microinstruction
                         function.MicroInstructions[i] = cached;
                     else
-                        function.MicroInstructions[i].Location = (address++ << 6) | 1 << 15; // last bit doesn't count | first bit to say we are internal
+                    {
+                        function.MicroInstructions[i].Location = (address++ << 6); // last bit doesn't count 
+                        function.MicroInstructions[i].InternalInstruction = true;
+                    }
 
                     function.MicroInstructions[i - 1].NextInstruction = function.MicroInstructions[i].Location >> 6;
 

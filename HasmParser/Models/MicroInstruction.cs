@@ -27,7 +27,18 @@ namespace hasm.Parsing.Models
             ["N"] = Condition.Negative
         };
 
-        public int Location { get; set; }
+        private int _location;
+
+        public int Location
+        {
+            get
+            {
+                return InternalInstruction
+                    ? _location | 1 << 15
+                    : _location;
+            }
+            set { _location = value; }
+        }
 
         public int NextInstruction { get; set; }
         public ALU ALU { get; set; }
@@ -36,6 +47,7 @@ namespace hasm.Parsing.Models
         public bool StatusEnabled { get; set; }
         public Condition Condition { get; set; }
         public bool InvertedCondition { get; set; }
+        public bool InternalInstruction { get; set; }
 
         public MicroInstruction(ALU alu, MemoryOperation memory, bool lastInstruction, bool statusEnabled, Condition condition, bool invertedCondition)
         {
