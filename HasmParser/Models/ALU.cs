@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using hasm.Parsing.Encoding;
+using hasm.Parsing.Encoding.TypeConverters;
 using ParserLib.Evaluation;
 using ParserLib.Parsing;
 
@@ -28,8 +30,14 @@ namespace hasm.Parsing.Models
         };
 
         private string _grammar;
+
+        [EncodableProperty(ENCODING_A, 4, Converter = typeof(LeftConverter))]
         private OperandConverter _leftOperand;
+
+
         private OperandConverter _rightOperand;
+
+        [EncodableProperty(ENCODING_C, 4, Converter = typeof(TargetConverter))]
         private OperandConverter _targetOperand;
 
         public ALU(string target, string left, string right, AluOperation operation, bool carry, bool stackPointer, bool rightShift)
@@ -95,15 +103,7 @@ namespace hasm.Parsing.Models
         public long Encode()
         {
             long result = 0;
-
-            result |= (string.IsNullOrEmpty(Target)
-                          ? 0xFL
-                          : _targetOperand.Value) << ENCODING_C;
-
-            result |= (string.IsNullOrEmpty(Left)
-                          ? 0xFL
-                          : _leftOperand.Value) << ENCODING_A;
-
+            
             if (!string.IsNullOrEmpty(Right))
             {
                 if (_rightOperand.IsImmediate)

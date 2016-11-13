@@ -77,11 +77,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Encoding\Encoder.cs" />
+    <Compile Include="Encoding\PropertyEncoder.cs" />
+    <Compile Include="Encoding\TypeConverters\AluContext.cs" />
+    <Compile Include="Encoding\TypeConverters\LeftConverter.cs" />
+    <Compile Include="Encoding\TypeConverters\RightConverter.cs" />
+    <Compile Include="Encoding\TypeConverters\TargetConverter.cs" />
     <Compile Include="Grammars\HasmGrammer.Rules.cs" />
     <Compile Include="Grammars\MicroHasmGrammar.cs" />
     <Compile Include="Models\ALU.cs" />
-    <Compile Include="Models\ALU.OperandConverter.cs" />
+    <Compile Include="Encoding\OperandConverter.cs" />
     <Compile Include="Models\AluOperation.cs" />
     <Compile Include="Models\Condition.cs" />
     <Compile Include="Models\DisableLines.cs" />

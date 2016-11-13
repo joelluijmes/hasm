@@ -65,19 +65,19 @@ namespace hasm
             {
                 Action<MicroInstruction, StreamWriter> writeLine = (instr, writ) =>
                 {
-                    var value = PropertyEncoder.Encode(instr);
+                    var value = PropertyEncoder.Encode(instr.ALU);
                     var encoded = Regex.Replace(Convert.ToString(value, 2).PadLeft(37, '0'), ".{4}", "$0 ");
                     var address = Regex.Replace(Convert.ToString(instr.Location, 2).PadLeft(16, '0'), ".{4}", "$0 ");
 
                     writ.WriteLine($"{address}: {encoded} {instr}");
                 };
 
-                var nopCopy = nop.Clone();
-                nopCopy.Location = 0xFFFF;
-                microInstructions.Add(nopCopy);
+                //var nopCopy = nop.Clone();
+                //nopCopy.Location = 0xFFFF;
+                //microInstructions.Add(nopCopy);
 
                 MicroInstruction previous = null;
-                foreach (var instruction in microInstructions)
+                foreach (var instruction in microInstructions.Skip(9))
                 {
                     if (previous != null)
                     {
@@ -104,13 +104,13 @@ namespace hasm
             sw.Stop();
             _logger.Info($"Completed in {sw.Elapsed}");
 
-            foreach (var function in microFunctions)
+            foreach (var function in microFunctions.Take(1))
             {
                 _logger.Info(function);
 
-                foreach (var instruction in function.MicroInstructions)
+                foreach (var instruction in function.MicroInstructions.Take(1))
                 {
-                    var value = PropertyEncoder.Encode(instruction);
+                    var value = PropertyEncoder.Encode(instruction.ALU);
                     var encoded = Regex.Replace(Convert.ToString(value, 2).PadLeft(37, '0'), ".{4}", "$0 ");
                     var address = Regex.Replace(Convert.ToString(instruction.Location, 2).PadLeft(16, '0'), ".{4}", "$0 ");
 
