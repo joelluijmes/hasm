@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using hasm.Parsing.Encoding;
 using hasm.Parsing.Grammars;
 using OfficeOpenXml;
 using ParserLib.Evaluation;
@@ -29,6 +30,7 @@ namespace hasm.Parsing.Models
 
         private int _location;
 
+        
         public int Location
         {
             get
@@ -40,13 +42,26 @@ namespace hasm.Parsing.Models
             set { _location = value; }
         }
 
-        public int NextInstruction { get; set; }
-        public ALU ALU { get; set; }
-        public MemoryOperation Memory { get; set; }
+        [EncodableProperty(ENCODING_NEXT)]
         public bool LastInstruction { get; }
-        public bool StatusEnabled { get; set; }
+
+        [EncodableProperty(ENCODING_ADDR, 9)]
+        public int NextInstruction { get; set; }
+
+        [EncodableProperty(ENCODING_CONDITION, 3)]
         public Condition Condition { get; set; }
+
+        [EncodableProperty(ENCODING_CONDITION_INVERTED)]
         public bool InvertedCondition { get; set; }
+
+        [EncodableProperty(ENCODING_STATUS_EN)]
+        public bool StatusEnabled { get; set; }
+
+        [EncodableProperty(ENCODING_MEMORY, 2)]
+        public MemoryOperation Memory { get; set; }
+
+        public ALU ALU { get; set; }
+
         public bool InternalInstruction { get; set; }
 
         public MicroInstruction(ALU alu, MemoryOperation memory, bool lastInstruction, bool statusEnabled, Condition condition, bool invertedCondition)
@@ -58,32 +73,7 @@ namespace hasm.Parsing.Models
             Condition = condition;
             InvertedCondition = invertedCondition;
         }
-
-        public long Encode()
-        {
-            long result = 0;
-
-            if (ALU != null)
-                result |= ALU.Encode();
-
-            result |= (long)Condition << ENCODING_CONDITION;
-            if (InvertedCondition)
-                result |= 1L << ENCODING_CONDITION_INVERTED;
-                
-            if (StatusEnabled)
-                result |= 1L << ENCODING_STATUS_EN;
-
-            result |= (long) Memory << ENCODING_MEMORY;
-
-            if (!LastInstruction)
-            {
-                result |= 1L << ENCODING_NEXT;
-                result |= (long) NextInstruction << ENCODING_ADDR;
-            }
-
-            return result;
-        }
-
+        
         public static MicroInstruction Parse(string[] row)
         {
             var operation = new Regex("\\s+").Replace(row[1], "");

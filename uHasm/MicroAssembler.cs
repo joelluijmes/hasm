@@ -6,6 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using hasm.Parsing;
+using hasm.Parsing.Encoding;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
 using hasm.Parsing.Parsers.Sheet;
@@ -32,7 +34,7 @@ namespace hasm
             var sw = Stopwatch.StartNew();
             var nop = _microProgram.First(m => m.Instruction == "NOP").MicroInstructions[0];
 #if DEBUG
-            var program =   new[] { _microProgram.ElementAt(29) };
+            var program =   new[] { _microProgram.ElementAt(0) };
 #else
             var program = _microProgram;
 #endif
@@ -63,7 +65,8 @@ namespace hasm
             {
                 Action<MicroInstruction, StreamWriter> writeLine = (instr, writ) =>
                 {
-                    var encoded = Regex.Replace(Convert.ToString(instr.Encode(), 2).PadLeft(37, '0'), ".{4}", "$0 ");
+                    var value = PropertyEncoder.Encode(instr);
+                    var encoded = Regex.Replace(Convert.ToString(value, 2).PadLeft(37, '0'), ".{4}", "$0 ");
                     var address = Regex.Replace(Convert.ToString(instr.Location, 2).PadLeft(16, '0'), ".{4}", "$0 ");
 
                     writ.WriteLine($"{address}: {encoded} {instr}");
@@ -107,7 +110,8 @@ namespace hasm
 
                 foreach (var instruction in function.MicroInstructions)
                 {
-                    var encoded = Regex.Replace(Convert.ToString(instruction.Encode(), 2).PadLeft(37, '0'), ".{4}", "$0 ");
+                    var value = PropertyEncoder.Encode(instruction);
+                    var encoded = Regex.Replace(Convert.ToString(value, 2).PadLeft(37, '0'), ".{4}", "$0 ");
                     var address = Regex.Replace(Convert.ToString(instruction.Location, 2).PadLeft(16, '0'), ".{4}", "$0 ");
 
                     _logger.Info(address +
