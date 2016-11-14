@@ -31,6 +31,8 @@ namespace hasm.Parsing.Models
 
         private int _location;
 
+        public static readonly MicroInstruction NOP = new MicroInstruction(ALU.NOP, MemoryOperation.None, true, false, Condition.None, false) {InternalInstruction = true};
+
         public int Location
         {
             get

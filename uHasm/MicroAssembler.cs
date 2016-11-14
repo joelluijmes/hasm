@@ -32,7 +32,6 @@ namespace hasm
             _logger.Info("Generating all possible instructions..");
 
             var sw = Stopwatch.StartNew();
-            var nop = _microProgram.First(m => m.Instruction == "NOP").MicroInstructions[0];
 #if DEBUG
             var program =   new[] { _microProgram.ElementAt(61) };
 #else
@@ -54,7 +53,11 @@ namespace hasm
                 .OrderBy(i => i.Location)
                 .ToList();
 
-            var count = microInstructions.Count();
+            var lastNop = MicroInstruction.NOP;
+            lastNop.Location = 0xFFFF;
+            microInstructions.Add(lastNop);
+
+            var count = microInstructions.Count;
 
             sw.Stop();
             _logger.Info($"Encoded {microFunctions.Count} micro-functions (in total {count} micro-instructions) in {sw.Elapsed}");
@@ -71,11 +74,7 @@ namespace hasm
 
                     writ.WriteLine($"{address}: {encoded} {instr}");
                 };
-
-                //var nopCopy = nop.Clone();
-                //nopCopy.Location = 0xFFFF;
-                //microInstructions.Add(nopCopy);
-
+                
                 MicroInstruction previous = null;
                 foreach (var instruction in microInstructions)
                 {
@@ -84,16 +83,8 @@ namespace hasm
                         var diff = instruction.Location - previous.Location;
                         for (var i = 1; i < diff; ++i)
                         {
-                            //if (previous.ALU.ExternalImmediate && instruction.ALU.ExternalImmediate)
-                            //{
                             ++previous.Location;
                             writeLine(previous, writer);
-                            //}
-                            //else
-                            //{
-                            //    nop.Location = previous.Location + i;
-                            //    writeLine(nop, writer);
-                            //}
                         }
                     }
 

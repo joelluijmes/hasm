@@ -29,6 +29,8 @@ namespace hasm.Parsing.Models
             ["^"] = AluOperation.Xor
         };
 
+        public static readonly ALU NOP = new ALU(null, null, null, AluOperation.Clear, false, false, false);
+
         [EncodableProperty(ENCODING_A, 4, Converter = typeof(LeftConverter))]
         private OperandConverter _leftOperand;
 
@@ -110,7 +112,7 @@ namespace hasm.Parsing.Models
         }
 
         private bool IsAssignment => ((Operation == AluOperation.Plus) && (Left == null) && (Right != null)) || ((Left != null) && (Right == null));
-        
+
         public ALU Clone() => new ALU(_targetOperand, _leftOperand, _rightOperand, Operation, Carry, StackPointer, RightShift);
 
         public bool Equals(ALU other)
@@ -201,8 +203,6 @@ namespace hasm.Parsing.Models
 
             return new ALU(target, left, right, operation, carry, stackPointer, shift);
         }
-
-        public static readonly ALU NOP = new ALU(null, null, null, AluOperation.Clear, false, false, false);
 
         private void FixOperands()
         {
