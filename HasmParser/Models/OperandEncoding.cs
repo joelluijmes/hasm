@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace hasm.Parsing.Models
 {
@@ -8,7 +10,7 @@ namespace hasm.Parsing.Models
         public OperandEncoding(string[] operands)
         {
             Operands = operands;
-            EncodingType = OperandEncodingType.Aggregation;
+            Type = OperandEncodingType.Aggregation;
         }
 
         public OperandEncoding(string[] operands, char encodingMask, int size, KeyValuePair<string, int> keyValue)
@@ -16,8 +18,8 @@ namespace hasm.Parsing.Models
             Operands = operands;
             EncodingMask = encodingMask;
             Size = size;
-            KeyValue = new[] {keyValue};
-            EncodingType = OperandEncodingType.KeyValue;
+            Pairs = new[] {keyValue};
+            Type = OperandEncodingType.KeyValue;
         }
 
         public OperandEncoding(string[] operands, char encodingMask, int size, int minimum, int maximum)
@@ -27,16 +29,16 @@ namespace hasm.Parsing.Models
             Size = size;
             Minimum = minimum;
             Maximum = maximum;
-            EncodingType = OperandEncodingType.Range;
+            Type = OperandEncodingType.Range;
         }
 
         public string[] Operands { get; set; }
         public char EncodingMask { get; set; }
         public int Size { get; set; }
-        public IList<KeyValuePair<string, int>> KeyValue { get; set; }
+        public IList<KeyValuePair<string, int>> Pairs { get; set; }
         public int Minimum { get; set; }
         public int Maximum { get; set; }
-        public OperandEncodingType EncodingType { get; set; }
+        public OperandEncodingType Type { get; set; }
 
         public static OperandEncoding Parse(string[] row)
         {
@@ -63,6 +65,15 @@ namespace hasm.Parsing.Models
             }
 
             throw new NotImplementedException();
+        }
+
+        public override string ToString()
+        {
+            var builder = new StringBuilder();
+            builder.Append(Operands.Aggregate((a, b) => $"{a},{b}"));
+            builder.Append($" {Type}");
+
+            return builder.ToString();
         }
     }
 }

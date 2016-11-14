@@ -34,8 +34,8 @@ namespace hasm.Parsing.Parsers.Sheet
             foreach (var group in operands.GroupBy(o => o.Operands))
             {
                 var operand = group.First();
-                if (operand.KeyValue != null)
-                    operand.KeyValue = group.SelectMany(o => o.KeyValue).ToList();
+                if (operand.Pairs != null)
+                    operand.Pairs = group.SelectMany(o => o.Pairs).ToList();
 
                 merged.Add(operand);
             }
