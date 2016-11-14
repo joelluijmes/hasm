@@ -2,7 +2,7 @@
 
 namespace hasm.Parsing.Encoding
 {
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = true)]
     public sealed class EncodablePropertyAttribute : Attribute
     {
         public int Start { get; }

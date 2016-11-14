@@ -5,10 +5,10 @@ namespace hasm.Parsing.Encoding.TypeConverters
 {
     internal sealed class AluContext : ITypeDescriptorContext
     {
-        public AluContext(object instance, string propertyName)
+        public AluContext(object instance)
         {
             Instance = instance;
-            PropertyDescriptor = TypeDescriptor.GetProperties(instance)[propertyName];
+            //PropertyDescriptor = TypeDescriptor.GetProperties(instance)[propertyName];
         }
 
         public object GetService(Type serviceType) => null;

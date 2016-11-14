@@ -2,8 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using hasm.Parsing.Encoding.TypeConverters;
 
 namespace hasm.Parsing.Encoding
 {
@@ -14,19 +16,11 @@ namespace hasm.Parsing.Encoding
         public static long Encode(object obj)
         {
             var encodableMembers = GetEncodableMembers(obj);
-            var alu = obj as ALU;
-            var aluContext = new AluContext(alu,)
             
             long total = 0;
             foreach (var x in encodableMembers)
             {
-                var converter = GetConverter(x.Encodable) ?? TypeDescriptor.GetConverter(typeof(long));
-
-                var objValue = x.GetValue(obj);
-
-                var value = converter.CanConvertFrom(objValue.GetType())
-                    ? (long) converter.ConvertFrom(objValue)
-                    : Convert.ToInt64(objValue);
+                var value = GetValue(obj, x);
 
                 if (x.Encodable.ExceedException && value > Math.Pow(2, x.Encodable.Count) - 1)
                     throw new NotImplementedException();
@@ -35,6 +29,26 @@ namespace hasm.Parsing.Encoding
             }
 
             return total;
+        }
+
+        private static long GetValue(object obj, EncodableMember member)
+        {
+            var objValue = member.GetValue(obj);
+            
+            AluContext aluContext = null;
+            var alu = obj as ALU;
+            if (alu != null)
+                aluContext = new AluContext(alu);
+            
+            var converter = GetConverter(member.Encodable) ?? TypeDescriptor.GetConverter(typeof(long));
+
+            var value = converter.CanConvertFrom(objValue.GetType())
+                ? (aluContext != null
+                    ? (long) converter.ConvertFrom(aluContext, CultureInfo.InvariantCulture, objValue)
+                    : (long) converter.ConvertFrom(objValue))
+                : Convert.ToInt64(objValue);
+
+            return value;
         }
 
         private static TypeConverter GetConverter(EncodablePropertyAttribute encodable)
@@ -59,22 +73,42 @@ namespace hasm.Parsing.Encoding
 
             var encodableMembers = type
                 .GetProperties(flags).Cast<MemberInfo>()
-                .Concat(type.GetFields(flags).Cast<MemberInfo>())
+                .Concat(type.GetFields(flags))
                 .Select(prop => new EncodableMember
                 {
                     Member = prop,
-                    Encodable = (EncodablePropertyAttribute)prop.GetCustomAttribute(typeof(EncodablePropertyAttribute), true)
+                    Encodable = (EncodablePropertyAttribute[])prop.GetCustomAttributes(typeof(EncodablePropertyAttribute), true)
                 })
                 .Where(x => x.Encodable != null)
                 .ToList();
 
-            var query = from x in encodableMembers
-                        from y in encodableMembers
-                        where x.Member != y.Member &&
-                        (x.Encodable.OverlapException || y.Encodable.OverlapException) &&
-                        x.Encodable.Start < (y.Encodable.Start + y.Encodable.Count) &&
-                        y.Encodable.Start < (x.Encodable.Start + x.Encodable.Count)
-                        select new { X = x, Y = y };
+            CheckOverlap(encodableMembers);
+            return encodableMembers;
+        }
+
+        private static void CheckOverlap(IList<EncodableMember> encodableMembers)
+        {
+            var encodables = encodableMembers
+                .SelectMany(x => encodableMembers, (x, y) => new {x, y})
+                .Where(t => t.x != t.y);
+
+            var list = new List<Tuple<MemberInfo, MemberInfo>();
+            foreach (var enc in encodables)
+            {
+                var attributes = enc.x.Encodable
+                    .SelectMany(a => enc.y.Encodable)
+                    .Where(c => enc.x != enc.y);
+
+                foreach (var attr in attributes)
+                {
+                    
+                }
+            }
+
+            var query = encodableMembers.SelectMany(x => encodableMembers, (x, y) => new {x, y}).Where(@t => @t.x.Member != @t.y.Member &&
+                                                                                                             (@t.x.Encodable.OverlapException || @t.y.Encodable.OverlapException) &&
+                                                                                                             @t.x.Encodable.Start < (@t.y.Encodable.Start + @t.y.Encodable.Count) &&
+                                                                                                             @t.y.Encodable.Start < (@t.x.Encodable.Start + @t.x.Encodable.Count)).Select(@t => new {X = @t.x, Y = @t.y});
 
             var overlaps = query.ToList();
             if (overlaps.Any())
@@ -85,23 +119,53 @@ namespace hasm.Parsing.Encoding
 
                 throw new Exception(message);
             }
-
-            return encodableMembers;
         }
 
         private struct EncodableMember
         {
             public MemberInfo Member { get; set; }
-            public EncodablePropertyAttribute Encodable { get; set; }
+            public EncodablePropertyAttribute[] Encodable { get; set; }
 
             public object GetValue(object obj)
             {
                 if (Member.MemberType == MemberTypes.Property)
                     return ((PropertyInfo)Member).GetValue(obj);
-                else if (Member.MemberType == MemberTypes.Field)
+
+                if (Member.MemberType == MemberTypes.Field)
                     return ((FieldInfo)Member).GetValue(obj);
-                else
-                    throw new InvalidOperationException();
+
+                throw new InvalidOperationException();
+            }
+
+            public bool Equals(EncodableMember other)
+            {
+                return Equals(Encodable, other.Encodable) && Equals(Member, other.Member);
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj))
+                    return false;
+
+                return obj is EncodableMember && Equals((EncodableMember) obj);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    return ((Encodable?.GetHashCode() ?? 0)*397) ^ (Member != null ? Member.GetHashCode() : 0);
+                }
+            }
+
+            public static bool operator ==(EncodableMember left, EncodableMember right)
+            {
+                return left.Equals(right);
+            }
+
+            public static bool operator !=(EncodableMember left, EncodableMember right)
+            {
+                return !left.Equals(right);
             }
         }
     }

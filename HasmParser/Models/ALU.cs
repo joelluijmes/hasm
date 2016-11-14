@@ -9,7 +9,7 @@ using ParserLib.Parsing;
 
 namespace hasm.Parsing.Models
 {
-    public sealed partial class ALU
+    public sealed class ALU
     {
         private const int ENCODING_IMM = 17;
         private const int ENCODING_A = 19;
@@ -29,12 +29,11 @@ namespace hasm.Parsing.Models
             ["^"] = AluOperation.Xor
         };
 
-        private string _grammar;
-
         [EncodableProperty(ENCODING_A, 4, Converter = typeof(LeftConverter))]
         private OperandConverter _leftOperand;
 
-
+        [EncodableProperty(ENCODING_B, 4, Converter = typeof(RightConverter))]
+        [EncodableProperty(ENCODING_IMM, 2, Converter = typeof(ImmediateConverter))]
         private OperandConverter _rightOperand;
 
         [EncodableProperty(ENCODING_C, 4, Converter = typeof(TargetConverter))]
@@ -54,7 +53,6 @@ namespace hasm.Parsing.Models
                 : operation;
 
             FixOperands();
-            _grammar = ToString();
         }
 
         private ALU(OperandConverter target, OperandConverter left, OperandConverter right, AluOperation operation, bool carry, bool stackPointer, bool rightShift)
@@ -67,6 +65,21 @@ namespace hasm.Parsing.Models
             RightShift = rightShift;
             Operation = operation;
         }
+
+
+        [EncodableProperty(ENCODING_CARRY)]
+        public bool Carry { get; set; }
+
+        [EncodableProperty(ENCODING_SP, Converter = typeof(InverseBooleanConverter))]
+        public bool StackPointer { get; set; }
+
+        [EncodableProperty(ENCODING_SHIFT)]
+        public bool RightShift { get; set; }
+
+        [EncodableProperty(ENCODING_ALU)]
+        public AluOperation Operation { get; set; }
+
+        public bool ExternalImmediate { get; set; }
 
         public string Target
         {
@@ -94,46 +107,8 @@ namespace hasm.Parsing.Models
             }
         }
 
-        public bool Carry { get; set; }
-        public bool StackPointer { get; set; }
-        public bool RightShift { get; set; }
-        public AluOperation Operation { get; set; }
-        public bool ExternalImmediate { get; set; }
+        private bool IsAssignment => ((Operation == AluOperation.Plus) && (Left == null) && (Right != null)) || ((Left != null) && (Right == null));
         
-        public long Encode()
-        {
-            long result = 0;
-            
-            if (!string.IsNullOrEmpty(Right))
-            {
-                if (_rightOperand.IsImmediate)
-                {
-                    result |= (_rightOperand.Value & 0x3L) << ENCODING_IMM; // encode maximum of 12 bits in the encoding
-                    result |= 0x9L << ENCODING_B; // internal immediate
-                }
-                else
-                    result |= _rightOperand.Value << ENCODING_B;
-            }
-            else
-            {
-                if (ExternalImmediate)
-                    result |= 0xAL << ENCODING_B; // external immediate
-                else
-                    result |= 0xFL << ENCODING_B; // disable b 
-            }
-
-            if (!StackPointer) // stackpointter is disable in encoding
-                result |= 1L << ENCODING_SP;
-            if (Carry)
-                result |= 1L << ENCODING_CARRY;
-            if (RightShift)
-                result |= 1L << ENCODING_SHIFT;
-
-            result |= (long) Operation << ENCODING_ALU;
-
-            return result;
-        }
-
         public void SetExternalImmediate()
         {
             if (_leftOperand.IsImmediate)
@@ -149,7 +124,7 @@ namespace hasm.Parsing.Models
             ExternalImmediate = true;
         }
 
-        public ALU Clone() => new ALU(_targetOperand, _leftOperand, _rightOperand, Operation, Carry, StackPointer, RightShift) { _grammar = _grammar };
+        public ALU Clone() => new ALU(_targetOperand, _leftOperand, _rightOperand, Operation, Carry, StackPointer, RightShift);
 
         public bool Equals(ALU other)
         {
@@ -240,8 +215,6 @@ namespace hasm.Parsing.Models
             return new ALU(target, left, right, operation, carry, stackPointer, shift);
         }
 
-        private bool IsAssignment => ((Operation == AluOperation.Plus) && (Left == null) && (Right != null)) || ((Left != null) && (Right == null));
-
         private void FixOperands()
         {
             // we can't put negative on the bus, so we inverse the plus or minus and inverse the operand to fix this 
@@ -279,7 +252,7 @@ namespace hasm.Parsing.Models
             if (!operand.IsImmediate || !int.TryParse(operand.Operand, out value) || (value >= 0))
                 return;
 
-            operand.Operand = (value * -1).ToString();
+            operand.Operand = (value*-1).ToString();
 
             if (Operation == AluOperation.Minus)
                 Operation = AluOperation.Plus;
