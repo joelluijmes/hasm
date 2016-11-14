@@ -202,6 +202,8 @@ namespace hasm.Parsing.Models
             return new ALU(target, left, right, operation, carry, stackPointer, shift);
         }
 
+        public static readonly ALU NOP = new ALU(null, null, null, AluOperation.Clear, false, false, false);
+
         private void FixOperands()
         {
             // we can't put negative on the bus, so we inverse the plus or minus and inverse the operand to fix this 

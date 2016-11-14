@@ -93,7 +93,7 @@ namespace hasm.Parsing.Models
             var aluNode = parsed.FirstNodeByNameOrDefault("alu");
             var alu = aluNode != null
                 ? ALU.Parse(aluNode)
-                : null;
+                : ALU.NOP;
 
             var memoryCell = row[2];
             var memory = string.IsNullOrEmpty(memoryCell)
