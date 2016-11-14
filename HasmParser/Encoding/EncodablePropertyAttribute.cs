@@ -22,5 +22,10 @@ namespace hasm.Parsing.Encoding
             Start = start;
             Count = count;
         }
+
+        public EncodablePropertyAttribute(Type converter)
+        {
+            Converter = converter;
+        }
     }
 }

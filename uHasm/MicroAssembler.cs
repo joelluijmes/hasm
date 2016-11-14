@@ -34,7 +34,7 @@ namespace hasm
             var sw = Stopwatch.StartNew();
             var nop = _microProgram.First(m => m.Instruction == "NOP").MicroInstructions[0];
 #if DEBUG
-            var program =   new[] { _microProgram.ElementAt(0) };
+            var program =   new[] { _microProgram.ElementAt(1) };
 #else
             var program = _microProgram;
 #endif
@@ -65,7 +65,7 @@ namespace hasm
             {
                 Action<MicroInstruction, StreamWriter> writeLine = (instr, writ) =>
                 {
-                    var value = PropertyEncoder.Encode(instr.ALU);
+                    var value = PropertyEncoder.Encode(instr);
                     var encoded = Regex.Replace(Convert.ToString(value, 2).PadLeft(37, '0'), ".{4}", "$0 ");
                     var address = Regex.Replace(Convert.ToString(instr.Location, 2).PadLeft(16, '0'), ".{4}", "$0 ");
 
@@ -77,7 +77,7 @@ namespace hasm
                 //microInstructions.Add(nopCopy);
 
                 MicroInstruction previous = null;
-                foreach (var instruction in microInstructions.Skip(9))
+                foreach (var instruction in microInstructions)
                 {
                     if (previous != null)
                     {
@@ -104,13 +104,13 @@ namespace hasm
             sw.Stop();
             _logger.Info($"Completed in {sw.Elapsed}");
 
-            foreach (var function in microFunctions.Take(1))
+            foreach (var function in microFunctions)
             {
                 _logger.Info(function);
 
-                foreach (var instruction in function.MicroInstructions.Take(1))
+                foreach (var instruction in function.MicroInstructions)
                 {
-                    var value = PropertyEncoder.Encode(instruction.ALU);
+                    var value = PropertyEncoder.Encode(instruction);
                     var encoded = Regex.Replace(Convert.ToString(value, 2).PadLeft(37, '0'), ".{4}", "$0 ");
                     var address = Regex.Replace(Convert.ToString(instruction.Location, 2).PadLeft(16, '0'), ".{4}", "$0 ");
 

@@ -76,7 +76,7 @@ namespace hasm.Parsing.Models
         [EncodableProperty(ENCODING_SHIFT)]
         public bool RightShift { get; set; }
 
-        [EncodableProperty(ENCODING_ALU)]
+        [EncodableProperty(ENCODING_ALU, 3)]
         public AluOperation Operation { get; set; }
 
         public bool ExternalImmediate { get; set; }

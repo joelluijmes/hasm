@@ -82,6 +82,7 @@
     <Compile Include="Encoding\TypeConverters\ImmediateConverter.cs" />
     <Compile Include="Encoding\TypeConverters\InverseBooleanConverter.cs" />
     <Compile Include="Encoding\TypeConverters\LeftConverter.cs" />
+    <Compile Include="Encoding\TypeConverters\AluConverter.cs" />
     <Compile Include="Encoding\TypeConverters\RightConverter.cs" />
     <Compile Include="Encoding\TypeConverters\TargetConverter.cs" />
     <Compile Include="Grammars\HasmGrammer.Rules.cs" />

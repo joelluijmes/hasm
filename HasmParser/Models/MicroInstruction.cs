@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using hasm.Parsing.Encoding;
+using hasm.Parsing.Encoding.TypeConverters;
 using hasm.Parsing.Grammars;
 using OfficeOpenXml;
 using ParserLib.Evaluation;
@@ -60,6 +61,7 @@ namespace hasm.Parsing.Models
         [EncodableProperty(ENCODING_MEMORY, 2)]
         public MemoryOperation Memory { get; set; }
 
+        [EncodableProperty(typeof(AluConverter), ExceedException = false)]
         public ALU ALU { get; set; }
 
         public bool InternalInstruction { get; set; }
