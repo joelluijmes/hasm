@@ -79,7 +79,9 @@ namespace hasm.Parsing.Models
         [EncodableProperty(ENCODING_ALU, 3)]
         public AluOperation Operation { get; set; }
 
-        public bool ExternalImmediate { get; set; }
+        public bool ExternalImmediate => (ExternalLeft && _leftOperand.IsImmediate) || (ExternalRight && _rightOperand.IsImmediate);
+        public bool ExternalLeft { get; set; }
+        public bool ExternalRight { get; set; }
 
         public string Target
         {
@@ -109,21 +111,6 @@ namespace hasm.Parsing.Models
 
         private bool IsAssignment => ((Operation == AluOperation.Plus) && (Left == null) && (Right != null)) || ((Left != null) && (Right == null));
         
-        public void SetExternalImmediate()
-        {
-            if (_leftOperand.IsImmediate)
-                _leftOperand = new OperandConverter();
-            else
-            {
-                if (_rightOperand.IsImmediate)
-                    _rightOperand = new OperandConverter();
-                else
-                    throw new NotImplementedException();
-            }
-
-            ExternalImmediate = true;
-        }
-
         public ALU Clone() => new ALU(_targetOperand, _leftOperand, _rightOperand, Operation, Carry, StackPointer, RightShift);
 
         public bool Equals(ALU other)

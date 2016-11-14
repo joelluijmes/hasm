@@ -171,7 +171,7 @@ namespace hasm
             {
                 var operands = HasmGrammar.GetOperands(microFunction.Instruction)
                                           .Select(type => PermuteOperands(type) // generate all permutations of operand
-                                              .Select(operand => new KeyValuePair<string, string>(type, operand))); // put it in a key:value
+                                              .Select(operand => new Operand(type, operand)));
 
                 foreach (var permutation in operands.CartesianProduct())
                 {
@@ -189,7 +189,7 @@ namespace hasm
             { 
                 var operands = HasmGrammar.GetOperands(microFunction.Instruction)
                                           .Select(type => PermuteOperands(type) // generate all permutations of operand
-                                              .Select(operand => new KeyValuePair<string, string>(type, operand))); // put it in a key:value
+                                              .Select(operand => new Operand(type, operand)));
 
                 foreach (var permutation in operands.CartesianProduct())
                 {
@@ -204,30 +204,38 @@ namespace hasm
 #endif
         }
 
-        private static void PermuteFunction(IEnumerable<KeyValuePair<string, string>> permutation, MicroFunction function)
+        private static void PermuteFunction(IEnumerable<Operand> permutation, MicroFunction function)
         {
-            var externalImmediate = false;
-            foreach (var operand in permutation.SelectMany(SplitAggregated))
+            var operands = permutation.SelectMany(SplitAggregated).ToArray();
+            for (var i = 0; i < operands.Length; i++)
             {
-                if (operand.Key.StartsWith("IMM"))
-                    externalImmediate = true;
-
-                function.Instruction = function.Instruction.Replace(operand.Key, operand.Value);
-
+                if (function.Instruction.Contains(operands[i].Type))
+                    operands[i].ExternalOperand = true;
+                
                 foreach (var alu in function.MicroInstructions.Select(s => s.ALU))
                 {
                     if (alu == null)
                         continue;
 
                     if (!string.IsNullOrEmpty(alu.Left))
-                        alu.Left = alu.Left.Replace(operand.Key, operand.Value);
+                    {
+                        alu.Left = alu.Left.Replace(operands[i].Type, operands[i].Value);
+                        alu.ExternalLeft = function.Instruction.Contains(operands[i].Type);
+                    }
+
                     if (!string.IsNullOrEmpty(alu.Right))
-                        alu.Right = alu.Right.Replace(operand.Key, operand.Value);
+                    {
+                        alu.Right = alu.Right.Replace(operands[i].Type, operands[i].Value);
+                        alu.ExternalRight = function.Instruction.Contains(operands[i].Type);
+                    }
+
                     if (!string.IsNullOrEmpty(alu.Target))
-                        alu.Target = alu.Target.Replace(operand.Key, operand.Value);
+                        alu.Target = alu.Target.Replace(operands[i].Type, operands[i].Value);
                 }
+
+                function.Instruction = function.Instruction.Replace(operands[i].Type, operands[i].Value);
             }
-            
+
             // first microinstruction/function address is the assembled (macro)instruction
             var encoded = _sheetParser.Encode(function.Instruction);
 
@@ -240,20 +248,17 @@ namespace hasm
 
             var address = ConvertToInt(encoded);
             function.MicroInstructions[0].Location = address >> 1; // last bit doesn't count
-
-            if (externalImmediate)
-                function.MicroInstructions[0].ALU.SetExternalImmediate();
         }
 
-        private static IEnumerable<KeyValuePair<string, string>> SplitAggregated(KeyValuePair<string, string> keyValue)
+        private static IEnumerable<Operand> SplitAggregated(Operand keyValue)
         {
-            var keys = keyValue.Key.Split(new[] {' ', '+'}, StringSplitOptions.RemoveEmptyEntries);
+            var types = keyValue.Type.Split(new[] {' ', '+'}, StringSplitOptions.RemoveEmptyEntries);
             var values = keyValue.Value.Split(new[] {' ', '+'}, StringSplitOptions.RemoveEmptyEntries);
 
-            if (keys.Length != values.Length)
+            if (types.Length != values.Length)
                 throw new NotImplementedException();
 
-            return keys.Zip(values, (key, value) => new KeyValuePair<string, string>(key, value));
+            return types.Zip(values, (type, value) => new Operand(type, value));
         }
 
         private static IEnumerable<string> PermuteOperands(string operand)
@@ -290,6 +295,20 @@ namespace hasm
                 result |= array[i] << (i*8);
 
             return result;
+        }
+
+        private struct Operand
+        {
+            public string Type { get; }
+            public string Value { get; }
+            public bool ExternalOperand { get; set; }
+
+            public Operand(string type, string value) 
+            {
+                Type = type;
+                Value = value;
+                ExternalOperand = false;
+            }
         }
     }
 }
