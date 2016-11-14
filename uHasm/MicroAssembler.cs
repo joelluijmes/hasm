@@ -34,7 +34,7 @@ namespace hasm
             var sw = Stopwatch.StartNew();
             var nop = _microProgram.First(m => m.Instruction == "NOP").MicroInstructions[0];
 #if DEBUG
-            var program =   new[] { _microProgram.ElementAt(20) };
+            var program =   new[] { _microProgram.ElementAt(29) };
 #else
             var program = _microProgram;
 #endif
@@ -152,7 +152,7 @@ namespace hasm
                         function.MicroInstructions[i].InternalInstruction = true;
                     }
 
-                    function.MicroInstructions[i - 1].NextInstruction = function.MicroInstructions[i].Location >> 6;
+                    function.MicroInstructions[i - 1].NextInstruction = (function.MicroInstructions[i].Location & 0x7FFF) >> 6;
 
                     if (cached == null)
                         instructions.Add(instruction, instruction);
