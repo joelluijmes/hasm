@@ -28,8 +28,19 @@ namespace hasm.Parsing.Models
             ["S"] = Condition.Sign,
             ["N"] = Condition.Negative
         };
-        
-        public int Location { get; set; }
+
+        private int _location;
+
+        public int Location
+        {
+            get
+            {
+                return InternalInstruction
+                    ? _location | 1 << 15
+                    : _location;
+            }
+            set { _location = value; }
+        }
 
         [EncodableProperty(ENCODING_NEXT)]
         public bool LastInstruction { get; }

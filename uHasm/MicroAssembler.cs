@@ -81,12 +81,13 @@ namespace hasm
                 {
                     if (previous != null)
                     {
-                        for (var i = 1; i < instruction.Location - previous.Location; ++i)
+                        var diff = instruction.Location - previous.Location;
+                        for (var i = 1; i < diff; ++i)
                         {
                             //if (previous.ALU.ExternalImmediate && instruction.ALU.ExternalImmediate)
                             //{
-                                previous.Location = ++previous.Location;
-                                writeLine(previous, writer);
+                            ++previous.Location;
+                            writeLine(previous, writer);
                             //}
                             //else
                             //{
