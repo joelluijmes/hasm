@@ -34,7 +34,7 @@ namespace hasm
             var sw = Stopwatch.StartNew();
             var nop = _microProgram.First(m => m.Instruction == "NOP").MicroInstructions[0];
 #if DEBUG
-            var program =   new[] { _microProgram.ElementAt(1) };
+            var program =   new[] { _microProgram.ElementAt(20) };
 #else
             var program = _microProgram;
 #endif

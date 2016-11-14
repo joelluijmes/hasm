@@ -14,7 +14,7 @@ namespace hasm.Parsing.Encoding.TypeConverters
                 return base.ConvertFrom(context, culture, value);
 
             var right = (OperandConverter)value;
-            return !string.IsNullOrEmpty(right.Operand) && right.IsImmediate 
+            return !string.IsNullOrEmpty(right.Operand) && right.IsImmediate && !alu.ExternalImmediate
                 ? right.Value 
                 : 0;
         }
