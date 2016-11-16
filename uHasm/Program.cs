@@ -56,7 +56,9 @@ namespace hasm
             //Console.WriteLine(tree.PrettyFormat());
 
             var microParser = new MicroFunctionSheetParser();
-            var assembler = new MicroAssembler(microParser.Items);
+		    var microInstructions = MicroGenerator.GenerateMicroInstructions(microParser.Items);
+
+            var assembler = new MicroAssembler(microInstructions);
             assembler.Generate();
         }
 
