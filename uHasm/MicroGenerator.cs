@@ -12,7 +12,6 @@ namespace hasm
     internal static class MicroGenerator
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private static readonly HasmSheetParser _sheetParser = new HasmSheetParser(new HasmGrammar());
 
         public static IList<MicroFunction> GenerateMicroInstructions(IList<MicroFunction> microFunctions)
         {
@@ -20,7 +19,7 @@ namespace hasm
 
             var sw = Stopwatch.StartNew();
 #if DEBUG
-            microFunctions = new[] {microFunctions.ElementAt(0)};
+            microFunctions = new[] { microFunctions.ElementAt(22), microFunctions.ElementAt(23), };
 #else
 #endif
             //var microFunctions = GenerateMicroInstructions(program);
@@ -40,7 +39,6 @@ namespace hasm
                 {
                     var function = microFunction.Clone();
                     PermuteFunction(permutation, function);
-                    SetLocation(function);
 
                     concurrentQueue.Enqueue(function);
                 }
@@ -59,7 +57,6 @@ namespace hasm
                 {
                     var function = microFunction.Clone();
                     PermuteFunction(permutation, function);
-                    SetLocation(function);
 
                     list.Add(function);
                 }
@@ -101,29 +98,7 @@ namespace hasm
                 function.Instruction = function.Instruction.Replace(operands[i].Type, operands[i].Value);
             }
         }
-
-        private static void SetLocation(MicroFunction function)
-        {
-            // first microinstruction/function address is the assembled (macro)instruction
-            var encoded = _sheetParser.Encode(function.Instruction);
-
-            if (encoded.Length == 1)
-                encoded = new byte[] {0x00, encoded[0]};
-            else
-            {
-                if (encoded.Length == 3)
-                    encoded = new[] {encoded[1], encoded[2]};
-                else
-                {
-                    if (encoded.Length != 2)
-                        throw new NotImplementedException();
-                }
-            }
-
-            var address = ConvertToInt(encoded);
-            function.MicroInstructions[0].Location = address >> 1; // last bit doesn't count
-        }
-
+        
         private static IEnumerable<Operand> SplitAggregated(Operand keyValue)
         {
             var types = keyValue.Type.Split(new[] {' ', '+'}, StringSplitOptions.RemoveEmptyEntries);
@@ -161,16 +136,7 @@ namespace hasm
                 throw new ArgumentOutOfRangeException();
             }
         }
-
-        private static int ConvertToInt(IList<byte> array)
-        {
-            var result = 0;
-            for (var i = 0; i < array.Count; i++)
-                result |= array[i] << (i*8);
-
-            return result;
-        }
-
+        
         private struct Operand
         {
             public string Type { get; }
