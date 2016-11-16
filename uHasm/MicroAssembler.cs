@@ -30,7 +30,7 @@ namespace hasm
 
             var sw = Stopwatch.StartNew();
 
-            var distinct = DistinctInstructions(_microFunctions);
+            var distinct = DistinctInstructions(_microFunctions).ToList();
             var assembled = AssembleFunctions(distinct);
             var microInstructions = assembled
                 .OrderBy(i => i.Location)
@@ -83,16 +83,16 @@ namespace hasm
             _logger.Info($"Completed in {sw.Elapsed}");
         }
 
-        private static IEnumerable<MicroFunction> DistinctInstructions(IEnumerable<MicroFunction> microFunctions)
+        private static IList<MicroFunction> DistinctInstructions(IEnumerable<MicroFunction> microFunctions)
         {
             var cache = new Dictionary<MicroInstruction, MicroInstruction>();
+            var list = new List<MicroFunction>();
 
             foreach (var microFunction in microFunctions)
             {
                 if (microFunction.MicroInstructions.Count == 1)
                 {
-                    yield return microFunction;
-
+                    list.Add(microFunction);
                     continue;
                 }
 
@@ -102,22 +102,24 @@ namespace hasm
                     var instruction = microFunction.MicroInstructions[i];
 
                     MicroInstruction cached;
-                    if (!cache.TryGetValue(instruction, out cached))
-                    {
-                        instructions.Add(instruction);
-                        cache.Add(instruction, instruction);
-                    }
-                    else
+                    if (cache.TryGetValue(instruction, out cached))
                     {
                         instructions.Add(cached);
                         instruction = cached;
+                    }
+                    else
+                    {
+                        instructions.Add(instruction);
+                        cache.Add(instruction, instruction);
                     }
 
                     instructions[i - 1].NextMicroInstruction = instruction;
                 }
 
-                yield return new MicroFunction(microFunction.Instruction, instructions);
+                list.Add(new MicroFunction(microFunction.Instruction, instructions));
             }
+
+            return list;
         }
 
         private static IList<AssembledInstruction> AssembleFunctions(IEnumerable<MicroFunction> microFunctions)
@@ -192,3 +194,4 @@ namespace hasm
         }
     }
 }
+

@@ -137,7 +137,14 @@ namespace hasm.Parsing.Models
 
         private bool Equals(MicroInstruction other)
         {
-            return _location == other._location && LastInstruction == other.LastInstruction && Condition == other.Condition && InvertedCondition == other.InvertedCondition && StatusEnabled == other.StatusEnabled && Memory == other.Memory && Equals(ALU, other.ALU) && Equals(NextMicroInstruction, other.NextMicroInstruction) && InternalInstruction == other.InternalInstruction;
+            return _location == other._location && 
+                LastInstruction == other.LastInstruction && 
+                Condition == other.Condition && 
+                InvertedCondition == other.InvertedCondition && 
+                StatusEnabled == other.StatusEnabled && 
+                Memory == other.Memory && 
+                ALU.Equals(other.ALU) && 
+                InternalInstruction == other.InternalInstruction;
         }
 
         public override int GetHashCode()

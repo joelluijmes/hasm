@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
 using hasm.Parsing.Parsers.Sheet;
@@ -19,13 +21,10 @@ namespace hasm
 
             var sw = Stopwatch.StartNew();
 #if DEBUG
-            microFunctions = new[] { microFunctions.ElementAt(28) };
-#else
+            microFunctions = new[] { microFunctions.ElementAt(40) };
 #endif
-            //var microFunctions = GenerateMicroInstructions(program);
-            sw.Stop();
+            //microFunctions = microFunctions.Take(10).ToList();
 
-            _logger.Info($"Generated {microFunctions.Count} micro-functions in {sw.Elapsed}");
 
 #if PARALLEL
             var concurrentQueue = new ConcurrentQueue<MicroFunction>();
@@ -44,7 +43,7 @@ namespace hasm
                 }
             });
 
-            return concurrentQueue.ToList();
+            var list = concurrentQueue.ToList();
 #else
             var list = new List<MicroFunction>();
             foreach (var microFunction in microFunctions)
@@ -61,9 +60,12 @@ namespace hasm
                     list.Add(function);
                 }
             }
+#endif
+
+            sw.Stop();
+            _logger.Info($"Generated {list.Count} micro-functions in {sw.Elapsed}");
 
             return list;
-#endif
         }
 
         private static void PermuteFunction(IEnumerable<Operand> permutation, MicroFunction function)
