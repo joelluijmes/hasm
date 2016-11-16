@@ -33,7 +33,7 @@ namespace hasm
 
             var sw = Stopwatch.StartNew();
 #if DEBUG
-            var program =   new[] { _microProgram.ElementAt(61) };
+            var program =   new[] { _microProgram.ElementAt(0) };
 #else
             var program = _microProgram;
 #endif
@@ -169,6 +169,7 @@ namespace hasm
                 {
                     var function = microFunction.Clone();
                     PermuteFunction(permutation, function);
+                    SetLocation(function);
 
                     concurrentQueue.Enqueue(function);
                 }
@@ -187,6 +188,7 @@ namespace hasm
                 {
                     var function = microFunction.Clone();
                     PermuteFunction(permutation, function);
+                    SetLocation(function);
 
                     list.Add(function);
                 }
@@ -227,12 +229,15 @@ namespace hasm
 
                 function.Instruction = function.Instruction.Replace(operands[i].Type, operands[i].Value);
             }
+        }
 
+        private static void SetLocation(MicroFunction function)
+        { 
             // first microinstruction/function address is the assembled (macro)instruction
             var encoded = _sheetParser.Encode(function.Instruction);
 
             if (encoded.Length == 1)
-                encoded = new byte[] { 0x00, encoded[0]};
+                encoded = new byte[] {0x00, encoded[0]};
             else if (encoded.Length == 3)
                 encoded = new[] {encoded[1], encoded[2]};
             else if (encoded.Length != 2)
