@@ -50,8 +50,7 @@ namespace hasm.Parsing.Models
         public bool LastInstruction { get;} // NextMicroInstruction == null;
 
         [EncodableProperty(ENCODING_ADDR, 9)]
-        public int NextInstruction => 
-            (NextMicroInstruction?.Location & 0x7FFF) >> 6 ?? 0;
+        public int NextInstruction => (NextMicroInstruction?.Location & 0x7FFF) >> 6 ?? 0;
 
         [EncodableProperty(ENCODING_CONDITION, 3)]
         public Condition Condition { get; set; }

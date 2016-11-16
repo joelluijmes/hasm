@@ -19,7 +19,7 @@ namespace hasm
 
             var sw = Stopwatch.StartNew();
 #if DEBUG
-            microFunctions = new[] { microFunctions.ElementAt(22), microFunctions.ElementAt(23), };
+            microFunctions = new[] { microFunctions.ElementAt(28) };
 #else
 #endif
             //var microFunctions = GenerateMicroInstructions(program);
@@ -79,13 +79,13 @@ namespace hasm
                     if (alu == null)
                         continue;
 
-                    if (!string.IsNullOrEmpty(alu.Left))
+                    if (!string.IsNullOrEmpty(alu.Left) && alu.Left.Contains(operands[i].Type))
                     {
                         alu.Left = alu.Left.Replace(operands[i].Type, operands[i].Value);
                         alu.ExternalLeft = function.Instruction.Contains(operands[i].Type);
                     }
 
-                    if (!string.IsNullOrEmpty(alu.Right))
+                    if (!string.IsNullOrEmpty(alu.Right) && alu.Right.Contains(operands[i].Type))
                     {
                         alu.Right = alu.Right.Replace(operands[i].Type, operands[i].Value);
                         alu.ExternalRight = function.Instruction.Contains(operands[i].Type);

@@ -30,8 +30,8 @@ namespace hasm
 
             var sw = Stopwatch.StartNew();
 
-            var distinct = DistinctInstructions(_microFunctions).ToArray();
-            var assembled = AssembleFunctions(distinct).ToArray();
+            var distinct = DistinctInstructions(_microFunctions);
+            var assembled = AssembleFunctions(distinct);
             var microInstructions = assembled
                 .OrderBy(i => i.Location)
                 .ToList();
@@ -120,7 +120,7 @@ namespace hasm
             }
         }
 
-        private static IList<AssembledInstruction> AssembleFunctions(IList<MicroFunction> microFunctions)
+        private static IList<AssembledInstruction> AssembleFunctions(IEnumerable<MicroFunction> microFunctions)
         {
             var cache = new Dictionary<MicroInstruction, MicroInstruction>();
             var list = new List<MicroInstruction>();
