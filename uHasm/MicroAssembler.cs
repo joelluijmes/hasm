@@ -53,9 +53,9 @@ namespace hasm
                 .OrderBy(i => i.Location)
                 .ToList();
 
-            var lastNop = MicroInstruction.NOP;
-            lastNop.Location = 0xFFFF;
-            microInstructions.Add(lastNop);
+            //var lastNop = MicroInstruction.NOP;
+            //lastNop.Location = 0xFFFF;
+            //microInstructions.Add(lastNop);
 
             var count = microInstructions.Count;
 
@@ -96,30 +96,30 @@ namespace hasm
             sw.Stop();
             _logger.Info($"Completed in {sw.Elapsed}");
 
-            foreach (var function in microFunctions)
-            {
-                _logger.Info(function);
+            //foreach (var function in microFunctions)
+            //{
+            //    _logger.Info(function);
 
-                foreach (var instruction in function.MicroInstructions)
-                {
-                    var value = PropertyEncoder.Encode(instruction);
-                    var encoded = Regex.Replace(Convert.ToString(value, 2).PadLeft(37, '0'), ".{4}", "$0 ");
-                    var address = Regex.Replace(Convert.ToString(instruction.Location, 2).PadLeft(16, '0'), ".{4}", "$0 ");
+            //    foreach (var instruction in function.MicroInstructions)
+            //    {
+            //        var value = PropertyEncoder.Encode(instruction);
+            //        var encoded = Regex.Replace(Convert.ToString(value, 2).PadLeft(37, '0'), ".{4}", "$0 ");
+            //        var address = Regex.Replace(Convert.ToString(instruction.Location, 2).PadLeft(16, '0'), ".{4}", "$0 ");
 
-                    _logger.Info(address +
-                                  $" {instruction.ToString().PadRight(25)}" +
-                                  $" {encoded}" +
-                                  $" {(instruction.LastInstruction ? "" : Convert.ToString(instruction.NextInstruction, 16).PadLeft(3, '0') + "h")}");
+            //        _logger.Info(address +
+            //                      $" {instruction.ToString().PadRight(25)}" +
+            //                      $" {encoded}" +
+            //                      $" {(instruction.LastInstruction ? "" : Convert.ToString(instruction.NextInstruction, 16).PadLeft(3, '0') + "h")}");
 
-                    ++count;
-                }
+            //        ++count;
+            //    }
 
-                if (count > 400)
-                    break;
-            }
+            //    if (count > 400)
+            //        break;
+            //}
         }
 
-        private void FitMicroFunctions(IList<MicroFunction> microFunctions)
+        private static void FitMicroFunctions(IEnumerable<MicroFunction> microFunctions)
         {
             var instructions = new Dictionary<MicroInstruction, MicroInstruction>();
 
@@ -134,20 +134,17 @@ namespace hasm
                     var instruction = function.MicroInstructions[i];
 
                     MicroInstruction cached;
-                    instructions.TryGetValue(instruction, out cached);
+                    if (!instructions.TryGetValue(instruction, out cached))
+                    { 
+                        instruction.Location = address++ << 6; // last bit doesn't count 
+                        instruction.InternalInstruction = true;
 
-                    if (cached != null) // reuse a previous created microinstruction
-                        function.MicroInstructions[i] = cached;
-                    else
-                    {
-                        function.MicroInstructions[i].Location = (address++ << 6); // last bit doesn't count 
-                        function.MicroInstructions[i].InternalInstruction = true;
-                    }
-
-                    function.MicroInstructions[i - 1].NextInstruction = (function.MicroInstructions[i].Location & 0x7FFF) >> 6;
-
-                    if (cached == null)
                         instructions.Add(instruction, instruction);
+                    }
+                    else
+                        function.MicroInstructions[i] = cached;
+
+                    function.MicroInstructions[i - 1].NextInstruction = (instruction.Location & 0x7FFF) >> 6;
                 }
 
                 if (address > 512)
@@ -285,10 +282,10 @@ namespace hasm
             }
         }
 
-        private static int ConvertToInt(byte[] array)
+        private static int ConvertToInt(IList<byte> array)
         {
             var result = 0;
-            for (var i = 0; i < array.Length; i++)
+            for (var i = 0; i < array.Count; i++)
                 result |= array[i] << (i*8);
 
             return result;
