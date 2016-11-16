@@ -33,6 +33,8 @@ namespace hasm
             var distinct = DistinctInstructions(_microFunctions).ToList();
             var assembled = AssembleFunctions(distinct);
             var microInstructions = assembled
+                .GroupBy(i => i.Location)
+                .Select(i => i.First())
                 .OrderBy(i => i.Location)
                 .ToList();
 
