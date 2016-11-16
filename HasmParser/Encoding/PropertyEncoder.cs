@@ -12,6 +12,7 @@ namespace hasm.Parsing.Encoding
     public static class PropertyEncoder
     {
         private static readonly Dictionary<Type, TypeConverter> _converters = new Dictionary<Type, TypeConverter>();
+        private static readonly Dictionary<Type, List<EncodableMember>> _cache = new Dictionary<Type, List<EncodableMember>>();
 
         public static long Encode(object obj)
         {
@@ -71,7 +72,11 @@ namespace hasm.Parsing.Encoding
             var type = obj.GetType();
             var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
-            var encodableMembers = type
+            List<EncodableMember> encodableMembers;
+            if (_cache.TryGetValue(type, out encodableMembers))
+                return encodableMembers;
+
+            encodableMembers = type
                 .GetProperties(flags).Cast<MemberInfo>()
                 .Concat(type.GetFields(flags))
                 .Where(mem => mem.CustomAttributes.Any())
@@ -85,6 +90,8 @@ namespace hasm.Parsing.Encoding
                 .ToList();
 
             CheckOverlap(encodableMembers);
+
+            _cache[type] = encodableMembers;
             return encodableMembers;
         }
 
