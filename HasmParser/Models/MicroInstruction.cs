@@ -13,6 +13,8 @@ namespace hasm.Parsing.Models
 {
     public sealed class MicroInstruction
     {
+        
+
         private const int ENCODING_NEXT = 0;
         private const int ENCODING_ADDR = 1;
         private const int ENCODING_CONDITION = 10;
@@ -45,10 +47,10 @@ namespace hasm.Parsing.Models
         }
 
         [EncodableProperty(ENCODING_NEXT)]
-        public bool LastInstruction { get; }
+        public bool LastInstruction { get;} // NextMicroInstruction == null;
 
         [EncodableProperty(ENCODING_ADDR, 9)]
-        public int NextInstruction { get; set; }
+        public int NextInstruction => (NextMicroInstruction?.Location & 0x7FFF) >> 6 ?? 0;
 
         [EncodableProperty(ENCODING_CONDITION, 3)]
         public Condition Condition { get; set; }
@@ -65,13 +67,15 @@ namespace hasm.Parsing.Models
         [EncodableProperty(typeof(AluConverter), ExceedException = false)]
         public ALU ALU { get; set; }
 
+        public MicroInstruction NextMicroInstruction { get; set; }
+
         public bool InternalInstruction { get; set; }
 
         public MicroInstruction(ALU alu, MemoryOperation memory, bool lastInstruction, bool statusEnabled, Condition condition, bool invertedCondition)
         {
             ALU = alu;
-            Memory = memory;
             LastInstruction = lastInstruction;
+            Memory = memory;
             StatusEnabled = statusEnabled;
             Condition = condition;
             InvertedCondition = invertedCondition;
@@ -131,9 +135,37 @@ namespace hasm.Parsing.Models
             return builder.ToString();
         }
 
-        public bool Equals(MicroInstruction other)
+        private bool Equals(MicroInstruction other)
         {
-            return ALU.Equals(other.ALU) && Memory == other.Memory && LastInstruction == other.LastInstruction && StatusEnabled == other.StatusEnabled && Condition == other.Condition && InvertedCondition == other.InvertedCondition;
+            return _location == other._location && 
+                LastInstruction == other.LastInstruction && 
+                Condition == other.Condition && 
+                InvertedCondition == other.InvertedCondition && 
+                StatusEnabled == other.StatusEnabled && 
+                Memory == other.Memory && 
+                ALU.Equals(other.ALU) && 
+                InternalInstruction == other.InternalInstruction;
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = _location;
+                hashCode = (hashCode*397) ^ LastInstruction.GetHashCode();
+                hashCode = (hashCode*397) ^ (int) Condition;
+                hashCode = (hashCode*397) ^ InvertedCondition.GetHashCode();
+                hashCode = (hashCode*397) ^ StatusEnabled.GetHashCode();
+                hashCode = (hashCode*397) ^ (int) Memory;
+                hashCode = (hashCode*397) ^ (ALU != null
+                               ? ALU.GetHashCode()
+                               : 0);
+                hashCode = (hashCode*397) ^ (NextMicroInstruction != null
+                               ? NextMicroInstruction.GetHashCode()
+                               : 0);
+                hashCode = (hashCode*397) ^ InternalInstruction.GetHashCode();
+                return hashCode;
+            }
         }
 
         public override bool Equals(object obj)
@@ -147,18 +179,14 @@ namespace hasm.Parsing.Models
             return other != null && Equals(other);
         }
 
-        public override int GetHashCode()
+        public static bool operator ==(MicroInstruction left, MicroInstruction right)
         {
-            unchecked
-            {
-                var hashCode = ALU?.GetHashCode() ?? 0;
-                hashCode = (hashCode*397) ^ (int) Memory;
-                hashCode = (hashCode*397) ^ LastInstruction.GetHashCode();
-                hashCode = (hashCode*397) ^ StatusEnabled.GetHashCode();
-                hashCode = (hashCode*397) ^ (int) Condition;
-                hashCode = (hashCode*397) ^ InvertedCondition.GetHashCode();
-                return hashCode;
-            }
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(MicroInstruction left, MicroInstruction right)
+        {
+            return !Equals(left, right);
         }
 
         public MicroInstruction Clone() => new MicroInstruction(ALU?.Clone(), Memory, LastInstruction, StatusEnabled, Condition, InvertedCondition);

@@ -80,8 +80,7 @@ namespace hasm.Parsing.Models
 
         [EncodableProperty(ENCODING_ALU, 3)]
         public AluOperation Operation { get; set; }
-
-        public bool ExternalImmediate => (ExternalLeft && _leftOperand.IsImmediate) || (ExternalRight && _rightOperand.IsImmediate);
+        
         public bool ExternalLeft { get; set; }
         public bool ExternalRight { get; set; }
 

@@ -20,15 +20,14 @@ namespace hasm.Parsing.Encoding.TypeConverters
             var right = (OperandConverter)value;
 
             if (string.IsNullOrEmpty(right.Operand))
-            {
-                return alu.ExternalImmediate
-                    ? EXT_IMMEDIATE
-                    : RIGHT_DISABLED;
-            }
+                return RIGHT_DISABLED;
 
-            return right.IsImmediate
-                ? INT_IMMEDIATE
-                : right.Value;
+            if (!right.IsImmediate)
+                return right.Value;
+
+            return alu.ExternalRight
+                ? EXT_IMMEDIATE
+                : INT_IMMEDIATE;
         }
         
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) =>

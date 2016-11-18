@@ -5,9 +5,6 @@ namespace hasm.Parsing.Models
 {
     public sealed class MicroFunction
     {
-        public string Instruction { get; set; }
-        public IList<MicroInstruction> MicroInstructions { get; }
-
         public MicroFunction(string instruction, IEnumerable<MicroInstruction> microInstructions)
         {
             Instruction = instruction;
@@ -18,6 +15,15 @@ namespace hasm.Parsing.Models
         {
             Instruction = instruction;
             MicroInstructions = new List<MicroInstruction> {microInstruction};
+        }
+
+        public string Instruction { get; set; }
+        public IList<MicroInstruction> MicroInstructions { get; }
+
+        public int Location
+        {
+            get { return MicroInstructions[0].Location; }
+            set { MicroInstructions[0].Location = value; }
         }
 
         public MicroFunction Clone() => new MicroFunction(Instruction, MicroInstructions.Select(i => i.Clone()));
@@ -35,7 +41,7 @@ namespace hasm.Parsing.Models
                 return true;
 
             var other = obj as MicroFunction;
-            return other != null && Equals(other);
+            return (other != null) && Equals(other);
         }
 
         public override int GetHashCode()

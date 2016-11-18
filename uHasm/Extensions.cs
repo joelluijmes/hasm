@@ -16,5 +16,14 @@ namespace hasm
                     select accseq.Concat(new[] { item })
                 );
         }
+
+        public static int ConvertToInt(this IList<byte> array)
+        {
+            var result = 0;
+            for (var i = 0; i < array.Count; i++)
+                result |= array[i] << (i * 8);
+
+            return result;
+        }
     }
 }
