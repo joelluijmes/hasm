@@ -4,7 +4,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using hasm.Parsing.Encoding;
+using hasm.Parsing.Export;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
 using hasm.Parsing.Parsers.Sheet;
@@ -16,26 +18,19 @@ namespace hasm
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private static readonly HasmSheetParser _sheetParser = new HasmSheetParser(new HasmGrammar());
-
-        private readonly IList<MicroFunction> _microFunctions;
-
-        public MicroAssembler(IList<MicroFunction> microFunctions)
+        
+        public IEnumerable<IAssembled> Assemble(IList<MicroFunction> microFunctions)
         {
-            _microFunctions = microFunctions;
-        }
-
-        public void Generate()
-        {
-            _logger.Info($"Assembling {_microFunctions.Count} micro-functions..");
+            _logger.Info($"Assembling {microFunctions.Count} micro-functions..");
 
             var sw = Stopwatch.StartNew();
 
-            var distinct = DistinctInstructions(_microFunctions).ToList();
+            var distinct = DistinctInstructions(microFunctions).ToList();
             var assembled = AssembleFunctions(distinct);
             var microInstructions = assembled
-                .GroupBy(i => i.Location)
+                .GroupBy(i => i.Address)
                 .Select(i => i.First())
-                .OrderBy(i => i.Location)
+                .OrderBy(i => i.Address)
                 .ToList();
 
             var lastNop = MicroInstruction.NOP;
@@ -44,47 +39,10 @@ namespace hasm
 
             sw.Stop();
             _logger.Info($"Assembled {microInstructions.Count} micro-instructions in {sw.Elapsed}");
-
-            WriteFile(microInstructions);
+            
+           return microInstructions;
         }
-
-        private static void WriteFile(List<AssembledInstruction> microInstructions)
-        {
-            _logger.Info("Started writing to out.txt");
-
-            var sw = Stopwatch.StartNew();
-            using (var writer = new StreamWriter("out.txt"))
-            {
-                Action<AssembledInstruction, StreamWriter> writeLine = (instr, writ) =>
-                {
-                    var encoded = Regex.Replace(Convert.ToString(instr.Assembled, 2).PadLeft(37, '0'), ".{4}", "$0 ");
-                    var address = Regex.Replace(Convert.ToString(instr.Location, 2).PadLeft(16, '0'), ".{4}", "$0 ");
-
-                    writ.WriteLine($"{address}: {encoded} {instr.Instruction}");
-                };
-
-                AssembledInstruction previous = null;
-                foreach (var instruction in microInstructions)
-                {
-                    if (previous != null)
-                    {
-                        var diff = instruction.Location - previous.Location;
-                        for (var i = 1; i < diff; ++i)
-                        {
-                            ++previous.Location;
-                            writeLine(previous, writer);
-                        }
-                    }
-
-                    writeLine(instruction, writer);
-                    previous = instruction;
-                }
-            }
-
-            sw.Stop();
-            _logger.Info($"Completed in {sw.Elapsed}");
-        }
-
+        
         private static IList<MicroFunction> DistinctInstructions(IEnumerable<MicroFunction> microFunctions)
         {
             var cache = new Dictionary<MicroInstruction, MicroInstruction>();
@@ -179,20 +137,21 @@ namespace hasm
             function.Location = address >> 1; // last bit doesn't count
         }
 
-        private class AssembledInstruction
+        private class AssembledInstruction : IAssembled
         {
             public AssembledInstruction(MicroInstruction instruction)
             {
                 Instruction = instruction;
-                Location = instruction.Location;
+                Address = instruction.Location;
                 Assembled = PropertyEncoder.Encode(instruction);
             }
 
             public long Assembled { get; } //=> PropertyEncoder.Encode(Instruction);
-            public int Location { get; set; }
+            public int Address { get; }
+            public int Count => 37;
             public MicroInstruction Instruction { get; }
 
-            public override string ToString() => $"{Convert.ToString(Location, 16)}: {Convert.ToString(Assembled, 16)} {Instruction}";
+            public override string ToString() => Instruction.ToString();
         }
     }
 }

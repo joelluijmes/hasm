@@ -85,6 +85,11 @@
     <Compile Include="Encoding\TypeConverters\AluConverter.cs" />
     <Compile Include="Encoding\TypeConverters\RightConverter.cs" />
     <Compile Include="Encoding\TypeConverters\TargetConverter.cs" />
+    <Compile Include="Export\BaseExporter.cs" />
+    <Compile Include="Export\IAssembled.cs" />
+    <Compile Include="Export\FormattedExporter.cs" />
+    <Compile Include="Export\IExporter.cs" />
+    <Compile Include="Export\IntelHexExporter.cs" />
     <Compile Include="Grammars\HasmGrammer.Rules.cs" />
     <Compile Include="Grammars\MicroHasmGrammar.cs" />
     <Compile Include="Models\ALU.cs" />

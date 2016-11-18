@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
-using hasm.Parsing.Grammars;
+using System.Threading.Tasks;
+using hasm.Parsing.Export;
 using hasm.Parsing.Parsers.Sheet;
 using NLog;
-using ParserLib;
 
 namespace hasm
 {
@@ -22,12 +23,12 @@ namespace hasm
 		private static void Main(string[] args)
 		{
 #if DEBUG
-			MainImpl(args);
+			MainImpl(args).Wait();
 #else
 			try
 			{
 				AppDomain.CurrentDomain.UnhandledException += UnhandledException;
-				MainImpl(args);
+				MainImpl(args).Wait();
 			}
 			catch (Exception e)
 			{
@@ -39,7 +40,7 @@ namespace hasm
 #endif
 		}
 
-		private static void MainImpl(string[] args)
+		private static async Task MainImpl(string[] args)
 		{
 			if (Debugging)
 			{
@@ -58,8 +59,15 @@ namespace hasm
 			var microParser = new MicroFunctionSheetParser();
 			var microInstructions = MicroGenerator.GenerateMicroInstructions(microParser.Items);
 
-			var assembler = new MicroAssembler(microInstructions);
-			assembler.Generate();
+			var assembler = new MicroAssembler();
+			var assembled = assembler.Assemble(microInstructions);
+
+			using (var stream = File.Open("out.txt", FileMode.Create, FileAccess.Write))
+			{
+				var exporter = new FormattedExporter(stream) {Base = 2, AppendToString = true};
+			    //var exporter = new IntelHexExporter(stream);
+				await exporter.Export(assembled);
+			}
 		}
 
 		private static void UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -70,7 +78,8 @@ namespace hasm
 				_logger.Fatal($"ExceptionObject is not an exception: {e.ExceptionObject}");
 				Environment.Exit(-1);
 			}
-			else UnhandledException(exception);
+			else
+				UnhandledException(exception);
 		}
 
 		private static void UnhandledException(Exception e)
