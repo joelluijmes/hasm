@@ -1,29 +1,32 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
 namespace hasm.Parsing.Export
 {
-    public abstract class BaseExporter : IExporter
+    public abstract class BaseExporter : IExporter, IDisposable
     {
-        private readonly Stream _stream;
-
         protected BaseExporter(Stream stream)
         {
-            _stream = stream;
+            Writer = new StreamWriter(stream, System.Text.Encoding.UTF8, 1024, true);
+        }
+
+        public StreamWriter Writer { get; }
+
+        public void Dispose()
+        {
+            Writer.Dispose();
         }
 
         public async Task Export(IEnumerable<IAssembled> listing)
         {
-            using (var writer = new StreamWriter(_stream))
-            {
-                foreach (var assembled in listing)
-                    await Export(writer, assembled);
+            foreach (var assembled in listing)
+                await Export(assembled);
 
-                await Export(writer, null);
-            }
+            await Export((IAssembled) null);
         }
 
-        protected abstract Task Export(TextWriter writer, IAssembled assembled);
+        protected abstract Task Export(IAssembled assembled);
     }
 }

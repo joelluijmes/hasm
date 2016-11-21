@@ -9,13 +9,13 @@ namespace hasm.Parsing.Export
 {
     public sealed class IntelHexExporter : BaseExporter
     {
-        protected override async Task Export(TextWriter writer, IAssembled assembled)
+        protected override async Task Export(IAssembled assembled)
         {
             var hexRecord = assembled == null
                 ? HexRecord.EOF
                 : HexRecord.FromAssembled(assembled);
 
-            await writer.WriteLineAsync(hexRecord.ToString());
+            await Writer.WriteLineAsync(hexRecord.ToString());
         }
 
         private sealed class HexRecord

@@ -41,12 +41,12 @@ namespace hasm.Parsing.Export
             return _spaceRegex.Replace(str, "$0 ").Trim();
         }
 
-        protected override async Task Export(TextWriter writer, IAssembled assembled)
+        protected override async Task Export(IAssembled assembled)
         {
             if (assembled == null)
                 return;
 
-            await writer.WriteLineAsync($"{FormatAddress(assembled.Address)}: {FormatAssembled(assembled.Assembled, assembled.Count)} {(AppendToString ? assembled.ToString() : "")}");
+            await Writer.WriteLineAsync($"{FormatAddress(assembled.Address)}: {FormatAssembled(assembled.Assembled, assembled.Count)} {(AppendToString ? assembled.ToString() : "")}");
         }
     }
 }
