@@ -68,7 +68,7 @@ namespace hasm
             return list;
         }
 
-        private static void PermuteFunction(IEnumerable<Operand> permutation, MicroFunction function)
+        public static void PermuteFunction(IEnumerable<Operand> permutation, MicroFunction function)
         {
             var operands = permutation.SelectMany(SplitAggregated).ToArray();
             for (var i = 0; i < operands.Length; i++)
@@ -139,7 +139,7 @@ namespace hasm
             }
         }
         
-        private struct Operand
+        public struct Operand
         {
             public string Type { get; }
             public string Value { get; }
