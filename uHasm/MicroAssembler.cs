@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using hasm.Parsing;
+using hasm.Parsing.DependencyInjection;
 using hasm.Parsing.Encoding;
 using hasm.Parsing.Export;
 using hasm.Parsing.Grammars;
@@ -17,7 +19,8 @@ namespace hasm
     internal sealed class MicroAssembler
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private static readonly EncodingSheetProvider _sheetSheetProvider = new EncodingSheetProvider(new HasmGrammar());
+        private static readonly HasmGrammar _hasmGrammar = KernelFactory.Resolve<HasmGrammar>();
+        private static readonly HasmEncoder _sheetSheetProvider = new HasmEncoder(_hasmGrammar);
         
         public IEnumerable<IAssembled> Assemble(IList<MicroFunction> microFunctions)
         {

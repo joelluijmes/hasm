@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using hasm.Parsing;
+using hasm.Parsing.DependencyInjection;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
 using hasm.Parsing.Parsers.Sheet;
@@ -14,6 +16,7 @@ namespace hasm
     internal static class MicroGenerator
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly HasmGrammar _hasmGrammar = KernelFactory.Resolve<HasmGrammar>();
 
         public static IList<MicroFunction> GenerateMicroInstructions(IList<MicroFunction> microFunctions)
         {
@@ -117,7 +120,7 @@ namespace hasm
             if (string.IsNullOrEmpty(operand))
                 return new string[] {null}; // return array[1] because we still want to generate the rest of the permutations
 
-            var encoding = HasmGrammar.FindOperandParser(operand)?.OperandEncoding;
+            var encoding = _hasmGrammar.FindOperandParser(operand)?.OperandEncoding;
             if (encoding == null)
                 return new[] {operand}; // operandParser returned null -> must be a 'static' operand
 

@@ -59,6 +59,10 @@
       <HintPath>..\packages\EPPlus.4.1.0\lib\net40\EPPlus.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Ninject, Version=3.2.0.0, Culture=neutral, PublicKeyToken=c7192dc5380945e7, processorArchitecture=MSIL">
+      <HintPath>..\packages\Ninject.3.2.2.0\lib\net45-full\Ninject.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
       <HintPath>..\packages\NLog.4.3.11\lib\net45\NLog.dll</HintPath>
       <Private>True</Private>
@@ -77,6 +81,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DependencyInjection\ParserModule.cs" />
     <Compile Include="Encoding\PropertyEncoder.cs" />
     <Compile Include="Encoding\TypeConverters\AluContext.cs" />
     <Compile Include="Encoding\TypeConverters\ImmediateConverter.cs" />
@@ -92,6 +97,7 @@
     <Compile Include="Export\IntelHexExporter.cs" />
     <Compile Include="Grammars\HasmGrammer.Rules.cs" />
     <Compile Include="Grammars\MicroHasmGrammar.cs" />
+    <Compile Include="DependencyInjection\KernelFactory.cs" />
     <Compile Include="Models\ALU.cs" />
     <Compile Include="Encoding\OperandConverter.cs" />
     <Compile Include="Models\AluOperation.cs" />
@@ -104,10 +110,11 @@
     <Compile Include="Models\OperandEncoding.cs" />
     <Compile Include="Models\OperandEncodingType.cs" />
     <Compile Include="Parsers\IProvider.cs" />
+    <Compile Include="Parsers\Sheet\EncodingSheetProvider.cs" />
     <Compile Include="Parsers\Sheet\MicroFunctionSheetProvider.cs" />
     <Compile Include="Parsers\OperandParser.cs" />
     <Compile Include="Parsers\Sheet\BaseSheetProvider.cs" />
-    <Compile Include="Parsers\Sheet\EncodingSheetProvider.cs" />
+    <Compile Include="Encoding\HasmEncoder.cs" />
     <Compile Include="Grammars\HasmGrammar.cs" />
     <Compile Include="Models\InstructionEncoding.cs" />
     <Compile Include="Parsers\Sheet\OperandSheetProvider.cs" />

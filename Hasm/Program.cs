@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq;
 using Fclp;
 using hasm.Parsing;
+using hasm.Parsing.DependencyInjection;
+using hasm.Parsing.Encoding;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
 using hasm.Parsing.Parsers;
@@ -17,7 +19,7 @@ namespace hasm
     internal class Program
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private static EncodingSheetProvider _encodingSheetProvider;
+        private static HasmEncoder _hasmEncoder;
 
         private static bool Debugging =>
 #if DEBUG
@@ -103,9 +105,9 @@ namespace hasm
 
         private static void Init()
         { 
-            var grammar = new HasmGrammar();
+            var grammar = KernelFactory.Resolve<HasmGrammar>();
 
-            _encodingSheetProvider = new EncodingSheetProvider(grammar);
+            _hasmEncoder = new HasmEncoder(grammar);
         }
 
         private static void HandleArguments(ApplicationArguments arguments)
@@ -127,7 +129,7 @@ namespace hasm
                 if (string.IsNullOrEmpty(line))
                     break;
 
-                var encoded = _encodingSheetProvider.Encode(line);
+                var encoded = _hasmEncoder.Encode(line);
                 var value = ConvertToInt(encoded);
 
                 _logger.Info($"Parsed {line} to encoding {Convert.ToString(value, 2).PadLeft(16, '0')}");

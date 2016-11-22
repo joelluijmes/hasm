@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using hasm.Exceptions;
+using hasm.Parsing;
+using hasm.Parsing.DependencyInjection;
+using hasm.Parsing.Encoding;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Parsers.Sheet;
 using NLog;
@@ -14,7 +17,8 @@ namespace hasm
     public sealed class HasmAssembler
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private static readonly EncodingSheetProvider _sheetSheetProvider = new EncodingSheetProvider(new HasmGrammar());
+        private static readonly HasmGrammar _hasmGrammar = KernelFactory.Resolve<HasmGrammar>();
+        private static readonly HasmEncoder _sheetSheetProvider = new HasmEncoder(_hasmGrammar);
         private readonly IDictionary<string, int> _labelLookup;
         private readonly IList<Instruction> _listing;
         private readonly Instruction _nopInstruction;

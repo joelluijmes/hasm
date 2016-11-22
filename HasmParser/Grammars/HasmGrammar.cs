@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using hasm.Parsing.Models;
 using hasm.Parsing.Parsers;
-using hasm.Parsing.Parsers.Sheet;
 using NLog;
 using ParserLib.Evaluation;
 using ParserLib.Evaluation.Rules;
@@ -22,21 +20,22 @@ namespace hasm.Parsing.Grammars
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private static readonly IDictionary<char, ValueRule<string>> _maskRules;
-        private static readonly IList<OperandParser> _operandParsers;
         private static readonly ValueRule<string> _opcodemaskRule;
-        
+
+        private readonly IList<OperandParser> _operandParsers;
+
         static HasmGrammar()
         {
             _maskRules = new Dictionary<char, ValueRule<string>>();
             _opcodemaskRule = CreateMaskRule('1');
-            _operandParsers = new List<OperandParser>();
-
-            var operandSheetParser = new OperandSheetProvider();
-            foreach (var parser in operandSheetParser.Items)
-                _operandParsers.Add(OperandParser.Create(parser));
         }
-        
-        public static OperandParser FindOperandParser(string operand)
+
+        public HasmGrammar(IProvider<OperandEncoding> operandProvider)
+        {
+            _operandParsers = operandProvider.Items.Select(OperandParser.Create).ToList();
+        }
+
+        public OperandParser FindOperandParser(string operand)
         {
             if (operand == null)
                 return null;
@@ -59,7 +58,7 @@ namespace hasm.Parsing.Grammars
                     int operandAsNumber;
                     if (int.TryParse(operand, out operandAsNumber) || int.TryParse(operand.Replace("0x", ""), NumberStyles.HexNumber, null, out operandAsNumber))
                     {
-                        if (operandAsNumber >= encoding.Minimum && operandAsNumber <= encoding.Maximum)
+                        if ((operandAsNumber >= encoding.Minimum) && (operandAsNumber <= encoding.Maximum))
                             return parser;
                     }
 
@@ -74,9 +73,9 @@ namespace hasm.Parsing.Grammars
         {
             var operand = Opcode.FirstValue(grammar);
             return grammar.Replace(operand, "") // remove operand from grammar
-                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries) // operands are split with a ,
-                .Select(s => s.Trim())
-                .ToArray();
+                          .Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries) // operands are split with a ,
+                          .Select(s => s.Trim())
+                          .ToArray();
         }
 
         /// <summary>
@@ -126,13 +125,6 @@ namespace hasm.Parsing.Grammars
             return rule;
         }
 
-        private static Rule ParseOpcode(InstructionEncoding instruction)
-        {
-            var opcode = Opcode.FirstValue(instruction.Grammar);
-            var encoding = OpcodeEncoding(instruction.Encoding);
-            return ConstantValue(encoding, MatchString(opcode, true)); // when it matches the opcode give its encoding 
-        }
-
         private Rule ParseOperands(InstructionEncoding instruction)
         {
             var operands = GetOperands(instruction.Grammar);
@@ -140,10 +132,10 @@ namespace hasm.Parsing.Grammars
                 return null;
 
             return operands.Select(o => ParseOperand(o, instruction.Encoding)) // make operand rules from the strings
-                .Aggregate((total, next) => total + MatchChar(',') + next); // merge the rules sepearted by a ,
+                           .Aggregate((total, next) => total + MatchChar(',') + next); // merge the rules sepearted by a ,
         }
 
-        private static Rule ParseOperand(string operand, string encoding)
+        private Rule ParseOperand(string operand, string encoding)
         {
             var parser = FindOperandParser(operand);
 
@@ -151,6 +143,13 @@ namespace hasm.Parsing.Grammars
             rule.Name = operand; // give the name that was used to parse it :)
 
             return rule;
+        }
+
+        private static Rule ParseOpcode(InstructionEncoding instruction)
+        {
+            var opcode = Opcode.FirstValue(instruction.Grammar);
+            var encoding = OpcodeEncoding(instruction.Encoding);
+            return ConstantValue(encoding, MatchString(opcode, true)); // when it matches the opcode give its encoding 
         }
 
         private static int OpcodeEncoding(string encoding)
