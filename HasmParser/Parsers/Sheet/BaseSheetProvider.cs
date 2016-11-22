@@ -7,7 +7,7 @@ using OfficeOpenXml;
 
 namespace hasm.Parsing.Parsers.Sheet
 {
-    public abstract class BaseSheetParser<T> where T : class
+    public abstract class BaseSheetProvider<T> : IProvider<T> where T : class
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private IList<T> _items;

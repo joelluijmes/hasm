@@ -7,6 +7,7 @@ using Fclp;
 using hasm.Parsing;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
+using hasm.Parsing.Parsers;
 using hasm.Parsing.Parsers.Sheet;
 using hasm.Properties;
 using NLog;
@@ -16,7 +17,7 @@ namespace hasm
     internal class Program
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private static HasmSheetParser _hasmSheetParser;
+        private static EncodingSheetProvider _encodingSheetProvider;
 
         private static bool Debugging =>
 #if DEBUG
@@ -103,7 +104,8 @@ namespace hasm
         private static void Init()
         { 
             var grammar = new HasmGrammar();
-            _hasmSheetParser = new HasmSheetParser(grammar);
+
+            _encodingSheetProvider = new EncodingSheetProvider(grammar);
         }
 
         private static void HandleArguments(ApplicationArguments arguments)
@@ -125,7 +127,7 @@ namespace hasm
                 if (string.IsNullOrEmpty(line))
                     break;
 
-                var encoded = _hasmSheetParser.Encode(line);
+                var encoded = _encodingSheetProvider.Encode(line);
                 var value = ConvertToInt(encoded);
 
                 _logger.Info($"Parsed {line} to encoding {Convert.ToString(value, 2).PadLeft(16, '0')}");

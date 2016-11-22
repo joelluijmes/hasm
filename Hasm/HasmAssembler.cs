@@ -14,7 +14,7 @@ namespace hasm
     public sealed class HasmAssembler
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private static readonly HasmSheetParser _sheetParser = new HasmSheetParser(new HasmGrammar());
+        private static readonly EncodingSheetProvider _sheetSheetProvider = new EncodingSheetProvider(new HasmGrammar());
         private readonly IDictionary<string, int> _labelLookup;
         private readonly IList<Instruction> _listing;
         private readonly Instruction _nopInstruction;
@@ -85,14 +85,14 @@ namespace hasm
                 instruction.Input = $"{opcode} {address}";
             }
 
-            instruction.Encoding = _sheetParser.Encode(instruction.Input);
+            instruction.Encoding = _sheetSheetProvider.Encode(instruction.Input);
             instruction.Completed = true;
         }
 
         private void FirstPass(Instruction instruction, ref int address)
         {
             byte[] encoded;
-            var completed = _sheetParser.TryEncode(instruction.Input, out encoded);
+            var completed = _sheetSheetProvider.TryEncode(instruction.Input, out encoded);
             if (encoded == null)
                 throw new AssemblerException($"Couldn't parse '{instruction.Input}'. Please check your grammar and/or input.");
 

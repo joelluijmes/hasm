@@ -17,7 +17,7 @@ namespace hasm
     internal sealed class MicroAssembler
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private static readonly HasmSheetParser _sheetParser = new HasmSheetParser(new HasmGrammar());
+        private static readonly EncodingSheetProvider _sheetSheetProvider = new EncodingSheetProvider(new HasmGrammar());
         
         public IEnumerable<IAssembled> Assemble(IList<MicroFunction> microFunctions)
         {
@@ -116,7 +116,7 @@ namespace hasm
         private static void SetLocation(MicroFunction function)
         {
             // first microinstruction/function address is the assembled (macro)instruction
-            var encoded = _sheetParser.Encode(function.Instruction);
+            var encoded = _sheetSheetProvider.Encode(function.Instruction);
 
             switch (encoded.Length)
             {

@@ -2,7 +2,7 @@
 
 namespace hasm.Parsing.Parsers.Sheet
 {
-    public sealed class MicroFunctionSheetParser : BaseSheetParser<MicroFunction>
+    public sealed class MicroFunctionSheetProvider : BaseSheetProvider<MicroFunction>
     {
         protected override string SheetName => "MicroInstructions";
 

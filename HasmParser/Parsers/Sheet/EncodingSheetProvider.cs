@@ -14,17 +14,17 @@ namespace hasm.Parsing.Parsers.Sheet
     ///     This class makes it possible to parse an instruction to an encoding as specified
     ///     in the HasmGrammar.
     /// </summary>
-    public sealed class HasmSheetParser : BaseSheetParser<InstructionEncoding>
+    public sealed class EncodingSheetProvider : BaseSheetProvider<InstructionEncoding>
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly HasmGrammar _grammar;
         private readonly IDictionary<string, ValueRule<byte[]>> _rules;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="HasmSheetParser" /> class.
+        ///     Initializes a new instance of the <see cref="EncodingSheetProvider" /> class.
         /// </summary>
         /// <param name="grammar">The grammar of the parser.</param>
-        public HasmSheetParser(HasmGrammar grammar)
+        public EncodingSheetProvider(HasmGrammar grammar)
         {
             _grammar = grammar;
             _rules = new ConcurrentDictionary<string, ValueRule<byte[]>>();

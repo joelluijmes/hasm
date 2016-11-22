@@ -31,7 +31,7 @@ namespace hasm.Parsing.Grammars
             _opcodemaskRule = CreateMaskRule('1');
             _operandParsers = new List<OperandParser>();
 
-            var operandSheetParser = new OperandSheetParser();
+            var operandSheetParser = new OperandSheetProvider();
             foreach (var parser in operandSheetParser.Items)
                 _operandParsers.Add(OperandParser.Create(parser));
         }

@@ -49,7 +49,7 @@ namespace hasm
 
 		private static async Task MainImpl(string[] args)
 		{
-            var microParser = new MicroFunctionSheetParser();
+            var microParser = new MicroFunctionSheetProvider();
             _microFunctions = microParser.Items;
 
             if (Debugging)
