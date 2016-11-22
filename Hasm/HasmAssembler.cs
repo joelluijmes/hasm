@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using hasm.Exceptions;
+using hasm.Parsing;
+using hasm.Parsing.DependencyInjection;
+using hasm.Parsing.Encoding;
 using hasm.Parsing.Grammars;
-using hasm.Parsing.Parsers.Sheet;
 using NLog;
 using ParserLib.Evaluation;
 
@@ -11,22 +13,21 @@ namespace hasm
     /// <summary>
     ///     Used to assemble a listing into binary data.
     /// </summary>
-    internal sealed class Assembler
+    public sealed class HasmAssembler
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private readonly HasmEncoder _encoder;
         private readonly IDictionary<string, int> _labelLookup;
         private readonly IList<Instruction> _listing;
         private readonly Instruction _nopInstruction;
-        private readonly HasmSheetParser _sheetParser;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="Assembler" /> class.
+        ///     Initializes a new instance of the <see cref="HasmAssembler" /> class.
         /// </summary>
-        /// <param name="sheetParser">The parser.</param>
         /// <param name="listing">The listing to assemble.</param>
-        public Assembler(HasmSheetParser sheetParser, IEnumerable<string> listing)
+        public HasmAssembler(HasmEncoder encoder, IEnumerable<string> listing)
         {
-            _sheetParser = sheetParser;
+            _encoder = encoder;
             _listing = listing
                 .Where(l => !string.IsNullOrWhiteSpace(l))
                 .Select(ParseFromLine)
@@ -87,14 +88,14 @@ namespace hasm
                 instruction.Input = $"{opcode} {address}";
             }
 
-            instruction.Encoding = _sheetParser.Encode(instruction.Input);
+            instruction.Encoding = _encoder.Encode(instruction.Input);
             instruction.Completed = true;
         }
 
         private void FirstPass(Instruction instruction, ref int address)
         {
             byte[] encoded;
-            var completed = _sheetParser.TryEncode(instruction.Input, out encoded);
+            var completed = _encoder.TryEncode(instruction.Input, out encoded);
             if (encoded == null)
                 throw new AssemblerException($"Couldn't parse '{instruction.Input}'. Please check your grammar and/or input.");
 
@@ -144,9 +145,13 @@ namespace hasm
                 line = line.Substring(label.Length + 1).Trim();
                 label = label.Trim();
             }
-            else label = null;
+            else
+                label = null;
 
-            var input = line == string.Empty ? string.Empty : HasmGrammar.ListingInstruction.FirstValueOrDefault(line);
+            var input = line == string.Empty
+                ? string.Empty
+                : HasmGrammar.ListingInstruction.FirstValueOrDefault(line);
+
             if (!string.IsNullOrEmpty(input))
                 input = input.Trim();
 

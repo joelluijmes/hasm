@@ -4,15 +4,14 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{D5BE1584-6E5C-44B7-90A6-73BC364F4DBF}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{A1611A04-758A-4558-89A6-D1B506BD5B62}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>hasm.Parsing</RootNamespace>
-    <AssemblyName>hasm-parser</AssemblyName>
+    <RootNamespace>hasm</RootNamespace>
+    <AssemblyName>uhasm</AssemblyName>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -33,30 +32,29 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject />
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug_Parallel|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\Debug_Parallel\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;PARALLEL</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release_Parallel|AnyCPU'">
     <OutputPath>bin\Release_Parallel\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;PARALLEL</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EPPlus, Version=4.1.0.0, Culture=neutral, PublicKeyToken=ea159fdaa78159a1, processorArchitecture=MSIL">
-      <HintPath>..\packages\EPPlus.4.1.0\lib\net40\EPPlus.dll</HintPath>
+    <Reference Include="FluentCommandLineParser, Version=1.4.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentCommandLineParser.1.4.3\lib\net35\FluentCommandLineParser.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Ninject, Version=3.2.0.0, Culture=neutral, PublicKeyToken=c7192dc5380945e7, processorArchitecture=MSIL">
@@ -81,49 +79,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DependencyInjection\ParserModule.cs" />
-    <Compile Include="Encoding\PropertyEncoder.cs" />
-    <Compile Include="Encoding\TypeConverters\AluContext.cs" />
-    <Compile Include="Encoding\TypeConverters\ImmediateConverter.cs" />
-    <Compile Include="Encoding\TypeConverters\InverseBooleanConverter.cs" />
-    <Compile Include="Encoding\TypeConverters\LeftConverter.cs" />
-    <Compile Include="Encoding\TypeConverters\AluConverter.cs" />
-    <Compile Include="Encoding\TypeConverters\RightConverter.cs" />
-    <Compile Include="Encoding\TypeConverters\TargetConverter.cs" />
-    <Compile Include="Export\BaseExporter.cs" />
-    <Compile Include="Export\IAssembled.cs" />
-    <Compile Include="Export\FormattedExporter.cs" />
-    <Compile Include="Export\IExporter.cs" />
-    <Compile Include="Export\IntelHexExporter.cs" />
-    <Compile Include="Grammars\HasmGrammer.Rules.cs" />
-    <Compile Include="Grammars\MicroHasmGrammar.cs" />
-    <Compile Include="DependencyInjection\KernelFactory.cs" />
-    <Compile Include="Models\ALU.cs" />
-    <Compile Include="Encoding\OperandConverter.cs" />
-    <Compile Include="Models\AluOperation.cs" />
-    <Compile Include="Models\Condition.cs" />
-    <Compile Include="Models\DisableLines.cs" />
-    <Compile Include="Encoding\EncodablePropertyAttribute.cs" />
-    <Compile Include="Models\MemoryOperation.cs" />
-    <Compile Include="Models\MicroFunction.cs" />
-    <Compile Include="Models\MicroInstruction.cs" />
-    <Compile Include="Models\OperandEncoding.cs" />
-    <Compile Include="Models\OperandEncodingType.cs" />
-    <Compile Include="Providers\IProvider.cs" />
-    <Compile Include="Providers\SheetParser\EncodingSheetProvider.cs" />
-    <Compile Include="Providers\SheetParser\MicroFunctionSheetProvider.cs" />
-    <Compile Include="Providers\OperandParser.cs" />
-    <Compile Include="Providers\SheetParser\BaseSheetProvider.cs" />
-    <Compile Include="Encoding\HasmEncoder.cs" />
-    <Compile Include="Grammars\HasmGrammar.cs" />
-    <Compile Include="Models\InstructionEncoding.cs" />
-    <Compile Include="Providers\SheetParser\OperandSheetProvider.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="MicroAssembler.cs" />
+    <Compile Include="MicroGenerator.cs" />
+    <Compile Include="MicroModule.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -134,15 +95,13 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="packages.config" />
-    <None Include="Resources\Instructionset with Encoding %28rev3%29.xlsx" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
+    <ProjectReference Include="..\HasmParser\HasmParser.csproj">
+      <Project>{d5be1584-6e5c-44b7-90a6-73bc364f4dbf}</Project>
+      <Name>HasmParser</Name>
+    </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

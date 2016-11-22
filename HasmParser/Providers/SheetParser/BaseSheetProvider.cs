@@ -5,9 +5,9 @@ using hasm.Parsing.Properties;
 using NLog;
 using OfficeOpenXml;
 
-namespace hasm.Parsing.Parsers.Sheet
+namespace hasm.Parsing.Providers.SheetParser
 {
-    public abstract class BaseSheetParser<T> where T : class
+    public abstract class BaseSheetProvider<T> : IProvider<T> where T : class
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private IList<T> _items;
@@ -26,6 +26,9 @@ namespace hasm.Parsing.Parsers.Sheet
             foreach (var row in EnumerateRows(SheetName))
             {
                 var current = Parse(row, previous);
+                if (EqualityComparer<T>.Default.Equals(current, previous))
+                    continue;
+
                 previous = current;
 
                 list.Add(current);

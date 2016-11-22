@@ -1,40 +1,39 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
+using hasm.Parsing.Providers;
 using NLog;
 using ParserLib.Evaluation;
 using ParserLib.Evaluation.Rules;
 
-namespace hasm.Parsing.Parsers.Sheet
+namespace hasm.Parsing.Encoding
 {
     /// <summary>
     ///     This class makes it possible to parse an instruction to an encoding as specified
     ///     in the HasmGrammar.
     /// </summary>
-    public sealed class HasmSheetParser : BaseSheetParser<InstructionEncoding>
+    public sealed class HasmEncoder
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
+        private readonly IProvider<InstructionEncoding> _encodingProvider;
         private readonly HasmGrammar _grammar;
-        private readonly Dictionary<string, ValueRule<byte[]>> _rules;
+        private readonly IDictionary<string, ValueRule<byte[]>> _rules;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="HasmSheetParser" /> class.
+        ///     Initializes a new instance of the <see cref="HasmEncoder" /> class.
         /// </summary>
         /// <param name="grammar">The grammar of the parser.</param>
-        public HasmSheetParser(HasmGrammar grammar)
+        public HasmEncoder(HasmGrammar grammar, IProvider<InstructionEncoding> encodingProvider)
         {
             _grammar = grammar;
-            _rules = new Dictionary<string, ValueRule<byte[]>>();
-            _logger.Info($"Learned {Items.Count} instructions");
+            _encodingProvider = encodingProvider;
+            _rules = new ConcurrentDictionary<string, ValueRule<byte[]>>();
+            //_logger.Info($"Learned {Items.Count} instructions");
         }
-
-        protected override string SheetName => "Encoding";
-
-        protected override InstructionEncoding Parse(string[] row, InstructionEncoding previous)
-            => InstructionEncoding.Parse(row);
 
         /// <summary>
         ///     Encodes the specified input.
@@ -106,13 +105,14 @@ namespace hasm.Parsing.Parsers.Sheet
         }
 
         private InstructionEncoding FindInstructionEncoding(string opcode)
-            => Items.FirstOrDefault(i => i.Grammar.StartsWith(opcode.ToUpper()));
+            => _encodingProvider.Items.FirstOrDefault(i => i.Grammar.StartsWith(opcode.ToUpper()));
 
         private static string FormatInput(string input)
         {
-            var opcode = HasmGrammar.Opcode.FirstValue(input);
+            var opcode = input.Split(' ')[0];
             var operands = input.Substring(opcode.Length);
-            operands = new Regex("\\s+").Replace(operands, "");
+            operands = string.Join("", operands.Split(default(string[]), StringSplitOptions.RemoveEmptyEntries));
+            operands = operands.Replace("+-", "-");
 
             return opcode + " " + operands;
         }

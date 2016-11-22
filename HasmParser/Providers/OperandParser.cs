@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using hasm.Parsing.DependencyInjection;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
 using ParserLib.Evaluation;
@@ -7,7 +8,7 @@ using ParserLib.Evaluation.Rules;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
-namespace hasm.Parsing.Parsers
+namespace hasm.Parsing.Providers
 {
     public sealed class OperandParser
     {
@@ -30,10 +31,10 @@ namespace hasm.Parsing.Parsers
                 throw new ArgumentNullException(nameof(operandEncoding));
 
             Rule rule;
-            switch (operandEncoding.EncodingType)
+            switch (operandEncoding.Type)
             {
                 case OperandEncodingType.KeyValue:
-                    rule = Grammar.Or(operandEncoding.KeyValue.Select(keyValue => Grammar.KeyValue(keyValue)));
+                    rule = Grammar.Or(operandEncoding.Pairs.Select(keyValue => Grammar.KeyValue(keyValue)));
                     break;
                 case OperandEncodingType.Range:
                     rule = Grammar.Range(operandEncoding.Minimum, operandEncoding.Maximum, Grammar.Int32());
@@ -54,9 +55,11 @@ namespace hasm.Parsing.Parsers
             return new OperandParser(valueRule, operandEncoding);
         }
 
+        public int Parse(string operand) => ValueRule.FirstValue(operand);
+
         public Rule CreateRule(string encoding)
         {
-            if (OperandEncoding.EncodingType != OperandEncodingType.Aggregation)
+            if (OperandEncoding.Type != OperandEncodingType.Aggregation)
                 return CreateConverterRule(ValueRule, encoding);
 
             var operands = OperandEncoding.Operands.Single().Split(new[] { '+', ' ' }, StringSplitOptions.RemoveEmptyEntries);
@@ -66,18 +69,21 @@ namespace hasm.Parsing.Parsers
 
         private Rule CreateConverterRule(ValueRule<int> rule, string encoding)
         {
+            var binaryRule = Grammar.ConvertBinary(rule, OperandEncoding.Size);
             Func<string, int> converter = match =>
             {
-                var value = rule.FirstValue(match);
+                var value = binaryRule.FirstValue(match);
                 return Encode(encoding, value);
             };
 
-            return Grammar.ConvertToValue(converter, rule);
+            return Grammar.ConvertToValue(converter, binaryRule);
         }
 
-        private int Encode(string encoding, int value)
+        private int Encode(string encoding, string value)
         {
-            // TODO: make sure that value repalces the mask (i.e. masked encoding isn't required to be after each other)
+            if (value.Length != OperandEncoding.Size)
+                throw new NotImplementedException();
+
             var opcodeBinary = EncodingRule.FirstValue(encoding); // gets the binary representation of the encoding
             var index = opcodeBinary.IndexOf(OperandEncoding.EncodingMask); // finds the first occurance of the mask
             var nextIndex = opcodeBinary.IndexOf('0', index); // and the last
@@ -85,9 +91,9 @@ namespace hasm.Parsing.Parsers
                 nextIndex = opcodeBinary.Length; // could be that it ended with the mask so we set it to the length of total encoding
 
             var length = nextIndex - index;
-            var bin = Convert.ToString(value, 2).PadLeft(OperandEncoding.Size, '0');
+            //var bin = Convert.ToString(value, 2).PadLeft(OperandEncoding.Size, '0');
 
-            opcodeBinary = opcodeBinary.Remove(index, length).Insert(index, bin);
+            opcodeBinary = opcodeBinary.Remove(index, length).Insert(index, value);
             var result = Convert.ToInt32(opcodeBinary, 2);
 
             return result;

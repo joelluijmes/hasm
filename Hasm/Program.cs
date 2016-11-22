@@ -4,10 +4,13 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Fclp;
+using hasm.Parsing;
+using hasm.Parsing.DependencyInjection;
+using hasm.Parsing.Encoding;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
-using hasm.Parsing.Parsers.Sheet;
 using hasm.Properties;
+using Ninject.Parameters;
 using NLog;
 
 namespace hasm
@@ -15,7 +18,7 @@ namespace hasm
     internal class Program
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private static HasmSheetParser _hasmSheetParser;
+        private static HasmEncoder _hasmEncoder;
 
         private static bool Debugging =>
 #if DEBUG
@@ -53,7 +56,7 @@ namespace hasm
 
                 Init();
 
-//					LiveMode();
+				LiveMode();
 
                 var listing = new List<string>();
                 using (var memoryStream = new MemoryStream(Resources.listing))
@@ -65,7 +68,7 @@ namespace hasm
                     }
                 }
 
-                var assembler = new Assembler(_hasmSheetParser, listing);
+                var assembler = KernelFactory.Resolve<HasmAssembler>(new ConstructorArgument(nameof(listing), listing));
                 var assembled = assembler.Process();
 
                 var encoded = assembled.Aggregate("", (a, b) => $"{a} {b:X2}");
@@ -100,9 +103,8 @@ namespace hasm
         }
 
         private static void Init()
-        { 
-            var grammar = new HasmGrammar();
-            _hasmSheetParser = new HasmSheetParser(grammar);
+        {
+            _hasmEncoder = KernelFactory.Resolve<HasmEncoder>();
         }
 
         private static void HandleArguments(ApplicationArguments arguments)
@@ -124,8 +126,10 @@ namespace hasm
                 if (string.IsNullOrEmpty(line))
                     break;
 
-                var encoded = _hasmSheetParser.Encode(line).Aggregate("0x", (a, b) => $"{a}{b:X2}");
-                _logger.Info($"Parsed {line} to encoding {encoded}");
+                var encoded = _hasmEncoder.Encode(line);
+                var value = ConvertToInt(encoded);
+
+                _logger.Info($"Parsed {line} to encoding {Convert.ToString(value, 2).PadLeft(16, '0')}");
 
                 Console.WriteLine();
             }
@@ -134,7 +138,7 @@ namespace hasm
         private static void AssembleFile(string input, string output)
         {
             var listing = File.ReadAllLines(input);
-            var assembler = new Assembler(_hasmSheetParser, listing);
+            var assembler = KernelFactory.Resolve<HasmAssembler>(new ConstructorArgument(nameof(listing), listing));
             var assembled = assembler.Process();
 
             var encoded = assembled.Aggregate("", (a, b) => $"{a} {b:X2}");
@@ -158,6 +162,15 @@ namespace hasm
             Environment.Exit(-1);
         }
 
+        private static int ConvertToInt(byte[] array)
+        {
+            var result = 0;
+            for (var i = 0; i < array.Length; i++)
+                result |= array[i] << (i * 8);
+
+            return result;
+        }
+
         private static void IfDebugging(Action action)
         {
 #if DEBUG
@@ -171,5 +184,6 @@ namespace hasm
             public string OutputFile { get; set; }
             public bool LiveMode { get; set; }
         }
+
     }
 }
