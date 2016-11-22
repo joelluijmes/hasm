@@ -5,7 +5,6 @@ using hasm.Parsing;
 using hasm.Parsing.DependencyInjection;
 using hasm.Parsing.Encoding;
 using hasm.Parsing.Grammars;
-using hasm.Parsing.Parsers.Sheet;
 using NLog;
 using ParserLib.Evaluation;
 
@@ -17,8 +16,7 @@ namespace hasm
     public sealed class HasmAssembler
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private static readonly HasmGrammar _hasmGrammar = KernelFactory.Resolve<HasmGrammar>();
-        private static readonly HasmEncoder _sheetSheetProvider = new HasmEncoder(_hasmGrammar);
+        private readonly HasmEncoder _encoder;
         private readonly IDictionary<string, int> _labelLookup;
         private readonly IList<Instruction> _listing;
         private readonly Instruction _nopInstruction;
@@ -27,8 +25,9 @@ namespace hasm
         ///     Initializes a new instance of the <see cref="HasmAssembler" /> class.
         /// </summary>
         /// <param name="listing">The listing to assemble.</param>
-        public HasmAssembler(IEnumerable<string> listing)
+        public HasmAssembler(HasmEncoder encoder, IEnumerable<string> listing)
         {
+            _encoder = encoder;
             _listing = listing
                 .Where(l => !string.IsNullOrWhiteSpace(l))
                 .Select(ParseFromLine)
@@ -89,14 +88,14 @@ namespace hasm
                 instruction.Input = $"{opcode} {address}";
             }
 
-            instruction.Encoding = _sheetSheetProvider.Encode(instruction.Input);
+            instruction.Encoding = _encoder.Encode(instruction.Input);
             instruction.Completed = true;
         }
 
         private void FirstPass(Instruction instruction, ref int address)
         {
             byte[] encoded;
-            var completed = _sheetSheetProvider.TryEncode(instruction.Input, out encoded);
+            var completed = _encoder.TryEncode(instruction.Input, out encoded);
             if (encoded == null)
                 throw new AssemblerException($"Couldn't parse '{instruction.Input}'. Please check your grammar and/or input.");
 

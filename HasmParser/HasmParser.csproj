@@ -109,15 +109,15 @@
     <Compile Include="Models\MicroInstruction.cs" />
     <Compile Include="Models\OperandEncoding.cs" />
     <Compile Include="Models\OperandEncodingType.cs" />
-    <Compile Include="Parsers\IProvider.cs" />
-    <Compile Include="Parsers\Sheet\EncodingSheetProvider.cs" />
-    <Compile Include="Parsers\Sheet\MicroFunctionSheetProvider.cs" />
-    <Compile Include="Parsers\OperandParser.cs" />
-    <Compile Include="Parsers\Sheet\BaseSheetProvider.cs" />
+    <Compile Include="Providers\IProvider.cs" />
+    <Compile Include="Providers\SheetParser\EncodingSheetProvider.cs" />
+    <Compile Include="Providers\SheetParser\MicroFunctionSheetProvider.cs" />
+    <Compile Include="Providers\OperandParser.cs" />
+    <Compile Include="Providers\SheetParser\BaseSheetProvider.cs" />
     <Compile Include="Encoding\HasmEncoder.cs" />
     <Compile Include="Grammars\HasmGrammar.cs" />
     <Compile Include="Models\InstructionEncoding.cs" />
-    <Compile Include="Parsers\Sheet\OperandSheetProvider.cs" />
+    <Compile Include="Providers\SheetParser\OperandSheetProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

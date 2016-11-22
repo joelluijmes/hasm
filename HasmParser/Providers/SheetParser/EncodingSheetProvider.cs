@@ -1,6 +1,6 @@
 ﻿using hasm.Parsing.Models;
 
-namespace hasm.Parsing.Parsers.Sheet
+namespace hasm.Parsing.Providers.SheetParser
 {
     internal sealed class EncodingSheetProvider : BaseSheetProvider<InstructionEncoding>
     {

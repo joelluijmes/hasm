@@ -3,7 +3,7 @@ using System.Linq;
 using hasm.Parsing.Models;
 using NLog;
 
-namespace hasm.Parsing.Parsers.Sheet
+namespace hasm.Parsing.Providers.SheetParser
 {
     public sealed class OperandSheetProvider : BaseSheetProvider<OperandEncoding>
     {

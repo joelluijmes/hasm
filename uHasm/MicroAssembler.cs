@@ -1,17 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using hasm.Parsing;
-using hasm.Parsing.DependencyInjection;
 using hasm.Parsing.Encoding;
 using hasm.Parsing.Export;
-using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
-using hasm.Parsing.Parsers.Sheet;
 using NLog;
 
 namespace hasm
@@ -19,9 +12,13 @@ namespace hasm
     internal sealed class MicroAssembler
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private static readonly HasmGrammar _hasmGrammar = KernelFactory.Resolve<HasmGrammar>();
-        private static readonly HasmEncoder _sheetSheetProvider = new HasmEncoder(_hasmGrammar);
-        
+        private readonly HasmEncoder _encoder;
+
+        public MicroAssembler(HasmEncoder encoder)
+        {
+            _encoder = encoder;
+        }
+
         public IEnumerable<IAssembled> Assemble(IList<MicroFunction> microFunctions)
         {
             _logger.Info($"Assembling {microFunctions.Count} micro-functions..");
@@ -42,10 +39,10 @@ namespace hasm
 
             sw.Stop();
             _logger.Info($"Assembled {microInstructions.Count} micro-instructions in {sw.Elapsed}");
-            
-           return microInstructions;
+
+            return microInstructions;
         }
-        
+
         private static IList<MicroFunction> DistinctInstructions(IEnumerable<MicroFunction> microFunctions)
         {
             var cache = new Dictionary<MicroInstruction, MicroInstruction>();
@@ -85,7 +82,7 @@ namespace hasm
             return list;
         }
 
-        private static IList<AssembledInstruction> AssembleFunctions(IEnumerable<MicroFunction> microFunctions)
+        private IList<AssembledInstruction> AssembleFunctions(IEnumerable<MicroFunction> microFunctions)
         {
             var cache = new Dictionary<MicroInstruction, MicroInstruction>();
             var list = new List<MicroInstruction>();
@@ -116,10 +113,10 @@ namespace hasm
             return list.Select(i => new AssembledInstruction(i)).ToList();
         }
 
-        private static void SetLocation(MicroFunction function)
+        private void SetLocation(MicroFunction function)
         {
             // first microinstruction/function address is the assembled (macro)instruction
-            var encoded = _sheetSheetProvider.Encode(function.Instruction);
+            var encoded = _encoder.Encode(function.Instruction);
 
             switch (encoded.Length)
             {
@@ -149,13 +146,13 @@ namespace hasm
                 Assembled = PropertyEncoder.Encode(instruction);
             }
 
+            public MicroInstruction Instruction { get; }
+
             public long Assembled { get; } //=> PropertyEncoder.Encode(Instruction);
             public int Address { get; }
             public int Count => 37;
-            public MicroInstruction Instruction { get; }
 
             public override string ToString() => Instruction.ToString();
         }
     }
 }
-

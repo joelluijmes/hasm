@@ -5,7 +5,7 @@ using hasm.Parsing.Properties;
 using NLog;
 using OfficeOpenXml;
 
-namespace hasm.Parsing.Parsers.Sheet
+namespace hasm.Parsing.Providers.SheetParser
 {
     public abstract class BaseSheetProvider<T> : IProvider<T> where T : class
     {

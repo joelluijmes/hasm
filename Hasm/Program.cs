@@ -9,9 +9,8 @@ using hasm.Parsing.DependencyInjection;
 using hasm.Parsing.Encoding;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
-using hasm.Parsing.Parsers;
-using hasm.Parsing.Parsers.Sheet;
 using hasm.Properties;
+using Ninject.Parameters;
 using NLog;
 
 namespace hasm
@@ -69,7 +68,7 @@ namespace hasm
                     }
                 }
 
-                var assembler = new HasmAssembler(listing);
+                var assembler = KernelFactory.Resolve<HasmAssembler>(new ConstructorArgument(nameof(listing), listing));
                 var assembled = assembler.Process();
 
                 var encoded = assembled.Aggregate("", (a, b) => $"{a} {b:X2}");
@@ -104,10 +103,8 @@ namespace hasm
         }
 
         private static void Init()
-        { 
-            var grammar = KernelFactory.Resolve<HasmGrammar>();
-
-            _hasmEncoder = new HasmEncoder(grammar);
+        {
+            _hasmEncoder = KernelFactory.Resolve<HasmEncoder>();
         }
 
         private static void HandleArguments(ApplicationArguments arguments)
@@ -141,7 +138,7 @@ namespace hasm
         private static void AssembleFile(string input, string output)
         {
             var listing = File.ReadAllLines(input);
-            var assembler = new HasmAssembler(listing);
+            var assembler = KernelFactory.Resolve<HasmAssembler>(new ConstructorArgument(nameof(listing), listing));
             var assembled = assembler.Process();
 
             var encoded = assembled.Aggregate("", (a, b) => $"{a} {b:X2}");

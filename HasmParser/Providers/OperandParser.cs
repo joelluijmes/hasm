@@ -8,11 +8,10 @@ using ParserLib.Evaluation.Rules;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
-namespace hasm.Parsing.Parsers
+namespace hasm.Parsing.Providers
 {
     public sealed class OperandParser
     {
-        private static readonly HasmGrammar _hasmGrammar = KernelFactory.Resolve<HasmGrammar>();
         public ValueRule<string> EncodingRule { get; }
         public OperandEncoding OperandEncoding { get; }
         public ValueRule<int> ValueRule { get; }
@@ -43,7 +42,7 @@ namespace hasm.Parsing.Parsers
 
                 case OperandEncodingType.Aggregation:
                     var operands = operandEncoding.Operands.Single().Split(new[] {'+', ' '}, StringSplitOptions.RemoveEmptyEntries);
-                    var rules = operands.Select(_hasmGrammar.FindOperandParser).Select(o => o.ValueRule);
+                    var rules = operands.Select(HasmGrammar.FindOperandParser).Select(o => o.ValueRule);
 
                     rule = Grammar.Sequence(rules);
                     break;
@@ -64,7 +63,7 @@ namespace hasm.Parsing.Parsers
                 return CreateConverterRule(ValueRule, encoding);
 
             var operands = OperandEncoding.Operands.Single().Split(new[] { '+', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            var rules = operands.Select(_hasmGrammar.FindOperandParser).Select(o => o.CreateRule(encoding));
+            var rules = operands.Select(HasmGrammar.FindOperandParser).Select(o => o.CreateRule(encoding));
             return Grammar.Sequence(rules);
         }
 

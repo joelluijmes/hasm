@@ -1,6 +1,6 @@
 ﻿using hasm.Parsing.Models;
 
-namespace hasm.Parsing.Parsers.Sheet
+namespace hasm.Parsing.Providers.SheetParser
 {
     public sealed class MicroFunctionSheetProvider : BaseSheetProvider<MicroFunction>
     {

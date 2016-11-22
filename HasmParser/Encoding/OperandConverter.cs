@@ -1,13 +1,12 @@
 ﻿using hasm.Parsing.DependencyInjection;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
-using hasm.Parsing.Parsers;
+using hasm.Parsing.Providers;
 
 namespace hasm.Parsing.Encoding
 {
     internal struct OperandConverter
     {
-        private static readonly HasmGrammar _hasmGrammar = KernelFactory.Resolve<HasmGrammar>();
         private readonly OperandParser _parser;
         private string _operand;
 
@@ -28,7 +27,7 @@ namespace hasm.Parsing.Encoding
         public OperandConverter(string operand)
         { // operand can be null
             _operand = operand;
-            _parser = _hasmGrammar.FindOperandParser(operand);
+            _parser = HasmGrammar.FindOperandParser(operand);
             _value = null;
         }
 

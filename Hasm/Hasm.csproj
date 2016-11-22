@@ -85,6 +85,7 @@
   <ItemGroup>
     <Compile Include="HasmAssembler.cs" />
     <Compile Include="Exceptions\AssemblerException.cs" />
+    <Compile Include="HasmModule.cs" />
     <Compile Include="Instruction.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

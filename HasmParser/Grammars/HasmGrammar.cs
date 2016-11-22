@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using hasm.Parsing.DependencyInjection;
 using hasm.Parsing.Models;
-using hasm.Parsing.Parsers;
+using hasm.Parsing.Providers;
 using NLog;
 using ParserLib.Evaluation;
 using ParserLib.Evaluation.Rules;
@@ -16,26 +17,25 @@ namespace hasm.Parsing.Grammars
     ///     Provides type for defining the grammar with definitions for hasm
     /// </summary>
     /// <seealso cref="ParserLib.Parsing.Grammar" />
-    public sealed partial class HasmGrammar : Grammar
+    public sealed partial class HasmGrammar : Grammar, IProvider<OperandParser>
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private static readonly IDictionary<char, ValueRule<string>> _maskRules;
         private static readonly ValueRule<string> _opcodemaskRule;
-
-        private readonly IList<OperandParser> _operandParsers;
+        private static readonly IList<OperandParser> _operandParsers;
 
         static HasmGrammar()
         {
             _maskRules = new Dictionary<char, ValueRule<string>>();
             _opcodemaskRule = CreateMaskRule('1');
-        }
 
-        public HasmGrammar(IProvider<OperandEncoding> operandProvider)
-        {
-            _operandParsers = operandProvider.Items.Select(OperandParser.Create).ToList();
+            _operandParsers = new List<OperandParser>();
+            var encodingProvider = KernelFactory.Resolve<IProvider<OperandEncoding>>();
+            foreach (var encoding in encodingProvider.Items)
+                _operandParsers.Add(OperandParser.Create(encoding));
         }
-
-        public OperandParser FindOperandParser(string operand)
+        
+        public static OperandParser FindOperandParser(string operand)
         {
             if (operand == null)
                 return null;
@@ -157,5 +157,7 @@ namespace hasm.Parsing.Grammars
             var opcodeBinary = _opcodemaskRule.FirstValue(encoding); // gets the binary representation of the encoding
             return Convert.ToInt32(opcodeBinary, 2);
         }
+
+        public IList<OperandParser> Items => _operandParsers;
     }
 }
