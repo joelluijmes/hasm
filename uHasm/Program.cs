@@ -6,10 +6,11 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Fclp;
+using hasm.Parsing.DependencyInjection;
 using hasm.Parsing.Export;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
-using hasm.Parsing.Parsers.Sheet;
+using hasm.Parsing.Providers.SheetParser;
 using NLog;
 using ParserLib.Evaluation;
 
@@ -49,7 +50,7 @@ namespace hasm
 
 		private static async Task MainImpl(string[] args)
 		{
-            var microParser = new MicroFunctionSheetParser();
+            var microParser = new MicroFunctionSheetProvider();
             _microFunctions = microParser.Items;
 
             if (Debugging)
@@ -127,7 +128,7 @@ namespace hasm
                         .Zip(HasmGrammar.GetOperands(input), (type, operand) => new MicroGenerator.Operand(type, operand));
 
                     MicroGenerator.PermuteFunction(operands, function);
-                    var assembler = new MicroAssembler();
+                    var assembler = KernelFactory.Resolve<MicroAssembler>();
                     var assembled = assembler.Assemble(new[] {function});
 
                     await exporter.Export(assembled);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using hasm.Parsing.DependencyInjection;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
 using ParserLib.Evaluation;
@@ -7,7 +8,7 @@ using ParserLib.Evaluation.Rules;
 using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
-namespace hasm.Parsing.Parsers
+namespace hasm.Parsing.Providers
 {
     public sealed class OperandParser
     {

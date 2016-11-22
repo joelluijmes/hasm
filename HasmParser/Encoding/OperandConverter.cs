@@ -1,6 +1,7 @@
-﻿using hasm.Parsing.Grammars;
+﻿using hasm.Parsing.DependencyInjection;
+using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
-using hasm.Parsing.Parsers;
+using hasm.Parsing.Providers;
 
 namespace hasm.Parsing.Encoding
 {
