@@ -72,7 +72,7 @@ namespace hasm.Parsing.Models
         [EncodableProperty(ENCODING_CARRY)]
         public bool Carry { get; set; }
 
-        [EncodableProperty(ENCODING_SP, Converter = typeof(InverseBooleanConverter))]
+        [EncodableProperty(ENCODING_SP)]
         public bool StackPointer { get; set; }
 
         [EncodableProperty(ENCODING_SHIFT)]
