@@ -66,6 +66,7 @@ namespace hasm.Parsing.Export
 
                 var rounded = (int)Math.Ceiling(assembled.Count / 8.0);
                 Array.Resize(ref data, rounded);
+                Array.Reverse(data);
 
                 return new HexRecord(address, data);
             }

@@ -19,14 +19,14 @@ namespace hasm
             _encoder = encoder;
         }
 
-        public IEnumerable<IAssembled> Assemble(IList<MicroFunction> microFunctions)
+        public IEnumerable<IAssembled> Assemble(IList<MicroFunction> microFunctions, int address = 0)
         {
             _logger.Info($"Assembling {microFunctions.Count} micro-functions..");
 
             var sw = Stopwatch.StartNew();
 
             var distinct = DistinctInstructions(microFunctions).ToList();
-            var assembled = AssembleFunctions(distinct);
+            var assembled = AssembleFunctions(distinct, address);
             var microInstructions = assembled
                 .GroupBy(i => i.Address)
                 .Select(i => i.First())
@@ -82,12 +82,11 @@ namespace hasm
             return list;
         }
 
-        private IList<AssembledInstruction> AssembleFunctions(IEnumerable<MicroFunction> microFunctions)
+        private IList<AssembledInstruction> AssembleFunctions(IEnumerable<MicroFunction> microFunctions, int address = 0)
         {
             var cache = new Dictionary<MicroInstruction, MicroInstruction>();
             var list = new List<MicroInstruction>();
-
-            var address = 0;
+            
             foreach (var function in microFunctions)
             {
                 for (var i = function.MicroInstructions.Count - 1; i >= 1; --i)

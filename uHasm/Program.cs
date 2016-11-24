@@ -53,32 +53,34 @@ namespace hasm
             var microParser = new MicroFunctionSheetProvider();
             _microFunctions = microParser.Items;
 
-            if (Debugging)
-		    {
-		        var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
-		        consoleRule.EnableLoggingForLevel(LogLevel.Debug);
+            await LiveMode();
 
-               await LiveMode();
-		    }
-		    else
-		    {
-                var commandParser = new FluentCommandLineParser<ApplicationArguments>();
-                commandParser.Setup(a => a.LiveMode)
-                    .As('l', "live-mode")
-                    .WithDescription("Use live mode");
-                commandParser.SetupHelp("?", "help")
-                    .WithHeader("Invalid usage: ")
-                    .Callback(c => Console.WriteLine(c));
+      //      if (Debugging)
+		    //{
+		    //    var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
+		    //    consoleRule.EnableLoggingForLevel(LogLevel.Debug);
 
-                var result = commandParser.Parse(args);
-                if (result.HasErrors || result.EmptyArgs)
-                {
-                    commandParser.HelpOption.ShowHelp(commandParser.Options);
-                    return;
-                }
+      //         await LiveMode();
+		    //}
+		    //else
+		    //{
+      //          var commandParser = new FluentCommandLineParser<ApplicationArguments>();
+      //          commandParser.Setup(a => a.LiveMode)
+      //              .As('l', "live-mode")
+      //              .WithDescription("Use live mode");
+      //          commandParser.SetupHelp("?", "help")
+      //              .WithHeader("Invalid usage: ")
+      //              .Callback(c => Console.WriteLine(c));
 
-                await HandleArguments(commandParser.Object);
-            }
+      //          var result = commandParser.Parse(args);
+      //          if (result.HasErrors || result.EmptyArgs)
+      //          {
+      //              commandParser.HelpOption.ShowHelp(commandParser.Options);
+      //              return;
+      //          }
+
+      //          await HandleArguments(commandParser.Object);
+      //      }
 
 			
 
@@ -112,7 +114,8 @@ namespace hasm
         private static async Task LiveMode()
         {
             using (var stream = Console.OpenStandardOutput())
-            using (var exporter = new FormattedExporter(stream) { AppendToString = true, Base = 2 })
+            //using (var exporter = new FormattedExporter(stream) { AppendToString = true, Base = 2 })
+            using (var exporter = new IntelHexExporter(stream))
             {
                 exporter.Writer.AutoFlush = true;
                 Console.SetOut(exporter.Writer);
@@ -121,6 +124,14 @@ namespace hasm
                 {
                     Console.Write("Enter instruction: ");
                     var input = Console.ReadLine();
+                    var index = input.IndexOf(':');
+                    var address = 0;
+                    if (index != -1)
+                    {
+                        address = int.Parse(input.Substring(0, index));
+                        input = input.Substring(index + 1).Trim();
+                    }
+
                     var opcode = HasmGrammar.Opcode.FirstValue(input).ToLower();
                     var function = _microFunctions.First(m => m.Instruction.ToLower().StartsWith(opcode));
 
@@ -129,7 +140,7 @@ namespace hasm
 
                     MicroGenerator.PermuteFunction(operands, function);
                     var assembler = KernelFactory.Resolve<MicroAssembler>();
-                    var assembled = assembler.Assemble(new[] {function});
+                    var assembled = assembler.Assemble(new[] {function}, address);
 
                     await exporter.Export(assembled);
 
