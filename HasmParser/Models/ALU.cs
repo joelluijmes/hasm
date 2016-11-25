@@ -93,21 +93,13 @@ namespace hasm.Parsing.Models
         public string Left
         {
             get { return _leftOperand.Operand; }
-            set
-            {
-                _leftOperand.Operand = value;
-                FixImmediateOperand(ref _leftOperand);
-            }
+            set { _leftOperand.Operand = value; }
         }
 
         public string Right
         {
             get { return _rightOperand.Operand; }
-            set
-            {
-                _rightOperand.Operand = value;
-                FixImmediateOperand(ref _rightOperand);
-            }
+            set { _rightOperand.Operand = value; }
         }
 
         private bool IsAssignment => ((Operation == AluOperation.Plus) && (Left == null) && (Right != null)) || ((Left != null) && (Right == null));
@@ -205,10 +197,6 @@ namespace hasm.Parsing.Models
 
         private void FixOperands()
         {
-            // we can't put negative on the bus, so we inverse the plus or minus and inverse the operand to fix this 
-            FixImmediateOperand(ref _rightOperand);
-            FixImmediateOperand(ref _leftOperand);
-
             // immediates must be placed on B bus (right), so for certain cases we have to swap the operands
             // so that the right is the immediate
             if (!_leftOperand.IsImmediate)
@@ -231,28 +219,6 @@ namespace hasm.Parsing.Models
                 }
                 else
                     throw new NotImplementedException();
-            }
-        }
-
-        private void FixImmediateOperand(ref OperandConverter operand)
-        {
-            int value;
-            if (!operand.IsImmediate || !int.TryParse(operand.Operand, out value) || (value >= 0))
-                return;
-
-            operand.Operand = (value*-1).ToString();
-
-            if (Operation == AluOperation.Minus)
-                Operation = AluOperation.Plus;
-            else
-            {
-                if (Operation == AluOperation.Plus)
-                    Operation = AluOperation.Minus;
-                else
-                {
-                    if (!IsAssignment)
-                        throw new NotImplementedException();
-                }
             }
         }
     }
