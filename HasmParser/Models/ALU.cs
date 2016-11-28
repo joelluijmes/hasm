@@ -87,7 +87,16 @@ namespace hasm.Parsing.Models
         public string Target
         {
             get { return _targetOperand.Operand; }
-            set { _targetOperand.Operand = value; }
+            set
+            {
+                if (value.ToLower() == "sp")
+                {
+                    StackPointer = true;
+                    _targetOperand.Operand = null;
+                }
+                else
+                    _targetOperand.Operand = value;
+            }
         }
 
         public string Left
