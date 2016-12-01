@@ -18,6 +18,6 @@ namespace hasm.Parsing.Grammars
 
         public static readonly Rule Alu = Node("alu", (MultiTarget + Left + Optional((AluOperation + Right + Optional(Carry)) | Shift)) | (Left + AluOperation + Right + Optional(Carry)) | Right);
 
-        public static readonly Rule Operation = Optional(If) + (Alu | Nop);
+        public static readonly Rule Operation = Optional(If) + (Nop  | Alu);
     }
 }

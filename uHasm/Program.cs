@@ -136,7 +136,7 @@ namespace hasm
                     var function = _microFunctions.First(m => m.Instruction.ToLower().StartsWith(opcode));
 
                     var operands = HasmGrammar.GetOperands(function.Instruction)
-                        .Zip(HasmGrammar.GetOperands(input), (type, operand) => new MicroGenerator.Operand(type, operand));
+                                              .Zip(HasmGrammar.GetOperands(input), (type, operand) => new MicroGenerator.Operand(type, operand));
 
                     MicroGenerator.PermuteFunction(operands, function);
                     var assembler = KernelFactory.Resolve<MicroAssembler>();
