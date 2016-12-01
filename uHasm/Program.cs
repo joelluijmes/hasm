@@ -114,8 +114,8 @@ namespace hasm
         private static async Task LiveMode()
         {
             using (var stream = Console.OpenStandardOutput())
-            //using (var exporter = new FormattedExporter(stream) { AppendToString = true, Base = 2 })
-            using (var exporter = new IntelHexExporter(stream))
+            using (var exporter = new FormattedExporter(stream) { AppendToString = true, Base = 2 })
+            //using (var exporter = new IntelHexExporter(stream))
             {
                 exporter.Writer.AutoFlush = true;
                 Console.SetOut(exporter.Writer);

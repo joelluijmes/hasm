@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using hasm.Parsing.Encoding;
 using hasm.Parsing.Encoding.TypeConverters;
 using hasm.Parsing.Grammars;
-using OfficeOpenXml;
 using ParserLib.Evaluation;
 using ParserLib.Parsing;
 
@@ -13,14 +11,12 @@ namespace hasm.Parsing.Models
 {
     public sealed class MicroInstruction
     {
-        
-
         private const int ENCODING_NEXT = 0;
         private const int ENCODING_ADDR = 1;
-        private const int ENCODING_CONDITION = 10;
-        private const int ENCODING_CONDITION_INVERTED = 13;
-        private const int ENCODING_STATUS_EN = 14;
-        private const int ENCODING_MEMORY = 15;
+        private const int ENCODING_CONDITION = 16;
+        private const int ENCODING_CONDITION_INVERTED = 19;
+        private const int ENCODING_STATUS_EN = 15;
+        private const int ENCODING_MEMORY = 12;
 
         private static readonly Dictionary<string, Condition> _conditions = new Dictionary<string, Condition>
         {
@@ -31,23 +27,33 @@ namespace hasm.Parsing.Models
             ["N"] = Condition.Negative
         };
 
+        public static readonly MicroInstruction NOP = new MicroInstruction(ALU.NOP, MemoryOperation.None, true, false, Condition.None, false) {InternalInstruction = true};
+
         private int _location;
 
-        public static readonly MicroInstruction NOP = new MicroInstruction(ALU.NOP, MemoryOperation.None, true, false, Condition.None, false) {InternalInstruction = true};
+        public MicroInstruction(ALU alu, MemoryOperation memory, bool lastInstruction, bool statusEnabled, Condition condition, bool invertedCondition)
+        {
+            ALU = alu;
+            LastInstruction = lastInstruction;
+            Memory = memory;
+            StatusEnabled = statusEnabled;
+            Condition = condition;
+            InvertedCondition = invertedCondition;
+        }
 
         public int Location
         {
             get
             {
                 return InternalInstruction
-                    ? _location | 1 << 15
+                    ? _location | (1 << 15)
                     : _location;
             }
             set { _location = value; }
         }
 
         [EncodableProperty(ENCODING_NEXT)]
-        public bool LastInstruction { get;} // NextMicroInstruction == null;
+        public bool LastInstruction { get; } // NextMicroInstruction == null;
 
         [EncodableProperty(ENCODING_ADDR, 9)]
         public int NextInstruction => ((NextMicroInstruction?.Location + 1) & 0x7FFF) >> 6 ?? 0;
@@ -61,7 +67,7 @@ namespace hasm.Parsing.Models
         [EncodableProperty(ENCODING_STATUS_EN)]
         public bool StatusEnabled { get; set; }
 
-        [EncodableProperty(ENCODING_MEMORY, 2)]
+        [EncodableProperty(ENCODING_MEMORY, 3)]
         public MemoryOperation Memory { get; set; }
 
         [EncodableProperty(typeof(AluConverter), ExceedException = false)]
@@ -71,16 +77,6 @@ namespace hasm.Parsing.Models
 
         public bool InternalInstruction { get; set; }
 
-        public MicroInstruction(ALU alu, MemoryOperation memory, bool lastInstruction, bool statusEnabled, Condition condition, bool invertedCondition)
-        {
-            ALU = alu;
-            LastInstruction = lastInstruction;
-            Memory = memory;
-            StatusEnabled = statusEnabled;
-            Condition = condition;
-            InvertedCondition = invertedCondition;
-        }
-        
         public static MicroInstruction Parse(string[] row)
         {
             var operation = new Regex("\\s+").Replace(row[1], "");
@@ -91,11 +87,11 @@ namespace hasm.Parsing.Models
             if (parsed.FirstNodeByNameOrDefault("if") != null)
             {
                 var status = parsed.FirstValueByNameOrDefault<string>("status");
- 
+
                 if (_conditions.TryGetValue(status, out condition))
-                     inverted = parsed.FirstValueByNameOrDefault<string>("cond") == "0";
+                    inverted = parsed.FirstValueByNameOrDefault<string>("cond") == "0";
             }
-            
+
             var aluNode = parsed.FirstNodeByNameOrDefault("alu");
             var alu = aluNode != null
                 ? ALU.Parse(aluNode)
@@ -103,7 +99,7 @@ namespace hasm.Parsing.Models
 
             var memoryCell = row[2];
             var memory = string.IsNullOrEmpty(memoryCell)
-                ? MemoryOperation.None 
+                ? MemoryOperation.None
                 : Grammar.EnumValue<MemoryOperation>().FirstValueOrDefault(memoryCell);
 
             var gotoInstruction = row[3];
@@ -111,7 +107,7 @@ namespace hasm.Parsing.Models
 
             var statusCell = row[4];
             var statusEnabled = statusCell == "1";
-            
+
             return new MicroInstruction(alu, memory, lastInstruction, statusEnabled, condition, inverted);
         }
 
@@ -137,14 +133,14 @@ namespace hasm.Parsing.Models
 
         private bool Equals(MicroInstruction other)
         {
-            return _location == other._location && 
-                LastInstruction == other.LastInstruction && 
-                Condition == other.Condition && 
-                InvertedCondition == other.InvertedCondition && 
-                StatusEnabled == other.StatusEnabled && 
-                Memory == other.Memory && 
-                ALU.Equals(other.ALU) && 
-                InternalInstruction == other.InternalInstruction;
+            return (_location == other._location) &&
+                   (LastInstruction == other.LastInstruction) &&
+                   (Condition == other.Condition) &&
+                   (InvertedCondition == other.InvertedCondition) &&
+                   (StatusEnabled == other.StatusEnabled) &&
+                   (Memory == other.Memory) &&
+                   ALU.Equals(other.ALU) &&
+                   (InternalInstruction == other.InternalInstruction);
         }
 
         public override int GetHashCode()
@@ -176,7 +172,7 @@ namespace hasm.Parsing.Models
                 return true;
 
             var other = obj as MicroInstruction;
-            return other != null && Equals(other);
+            return (other != null) && Equals(other);
         }
 
         public static bool operator ==(MicroInstruction left, MicroInstruction right)

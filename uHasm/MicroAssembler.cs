@@ -149,7 +149,7 @@ namespace hasm
 
             public long Assembled { get; } //=> PropertyEncoder.Encode(Instruction);
             public int Address { get; }
-            public int Count => 37;
+            public int Count => 40;
 
             public override string ToString() => Instruction.ToString();
         }

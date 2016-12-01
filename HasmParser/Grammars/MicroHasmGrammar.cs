@@ -14,9 +14,9 @@ namespace hasm.Parsing.Grammars
         public static readonly Rule Carry = Text("carry", PlusOrMinus + MatchChar('c', true));
         public static readonly Rule If = Node("if", MatchString("if", true) + Text("status", Label) + MatchChar('=') + Text("cond", MatchChar('1') | MatchChar('0')) + MatchChar(':'));
         public static readonly Rule Nop = Text("nop", MatchString("nop", true) | End());
-        public static readonly Rule Shift = Text("shift", MatchString(">>")) + MatchChar('1');  // Left shift is implemented as DST + DST
+        public static readonly Rule Shift = Text("lshift", MatchString(">>")) + MatchChar('1') | Text("ashift", MatchString(">>>")) + MatchChar('1');  // Left shift is implemented as DST + DST
 
-        public static readonly Rule Alu = Node("alu", (MultiTarget + Left + Optional((AluOperation + Right + Optional(Carry)) | Shift)) | (Left + AluOperation + Right + Optional(Carry)));
+        public static readonly Rule Alu = Node("alu", (MultiTarget + Left + Optional((AluOperation + Right + Optional(Carry)) | Shift)) | (Left + AluOperation + Right + Optional(Carry)) | Right);
 
         public static readonly Rule Operation = Optional(If) + (Alu | Nop);
     }

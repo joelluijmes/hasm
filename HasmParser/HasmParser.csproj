@@ -109,6 +109,7 @@
     <Compile Include="Models\MicroInstruction.cs" />
     <Compile Include="Models\OperandEncoding.cs" />
     <Compile Include="Models\OperandEncodingType.cs" />
+    <Compile Include="Models\RightShift.cs" />
     <Compile Include="Providers\IProvider.cs" />
     <Compile Include="Providers\SheetParser\EncodingSheetProvider.cs" />
     <Compile Include="Providers\SheetParser\MicroFunctionSheetProvider.cs" />

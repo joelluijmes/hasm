@@ -66,7 +66,7 @@ namespace hasm.Parsing.Grammars
                 }
             }
 
-            return null;
+            throw new NotImplementedException();
         }
 
         public static string[] GetOperands(string grammar)

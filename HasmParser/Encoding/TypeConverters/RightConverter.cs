@@ -9,7 +9,7 @@ namespace hasm.Parsing.Encoding.TypeConverters
     {
         private const long RIGHT_DISABLED = 0x0F;
         private const long EXT_IMMEDIATE = 0x0A;
-        private const long INT_IMMEDIATE = 0x09;
+        private const long INT_IMMEDIATE = 0x0B;
 
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {

@@ -11,14 +11,15 @@ namespace hasm.Parsing.Models
 {
     public sealed class ALU
     {
-        private const int ENCODING_IMM = 17;
-        private const int ENCODING_A = 19;
-        private const int ENCODING_B = 23;
-        private const int ENCODING_C = 27;
-        private const int ENCODING_SP = 31;
-        private const int ENCODING_ALU = 32;
-        private const int ENCODING_CARRY = 35;
-        private const int ENCODING_SHIFT = 36;
+        private const int ENCODING_IMM = 10;
+        private const int ENCODING_A = 20;
+        private const int ENCODING_B = 24;
+        private const int ENCODING_C = 28;
+        private const int ENCODING_SP = 32;
+        private const int ENCODING_ALU = 33;
+        private const int ENCODING_CARRY = 36;
+        private const int ENCODING_SHIFT = 37;
+        private const int ENCODING_BREAK = 39;
 
         private static readonly Dictionary<string, AluOperation> _operations = new Dictionary<string, AluOperation>
         {
@@ -29,7 +30,7 @@ namespace hasm.Parsing.Models
             ["^"] = AluOperation.Xor
         };
 
-        public static readonly ALU NOP = new ALU(null, null, null, AluOperation.Clear, false, false, false);
+        public static readonly ALU NOP = new ALU(null, null, null, AluOperation.Clear, false, false, RightShift.Disabled);
 
         [EncodableProperty(ENCODING_A, 4, Converter = typeof(LeftConverter))]
         private OperandConverter _leftOperand;
@@ -41,7 +42,7 @@ namespace hasm.Parsing.Models
         [EncodableProperty(ENCODING_C, 4, Converter = typeof(TargetConverter))]
         private OperandConverter _targetOperand;
 
-        public ALU(string target, string left, string right, AluOperation operation, bool carry, bool stackPointer, bool rightShift)
+        public ALU(string target, string left, string right, AluOperation operation, bool carry, bool stackPointer, RightShift rightShift)
         {
             _targetOperand = new OperandConverter(target);
             _leftOperand = new OperandConverter(left);
@@ -57,7 +58,7 @@ namespace hasm.Parsing.Models
             FixOperands();
         }
 
-        private ALU(OperandConverter target, OperandConverter left, OperandConverter right, AluOperation operation, bool carry, bool stackPointer, bool rightShift)
+        private ALU(OperandConverter target, OperandConverter left, OperandConverter right, AluOperation operation, bool carry, bool stackPointer, RightShift rightShift)
         {
             _targetOperand = target;
             _leftOperand = left;
@@ -68,6 +69,8 @@ namespace hasm.Parsing.Models
             Operation = operation;
         }
 
+        [EncodableProperty(ENCODING_BREAK)]
+        public bool Break { get; set; }
 
         [EncodableProperty(ENCODING_CARRY)]
         public bool Carry { get; set; }
@@ -75,8 +78,8 @@ namespace hasm.Parsing.Models
         [EncodableProperty(ENCODING_SP)]
         public bool StackPointer { get; set; }
 
-        [EncodableProperty(ENCODING_SHIFT)]
-        public bool RightShift { get; set; }
+        [EncodableProperty(ENCODING_SHIFT, 2)]
+        public RightShift RightShift { get; set; }
 
         [EncodableProperty(ENCODING_ALU, 3)]
         public AluOperation Operation { get; set; }
@@ -180,8 +183,10 @@ namespace hasm.Parsing.Models
             else
                 builder.Append($"{Right}-{Left}");
 
-            if (RightShift)
+            if (RightShift == RightShift.Logical)
                 builder.Append(">>1");
+            else if (RightShift == RightShift.Arithmetic)
+                builder.Append(">>>1");
 
             return builder.ToString();
         }
@@ -194,14 +199,19 @@ namespace hasm.Parsing.Models
 
             var carry = aluNode.FirstValueByNameOrDefault<string>("carry") != null;
             var stackPointer = aluNode.FirstValueByNameOrDefault<string>("SP") != null;
-            var shift = aluNode.FirstValueByNameOrDefault<string>("shift") != null;
+
+            var rightShift = RightShift.Disabled;
+            if (aluNode.FirstValueByNameOrDefault<string>("ashift") != null)
+                rightShift = RightShift.Arithmetic;
+            else if (aluNode.FirstValueByNameOrDefault<string>("lshift") != null)
+                rightShift = RightShift.Logical;
 
             var operation = AluOperation.Clear;
             var op = aluNode.FirstValueByNameOrDefault<string>("op");
             if (op != null)
                 _operations.TryGetValue(op, out operation);
 
-            return new ALU(target, left, right, operation, carry, stackPointer, shift);
+            return new ALU(target, left, right, operation, carry, stackPointer, rightShift);
         }
 
         private void FixOperands()
