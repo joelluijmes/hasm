@@ -43,6 +43,8 @@ namespace hasm
             return microInstructions;
         }
 
+        public IAssembled Assemble(MicroInstruction microInstruction) => new AssembledInstruction(microInstruction);
+
         private static IList<MicroFunction> DistinctInstructions(IEnumerable<MicroFunction> microFunctions)
         {
             var cache = new Dictionary<MicroInstruction, MicroInstruction>();
@@ -82,7 +84,7 @@ namespace hasm
             return list;
         }
 
-        private IList<AssembledInstruction> AssembleFunctions(IEnumerable<MicroFunction> microFunctions, int address = 0)
+        private IList<IAssembled> AssembleFunctions(IEnumerable<MicroFunction> microFunctions, int address = 0)
         {
             var cache = new Dictionary<MicroInstruction, MicroInstruction>();
             var list = new List<MicroInstruction>();
@@ -109,7 +111,7 @@ namespace hasm
                     throw new NotImplementedException();
             }
 
-            return list.Select(i => new AssembledInstruction(i)).ToList();
+            return list.Select(Assemble).ToList();
         }
 
         private void SetLocation(MicroFunction function)

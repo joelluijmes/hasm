@@ -13,6 +13,7 @@ using hasm.Parsing.Models;
 using hasm.Parsing.Providers.SheetParser;
 using NLog;
 using ParserLib.Evaluation;
+using ParserLib.Parsing;
 
 namespace hasm
 {
@@ -113,6 +114,8 @@ namespace hasm
 
         private static async Task LiveMode()
         {
+            var assembler = KernelFactory.Resolve<MicroAssembler>();
+
             using (var stream = Console.OpenStandardOutput())
             using (var exporter = new FormattedExporter(stream) { AppendToString = true, Base = 2 })
             //using (var exporter = new IntelHexExporter(stream))
@@ -131,25 +134,77 @@ namespace hasm
                         address = int.Parse(input.Substring(0, index));
                         input = input.Substring(index + 1).Trim();
                     }
+                    
+                    MicroFunction function;
+                    MicroInstruction instruction;
+                    IEnumerable<IAssembled> assembled;
 
-                    var opcode = HasmGrammar.Opcode.FirstValue(input).ToLower();
-                    var function = _microFunctions.First(m => m.Instruction.ToLower().StartsWith(opcode));
-
-                    var operands = HasmGrammar.GetOperands(function.Instruction)
-                                              .Zip(HasmGrammar.GetOperands(input), (type, operand) => new MicroGenerator.Operand(type, operand));
-
-                    MicroGenerator.PermuteFunction(operands, function);
-                    var assembler = KernelFactory.Resolve<MicroAssembler>();
-                    var assembled = assembler.Assemble(new[] {function}, address);
-
-                    await exporter.Export(assembled);
+                    if (TryParseInstruction(input, out function))
+                    {
+                        assembled = assembler.Assemble(new[] { function }, address);
+                        await exporter.Export(assembled);
+                    }
+                    else if (TryParseMicroInstruction(input, out instruction))
+                    {
+                        assembled = new[] {assembler.Assemble(instruction)};
+                        await exporter.Export(assembled);
+                    }
+                    else
+                        Console.WriteLine("Unable to parse input.");
 
                     Console.WriteLine();
                 }
             }
         }
 
-        private static void UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        private static bool TryParseMicroInstruction(string input, out MicroInstruction instruction)
+        {
+            //instruction = null;
+
+            var memory = Grammar.MatchChar(';') + Grammar.EnumValue<MemoryOperation>("memory");
+            var next = Grammar.MatchChar(';') + Grammar.Node("next", Grammar.MatchString("next"));
+            var statusEnabled = Grammar.MatchChar(';') + Grammar.Node("status", Grammar.MatchString("status"));
+            var address = Grammar.MatchChar(';') + Grammar.Int32("addr");
+
+            var rule = MicroHasmGrammar.Alu.Optional + memory.Optional + next.Optional + statusEnabled.Optional + address.Optional + Grammar.MatchChar(';').Optional;
+
+            var tree = rule.ParseTree(input);
+            var aluNode = tree.FirstNodeByNameOrDefault("alu");
+            var alu = aluNode != null
+                ? ALU.Parse(aluNode)
+                : ALU.NOP;
+
+            var memoryOperation = tree.FirstValueByNameOrDefault<MemoryOperation>("memory");
+            var last = tree.FirstNodeByNameOrDefault("next") != null;
+            var status = tree.FirstNodeByNameOrDefault("status") != null;
+            var addr = tree.FirstValueByNameOrDefault<int>("addr");
+
+            instruction = new MicroInstruction(alu, memoryOperation, last, status, Condition.None, false);
+
+            var nextInstruction = MicroInstruction.NOP;
+            nextInstruction.Location = addr;
+            instruction.NextMicroInstruction = nextInstruction;
+
+            return true;
+        }
+
+        private static bool TryParseInstruction(string input, out MicroFunction function)
+	    {
+	        function = null;
+            var opcode = HasmGrammar.Opcode.FirstValueOrDefault(input);
+	        if (string.IsNullOrEmpty(opcode))
+	            return false;
+
+	        function = _microFunctions.FirstOrDefault(m => m.Instruction.ToLower().StartsWith(opcode.ToLower()));
+            if (function == null)
+                return false;
+
+            var operands = HasmGrammar.GetOperands(function.Instruction).Zip(HasmGrammar.GetOperands(input), (type, operand) => new MicroGenerator.Operand(type, operand));
+	        MicroGenerator.PermuteFunction(operands, function);
+	        return true;
+	    }
+
+	    private static void UnhandledException(object sender, UnhandledExceptionEventArgs e)
 		{
 			var exception = e.ExceptionObject as Exception;
 			if (exception == null)
