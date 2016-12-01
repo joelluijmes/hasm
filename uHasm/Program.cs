@@ -182,7 +182,7 @@ namespace hasm
             instruction = new MicroInstruction(alu, memoryOperation, last, status, Condition.None, false);
 
             var nextInstruction = MicroInstruction.NOP;
-            nextInstruction.Location = addr;
+            nextInstruction.Location = addr << 6;
             instruction.NextMicroInstruction = nextInstruction;
 
             return true;
