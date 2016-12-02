@@ -77,7 +77,7 @@ namespace hasm
                 if (function.Instruction.Contains(operands[i].Type))
                     operands[i].ExternalOperand = true;
 
-                foreach (var alu in function.MicroInstructions.Select(s => s.ALU))
+                foreach (var alu in function.MicroInstructions.Select(s => s.Operation))
                 {
                     if (alu == null)
                         continue;

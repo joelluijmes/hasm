@@ -13,13 +13,13 @@ namespace hasm.Parsing.Encoding.TypeConverters
             if (value is OperandConverter == false)
                 return base.ConvertFrom(context, culture, value);
 
-            var target = (OperandConverter)value;
+            var target = (OperandConverter) value;
             return string.IsNullOrEmpty(target.Operand)
                 ? LEFT_DISABLED
                 : target.Value;
         }
 
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) =>
-            sourceType == typeof(OperandConverter) || base.CanConvertFrom(context, sourceType);
+            (sourceType == typeof(OperandConverter)) || base.CanConvertFrom(context, sourceType);
     }
 }

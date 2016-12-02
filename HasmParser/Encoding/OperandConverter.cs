@@ -1,5 +1,4 @@
-﻿using hasm.Parsing.DependencyInjection;
-using hasm.Parsing.Grammars;
+﻿using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
 using hasm.Parsing.Providers;
 
@@ -16,7 +15,7 @@ namespace hasm.Parsing.Encoding
             set
             {
                 _operand = value;
-                    
+
                 if (_operand != value) // if changes -> reset the converted value
                     _value = null;
             }

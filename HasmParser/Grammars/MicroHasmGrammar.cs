@@ -1,23 +1,83 @@
-﻿using ParserLib.Parsing;
+﻿using System.Collections.Generic;
+using hasm.Parsing.Models;
+using ParserLib.Evaluation;
+using ParserLib.Parsing;
 using ParserLib.Parsing.Rules;
 
 namespace hasm.Parsing.Grammars
 {
     public sealed class MicroHasmGrammar : Grammar
     {
-        public static readonly Rule SP = Optional(Text("SP", MatchString("SP", true)) + MatchChar('='));
-        public static readonly Rule Target = Text("target", Label) + MatchChar('=');
-        public static readonly Rule MultiTarget = (Target + SP) | (SP + Target);
-        public static readonly Rule Left = Text("left", Label | Int32());
-        public static readonly Rule AluOperation = Text("op", MatchAnyString("+ - & | ^"));
-        public static readonly Rule Right = Text("right", Label | Int32());
-        public static readonly Rule Carry = Text("carry", PlusOrMinus + MatchChar('c', true));
-        public static readonly Rule If = Node("if", MatchString("if", true) + Text("status", Label) + MatchChar('=') + Text("cond", MatchChar('1') | MatchChar('0')) + MatchChar(':'));
-        public static readonly Rule Nop = Text("nop", MatchString("nop", true) | End());
-        public static readonly Rule Shift = Text("lshift", MatchString(">>")) + MatchChar('1') | Text("ashift", MatchString(">>>")) + MatchChar('1');  // Left shift is implemented as DST + DST
+        private static readonly Dictionary<string, AluOperation> _operations = new Dictionary<string, AluOperation>
+        {
+            ["-"] = AluOperation.Minus,
+            ["+"] = AluOperation.Plus,
+            ["&"] = AluOperation.And,
+            ["|"] = AluOperation.Or,
+            ["^"] = AluOperation.Xor
+        };
 
-        public static readonly Rule Alu = Node("alu", (MultiTarget + Left + Optional((AluOperation + Right + Optional(Carry)) | Shift)) | (Left + AluOperation + Right + Optional(Carry)) | Right);
+        private static readonly IDictionary<string, Condition> _conditions = new Dictionary<string, Condition>
+        {
+            ["C"] = Condition.Carry,
+            ["V"] = Condition.Overflow,
+            ["Z"] = Condition.Zero,
+            ["S"] = Condition.Sign,
+            ["N"] = Condition.Negative
+        };
 
-        public static readonly Rule Operation = Optional(If) + (Nop  | Alu);
+        private static readonly Rule _stackPointer = Optional(Text("SP", MatchString("SP", true)) + MatchChar('='));
+        private static readonly Rule _targetRegister = Text("target", Label) + MatchChar('=');
+        private static readonly Rule _target = (_targetRegister + _stackPointer) | (_stackPointer + _targetRegister);
+        private static readonly Rule _left = Text("left", Label | Int32());
+        private static readonly Rule _aluOperation = Text("op", MatchAnyString("+ - & | ^"));
+        private static readonly Rule _right = Text("right", Label | Int32());
+        private static readonly Rule _carry = Text("carry", PlusOrMinus + MatchChar('c', true));
+        private static readonly Rule _if = Node("if", MatchString("if", true) + Text("status", Label) + MatchChar('=') + Text("cond", MatchChar('1') | MatchChar('0')) + MatchChar(':'));
+        private static readonly Rule _nop = Text("nop", MatchString("nop", true) | End());
+        private static readonly Rule _rightShift = (Text("lshift", MatchString(">>")) + MatchChar('1')) | (Text("ashift", MatchString(">>>")) + MatchChar('1')); // Left shift is implemented as DST + DST
+
+        private static readonly Rule _assignment = _target + _left + Optional((_aluOperation + _right + Optional(_carry)) | _rightShift);
+        private static readonly Rule _operation = (_left + _aluOperation + _right + Optional(_carry)) | _right;
+        private static readonly Rule _aluRule = _assignment | _operation;
+
+        public static readonly Rule Alu = ConvertToValue("alu", ConvertToOperation, _aluRule);
+        public static readonly Rule Operation = Node("operation", Optional(_if) + (_nop | Alu));
+
+        private static Operation ConvertToOperation(Node node)
+        {
+            var condition = Condition.None;
+            var inverted = false;
+            if (node.FirstNodeByNameOrDefault("if") != null)
+            {
+                var status = node.FirstValueByNameOrDefault<string>("status");
+
+                if (_conditions.TryGetValue(status, out condition))
+                    inverted = node.FirstValueByNameOrDefault<string>("cond") == "0";
+            }
+
+            var target = node.FirstValueByNameOrDefault<string>("target");
+            var left = node.FirstValueByNameOrDefault<string>("left");
+            var right = node.FirstValueByNameOrDefault<string>("right");
+
+            var carry = node.FirstValueByNameOrDefault<string>("carry") != null;
+            var stackPointer = node.FirstValueByNameOrDefault<string>("SP") != null;
+
+            var rightShift = RightShift.Disabled;
+            if (node.FirstValueByNameOrDefault<string>("ashift") != null)
+                rightShift = RightShift.Arithmetic;
+            else
+            {
+                if (node.FirstValueByNameOrDefault<string>("lshift") != null)
+                    rightShift = RightShift.Logical;
+            }
+
+            var operation = AluOperation.Clear;
+            var op = node.FirstValueByNameOrDefault<string>("op");
+            if (op != null)
+                _operations.TryGetValue(op, out operation);
+
+            return new Operation(target, left, right, operation, carry, stackPointer, rightShift, condition, inverted);
+        }
     }
 }

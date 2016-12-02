@@ -9,14 +9,14 @@ namespace hasm.Parsing.Encoding.TypeConverters
     {
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
-            if (value is ALU == false)
+            if (value is Operation == false)
                 return base.ConvertFrom(context, culture, value);
 
-            var alu = (ALU)value;
+            var alu = (Operation) value;
             return PropertyEncoder.Encode(alu);
         }
 
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) =>
-            sourceType == typeof(ALU) || base.CanConvertFrom(context, sourceType);
+            (sourceType == typeof(Operation)) || base.CanConvertFrom(context, sourceType);
     }
 }

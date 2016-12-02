@@ -34,7 +34,9 @@ namespace hasm.Parsing.Grammars
             foreach (var encoding in encodingProvider.Items)
                 _operandParsers.Add(OperandParser.Create(encoding));
         }
-        
+
+        public IList<OperandParser> Items => _operandParsers;
+
         public static OperandParser FindOperandParser(string operand)
         {
             if (operand == null)
@@ -157,7 +159,5 @@ namespace hasm.Parsing.Grammars
             var opcodeBinary = _opcodemaskRule.FirstValue(encoding); // gets the binary representation of the encoding
             return Convert.ToInt32(opcodeBinary, 2);
         }
-
-        public IList<OperandParser> Items => _operandParsers;
     }
 }

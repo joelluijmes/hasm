@@ -55,45 +55,41 @@ namespace hasm
             var microParser = new MicroFunctionSheetProvider();
             _microFunctions = microParser.Items;
 
+            if (Debugging)
+            {
+                var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
+                consoleRule.EnableLoggingForLevel(LogLevel.Debug);
+            }
+            else
+            {
+                var commandParser = new FluentCommandLineParser<ApplicationArguments>();
+                commandParser.Setup(a => a.LiveMode)
+                    .As('l', "live-mode")
+                    .WithDescription("Use live mode");
+                commandParser.SetupHelp("?", "help")
+                    .WithHeader("Invalid usage: ")
+                    .Callback(c => Console.WriteLine(c));
+
+                var result = commandParser.Parse(args);
+                if (result.HasErrors || result.EmptyArgs)
+                {
+                    commandParser.HelpOption.ShowHelp(commandParser.Options);
+                    return;
+                }
+
+                await HandleArguments(commandParser.Object);
+            }
+
             await LiveMode();
 
-      //      if (Debugging)
-		    //{
-		    //    var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
-		    //    consoleRule.EnableLoggingForLevel(LogLevel.Debug);
+            //var rule = MicroHasmGrammar.Alu;
+            //Console.WriteLine(rule.PrettyFormat());
+            //Console.WriteLine();
 
-      //         await LiveMode();
-		    //}
-		    //else
-		    //{
-      //          var commandParser = new FluentCommandLineParser<ApplicationArguments>();
-      //          commandParser.Setup(a => a.LiveMode)
-      //              .As('l', "live-mode")
-      //              .WithDescription("Use live mode");
-      //          commandParser.SetupHelp("?", "help")
-      //              .WithHeader("Invalid usage: ")
-      //              .Callback(c => Console.WriteLine(c));
+            //var tree = rule.ParseTree("0xFF-DST");
 
-      //          var result = commandParser.Parse(args);
-      //          if (result.HasErrors || result.EmptyArgs)
-      //          {
-      //              commandParser.HelpOption.ShowHelp(commandParser.Options);
-      //              return;
-      //          }
+            //Console.WriteLine(tree.PrettyFormat());
 
-      //          await HandleArguments(commandParser.Object);
-      //      }
-
-			
-
-			//var rule = MicroHasmGrammar.Alu;
-			//Console.WriteLine(rule.PrettyFormat());
-			//Console.WriteLine();
-
-			//var tree = rule.ParseTree("0xFF-DST");
-
-			//Console.WriteLine(tree.PrettyFormat());
-            
             //var microInstructions = MicroGenerator.GenerateMicroInstructions(microParser.Items);
 
             //var assembler = new MicroAssembler();
@@ -167,21 +163,18 @@ namespace hasm
             var statusEnabled = Grammar.MatchChar(';') + Grammar.Node("status", Grammar.MatchString("STATUS"));
             var address = Grammar.MatchChar(';') + Grammar.Int32("addr");
 
-            var rule = MicroHasmGrammar.Alu.Optional + memory.Optional + next.Optional + statusEnabled.Optional + address.Optional + Grammar.MatchChar(';').Optional;
+            var rule = MicroHasmGrammar.Operation + memory.Optional + next.Optional + statusEnabled.Optional + address.Optional + Grammar.MatchChar(';').Optional;
 
             input = Regex.Replace(input, @"\s+", "").ToUpper();
             var tree = rule.ParseTree(input);
-            var aluNode = tree.FirstNodeByNameOrDefault("alu");
-            var alu = aluNode != null
-                ? ALU.Parse(aluNode)
-                : ALU.NOP;
+            var alu = tree.FirstValueOrDefault<Operation>() ?? Operation.NOP;
 
             var memoryOperation = tree.FirstValueByNameOrDefault<MemoryOperation>("memory");
             var last = tree.FirstNodeByNameOrDefault("next") != null;
             var status = tree.FirstNodeByNameOrDefault("status") != null;
             var addr = tree.FirstValueByNameOrDefault<int>("addr");
 
-            instruction = new MicroInstruction(alu, memoryOperation, last, status, Condition.None, false);
+            instruction = new MicroInstruction(alu, memoryOperation, last, status);
 
             var nextInstruction = MicroInstruction.NOP;
             nextInstruction.Location = addr << 6;

@@ -13,11 +13,11 @@ namespace hasm.Parsing.Encoding.TypeConverters
 
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
-            var alu = context.Instance as ALU;
-            if (value is OperandConverter == false || alu == null)
+            var alu = context.Instance as Operation;
+            if ((value is OperandConverter == false) || (alu == null))
                 return base.ConvertFrom(context, culture, value);
 
-            var right = (OperandConverter)value;
+            var right = (OperandConverter) value;
 
             if (string.IsNullOrEmpty(right.Operand))
                 return RIGHT_DISABLED;
@@ -29,8 +29,8 @@ namespace hasm.Parsing.Encoding.TypeConverters
                 ? EXT_IMMEDIATE
                 : INT_IMMEDIATE;
         }
-        
+
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) =>
-            sourceType == typeof(OperandConverter) || base.CanConvertFrom(context, sourceType);
+            (sourceType == typeof(OperandConverter)) || base.CanConvertFrom(context, sourceType);
     }
 }

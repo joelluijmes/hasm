@@ -5,12 +5,6 @@ namespace hasm.Parsing.Encoding
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = true)]
     public sealed class EncodablePropertyAttribute : Attribute
     {
-        public int Start { get; }
-        public int Count { get; }
-        public Type Converter { get; set; }
-        public bool ExceedException { get; set; } = true;
-        public bool OverlapException { get; set; } = true;
-
         public EncodablePropertyAttribute(int start)
         {
             Start = start;
@@ -27,5 +21,11 @@ namespace hasm.Parsing.Encoding
         {
             Converter = converter;
         }
+
+        public int Start { get; }
+        public int Count { get; }
+        public Type Converter { get; set; }
+        public bool ExceedException { get; set; } = true;
+        public bool OverlapException { get; set; } = true;
     }
 }

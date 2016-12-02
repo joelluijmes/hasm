@@ -9,17 +9,17 @@ namespace hasm.Parsing.Encoding.TypeConverters
     {
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
-            var alu = context.Instance as ALU;
-            if (value is OperandConverter == false || alu == null)
+            var alu = context.Instance as Operation;
+            if ((value is OperandConverter == false) || (alu == null))
                 return base.ConvertFrom(context, culture, value);
 
-            var right = (OperandConverter)value;
+            var right = (OperandConverter) value;
             return !string.IsNullOrEmpty(right.Operand) && right.IsImmediate && !(alu.ExternalRight && right.IsImmediate)
-                ? right.Value 
+                ? right.Value
                 : 0;
         }
 
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) =>
-            sourceType == typeof(OperandConverter) || base.CanConvertFrom(context, sourceType);
+            (sourceType == typeof(OperandConverter)) || base.CanConvertFrom(context, sourceType);
     }
 }

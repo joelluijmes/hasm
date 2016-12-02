@@ -37,7 +37,7 @@ namespace hasm.Parsing.Encoding
             var objValue = member.GetValue(obj);
 
             AluContext aluContext = null;
-            var alu = obj as ALU;
+            var alu = obj as Operation;
             if (alu != null)
                 aluContext = new AluContext(alu);
 
@@ -83,7 +83,7 @@ namespace hasm.Parsing.Encoding
                 .Select(mem => new
                 {
                     Member = mem,
-                    Attributes = (EncodablePropertyAttribute[])mem.GetCustomAttributes(typeof(EncodablePropertyAttribute), true)
+                    Attributes = (EncodablePropertyAttribute[]) mem.GetCustomAttributes(typeof(EncodablePropertyAttribute), true)
                 })
                 .SelectMany(mems => mems.Attributes.Select(mem => new EncodableMember {Member = mems.Member, Encodable = mem}))
                 .Where(x => x.Encodable != null)
@@ -98,7 +98,7 @@ namespace hasm.Parsing.Encoding
         private static void CheckOverlap(IList<EncodableMember> encodableMembers)
         {
             var encodables = encodableMembers
-                .SelectMany(x => encodableMembers, (x, y) => new { x, y })
+                .SelectMany(x => encodableMembers, (x, y) => new {x, y})
                 .Where(t => t.x != t.y);
 
             var list = new List<Tuple<MemberInfo, MemberInfo>>();
@@ -141,7 +141,7 @@ namespace hasm.Parsing.Encoding
 
             private bool Equals(EncodableMember other) => Equals(Encodable, other.Encodable) && Equals(Member, other.Member);
 
-            public override bool Equals(object obj) => !ReferenceEquals(null, obj) && (obj is EncodableMember && Equals((EncodableMember) obj));
+            public override bool Equals(object obj) => !ReferenceEquals(null, obj) && obj is EncodableMember && Equals((EncodableMember) obj);
 
             public override int GetHashCode()
             {

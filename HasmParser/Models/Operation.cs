@@ -4,14 +4,14 @@ using System.Linq;
 using System.Text;
 using hasm.Parsing.Encoding;
 using hasm.Parsing.Encoding.TypeConverters;
-using ParserLib.Evaluation;
-using ParserLib.Parsing;
 
 namespace hasm.Parsing.Models
 {
-    public sealed class ALU
+    public sealed class Operation
     {
         private const int ENCODING_IMM = 10;
+        private const int ENCODING_CONDITION = 16;
+        private const int ENCODING_CONDITION_INVERTED = 19;
         private const int ENCODING_A = 20;
         private const int ENCODING_B = 24;
         private const int ENCODING_C = 28;
@@ -30,7 +30,7 @@ namespace hasm.Parsing.Models
             ["^"] = AluOperation.Xor
         };
 
-        public static readonly ALU NOP = new ALU(null, null, null, AluOperation.Clear, false, false, RightShift.Disabled);
+        public static readonly Operation NOP = new Operation(null, null, null, AluOperation.Clear, false, false, RightShift.Disabled, Condition.None, false);
 
         [EncodableProperty(ENCODING_A, 4, Converter = typeof(LeftConverter))]
         private OperandConverter _leftOperand;
@@ -42,7 +42,7 @@ namespace hasm.Parsing.Models
         [EncodableProperty(ENCODING_C, 4, Converter = typeof(TargetConverter))]
         private OperandConverter _targetOperand;
 
-        public ALU(string target, string left, string right, AluOperation operation, bool carry, bool stackPointer, RightShift rightShift)
+        public Operation(string target, string left, string right, AluOperation aluOperation, bool carry, bool stackPointer, RightShift rightShift, Condition condition, bool inverted)
         {
             _targetOperand = new OperandConverter(target);
             _leftOperand = new OperandConverter(left);
@@ -51,14 +51,17 @@ namespace hasm.Parsing.Models
             Carry = carry;
             StackPointer = stackPointer;
             RightShift = rightShift;
-            Operation = ((Left == null) && (Right != null)) || ((Left != null) && (Right == null))
+            AluOperation = ((Left == null) && (Right != null)) || ((Left != null) && (Right == null))
                 ? AluOperation.Plus // hardware uses addition with 0 to assign
-                : operation;
+                : aluOperation;
 
             FixOperands();
+
+            Condition = condition;
+            InvertedCondition = inverted;
         }
 
-        private ALU(OperandConverter target, OperandConverter left, OperandConverter right, AluOperation operation, bool carry, bool stackPointer, RightShift rightShift)
+        private Operation(OperandConverter target, OperandConverter left, OperandConverter right, AluOperation aluOperation, bool carry, bool stackPointer, RightShift rightShift, Condition condition, bool inverted)
         {
             _targetOperand = target;
             _leftOperand = left;
@@ -66,8 +69,16 @@ namespace hasm.Parsing.Models
             Carry = carry;
             StackPointer = stackPointer;
             RightShift = rightShift;
-            Operation = operation;
+            AluOperation = aluOperation;
+            Condition = condition;
+            InvertedCondition = inverted;
         }
+
+        [EncodableProperty(ENCODING_CONDITION, 3)]
+        public Condition Condition { get; set; }
+
+        [EncodableProperty(ENCODING_CONDITION_INVERTED)]
+        public bool InvertedCondition { get; set; }
 
         [EncodableProperty(ENCODING_BREAK)]
         public bool Break { get; set; }
@@ -82,8 +93,8 @@ namespace hasm.Parsing.Models
         public RightShift RightShift { get; set; }
 
         [EncodableProperty(ENCODING_ALU, 3)]
-        public AluOperation Operation { get; set; }
-        
+        public AluOperation AluOperation { get; set; }
+
         public bool ExternalLeft { get; set; }
         public bool ExternalRight { get; set; }
 
@@ -114,13 +125,21 @@ namespace hasm.Parsing.Models
             set { _rightOperand.Operand = value; }
         }
 
-        private bool IsAssignment => ((Operation == AluOperation.Plus) && (Left == null) && (Right != null)) || ((Left != null) && (Right == null));
+        private bool IsAssignment => ((AluOperation == AluOperation.Plus) && (Left == null) && (Right != null)) || ((Left != null) && (Right == null));
 
-        public ALU Clone() => new ALU(_targetOperand, _leftOperand, _rightOperand, Operation, Carry, StackPointer, RightShift);
+        public Operation Clone() => new Operation(_targetOperand, _leftOperand, _rightOperand, AluOperation, Carry, StackPointer, RightShift, Condition, InvertedCondition);
 
-        public bool Equals(ALU other)
+        public bool Equals(Operation other)
         {
-            return string.Equals(Target, other.Target) && string.Equals(Left, other.Left) && string.Equals(Right, other.Right) && (Carry == other.Carry) && (StackPointer == other.StackPointer) && Equals(RightShift, other.RightShift) && (Operation == other.Operation);
+            return string.Equals(Target, other.Target) &&
+                   string.Equals(Left, other.Left) &&
+                   string.Equals(Right, other.Right) &&
+                   (Carry == other.Carry) &&
+                   (StackPointer == other.StackPointer) &&
+                   Equals(RightShift, other.RightShift) &&
+                   (AluOperation == other.AluOperation) &&
+                   (Condition == other.Condition) &&
+                   (InvertedCondition == other.InvertedCondition);
         }
 
         public override bool Equals(object obj)
@@ -130,7 +149,7 @@ namespace hasm.Parsing.Models
             if (ReferenceEquals(this, obj))
                 return true;
 
-            var other = obj as ALU;
+            var other = obj as Operation;
             return (other != null) && Equals(other);
         }
 
@@ -139,12 +158,14 @@ namespace hasm.Parsing.Models
             unchecked
             {
                 var hashCode = Target?.GetHashCode() ?? 0;
+                hashCode = (hashCode*397) ^ (int) Condition;
+                hashCode = (hashCode*397) ^ InvertedCondition.GetHashCode();
                 hashCode = (hashCode*397) ^ (Left?.GetHashCode() ?? 0);
                 hashCode = (hashCode*397) ^ (Right?.GetHashCode() ?? 0);
                 hashCode = (hashCode*397) ^ Carry.GetHashCode();
                 hashCode = (hashCode*397) ^ StackPointer.GetHashCode();
                 hashCode = (hashCode*397) ^ RightShift.GetHashCode();
-                hashCode = (hashCode*397) ^ (int) Operation;
+                hashCode = (hashCode*397) ^ (int) AluOperation;
                 return hashCode;
             }
         }
@@ -153,12 +174,15 @@ namespace hasm.Parsing.Models
         {
             var builder = new StringBuilder();
 
+            if (Condition != Condition.None)
+                builder.Append($"if {Condition} = {(InvertedCondition ? "0" : "1")}: ");
+
             if (!string.IsNullOrEmpty(Target))
                 builder.Append($"{Target}=");
             if (StackPointer)
                 builder.Append("SP=");
 
-            if (Operation != AluOperation.InverseMinus)
+            if (AluOperation != AluOperation.InverseMinus)
             {
                 if (!string.IsNullOrEmpty(Left))
                     builder.Append(Left);
@@ -168,9 +192,9 @@ namespace hasm.Parsing.Models
                         builder.Append(Right);
                 }
 
-                if ((Operation != AluOperation.Clear) && !IsAssignment)
+                if ((AluOperation != AluOperation.Clear) && !IsAssignment)
                 {
-                    var sign = _operations.FirstOrDefault(f => f.Value == Operation).Key;
+                    var sign = _operations.FirstOrDefault(f => f.Value == AluOperation).Key;
                     if (!string.IsNullOrEmpty(sign))
                         builder.Append(sign);
 
@@ -185,33 +209,13 @@ namespace hasm.Parsing.Models
 
             if (RightShift == RightShift.Logical)
                 builder.Append(">>1");
-            else if (RightShift == RightShift.Arithmetic)
-                builder.Append(">>>1");
+            else
+            {
+                if (RightShift == RightShift.Arithmetic)
+                    builder.Append(">>>1");
+            }
 
             return builder.ToString();
-        }
-
-        public static ALU Parse(Node aluNode)
-        {
-            var target = aluNode.FirstValueByNameOrDefault<string>("target");
-            var left = aluNode.FirstValueByNameOrDefault<string>("left");
-            var right = aluNode.FirstValueByNameOrDefault<string>("right");
-
-            var carry = aluNode.FirstValueByNameOrDefault<string>("carry") != null;
-            var stackPointer = aluNode.FirstValueByNameOrDefault<string>("SP") != null;
-
-            var rightShift = RightShift.Disabled;
-            if (aluNode.FirstValueByNameOrDefault<string>("ashift") != null)
-                rightShift = RightShift.Arithmetic;
-            else if (aluNode.FirstValueByNameOrDefault<string>("lshift") != null)
-                rightShift = RightShift.Logical;
-
-            var operation = AluOperation.Clear;
-            var op = aluNode.FirstValueByNameOrDefault<string>("op");
-            if (op != null)
-                _operations.TryGetValue(op, out operation);
-
-            return new ALU(target, left, right, operation, carry, stackPointer, rightShift);
         }
 
         private void FixOperands()
@@ -228,13 +232,13 @@ namespace hasm.Parsing.Models
             }
             else
             {
-                if (Operation == AluOperation.Minus) // com, neg (immedate - register)
+                if (AluOperation == AluOperation.Minus) // com, neg (immedate - register)
                 {
                     var temp = _rightOperand;
                     _rightOperand = _leftOperand;
                     _leftOperand = temp;
 
-                    Operation = AluOperation.InverseMinus;
+                    AluOperation = AluOperation.InverseMinus;
                 }
                 else
                     throw new NotImplementedException();

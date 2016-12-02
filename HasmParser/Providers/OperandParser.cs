@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using hasm.Parsing.DependencyInjection;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
 using ParserLib.Evaluation;
@@ -12,16 +11,16 @@ namespace hasm.Parsing.Providers
 {
     public sealed class OperandParser
     {
-        public ValueRule<string> EncodingRule { get; }
-        public OperandEncoding OperandEncoding { get; }
-        public ValueRule<int> ValueRule { get; }
-
         private OperandParser(ValueRule<int> valueRule, OperandEncoding operandEncoding)
         {
             ValueRule = valueRule;
             OperandEncoding = operandEncoding;
             EncodingRule = HasmGrammar.CreateMaskRule(operandEncoding.EncodingMask);
         }
+
+        public ValueRule<string> EncodingRule { get; }
+        public OperandEncoding OperandEncoding { get; }
+        public ValueRule<int> ValueRule { get; }
 
         public string[] Operands => OperandEncoding.Operands;
 
@@ -33,24 +32,24 @@ namespace hasm.Parsing.Providers
             Rule rule;
             switch (operandEncoding.Type)
             {
-                case OperandEncodingType.KeyValue:
-                    rule = Grammar.Or(operandEncoding.Pairs.Select(keyValue => Grammar.KeyValue(keyValue)));
-                    break;
-                case OperandEncodingType.Range:
-                    rule = Grammar.Range(operandEncoding.Minimum, operandEncoding.Maximum, Grammar.Int32());
-                    break;
+            case OperandEncodingType.KeyValue:
+                rule = Grammar.Or(operandEncoding.Pairs.Select(keyValue => Grammar.KeyValue(keyValue)));
+                break;
+            case OperandEncodingType.Range:
+                rule = Grammar.Range(operandEncoding.Minimum, operandEncoding.Maximum, Grammar.Int32());
+                break;
 
-                case OperandEncodingType.Aggregation:
-                    var operands = operandEncoding.Operands.Single().Split(new[] {'+', ' '}, StringSplitOptions.RemoveEmptyEntries);
-                    var rules = operands.Select(HasmGrammar.FindOperandParser).Select(o => o.ValueRule);
+            case OperandEncodingType.Aggregation:
+                var operands = operandEncoding.Operands.Single().Split(new[] {'+', ' '}, StringSplitOptions.RemoveEmptyEntries);
+                var rules = operands.Select(HasmGrammar.FindOperandParser).Select(o => o.ValueRule);
 
-                    rule = Grammar.Sequence(rules);
-                    break;
+                rule = Grammar.Sequence(rules);
+                break;
 
-                default:
-                    throw new NotImplementedException();
+            default:
+                throw new NotImplementedException();
             }
-            
+
             var valueRule = Grammar.FirstValue<int>(rule);
             return new OperandParser(valueRule, operandEncoding);
         }
@@ -62,7 +61,7 @@ namespace hasm.Parsing.Providers
             if (OperandEncoding.Type != OperandEncodingType.Aggregation)
                 return CreateConverterRule(ValueRule, encoding);
 
-            var operands = OperandEncoding.Operands.Single().Split(new[] { '+', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var operands = OperandEncoding.Operands.Single().Split(new[] {'+', ' '}, StringSplitOptions.RemoveEmptyEntries);
             var rules = operands.Select(HasmGrammar.FindOperandParser).Select(o => o.CreateRule(encoding));
             return Grammar.Sequence(rules);
         }

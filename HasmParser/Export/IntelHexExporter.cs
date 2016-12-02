@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -9,6 +8,8 @@ namespace hasm.Parsing.Export
 {
     public sealed class IntelHexExporter : BaseExporter
     {
+        public IntelHexExporter(Stream stream) : base(stream) {}
+
         protected override async Task Export(IAssembled assembled)
         {
             var hexRecord = assembled == null
@@ -20,12 +21,16 @@ namespace hasm.Parsing.Export
 
         private sealed class HexRecord
         {
-            public byte Code => (byte)':';
-            public byte Length => (byte) (Data?.Length ?? 0);
-            public short Address { get; set; }      
-            public byte Type { get; set; }          
-            public byte[] Data { get; set; }        
-            public byte Checksum { get; set; }
+            public static readonly HexRecord EOF;
+
+            static HexRecord()
+            {
+                EOF = new HexRecord(0, null)
+                {
+                    Checksum = 0xFF,
+                    Type = 0x01
+                };
+            }
 
             public HexRecord(short address, byte[] data)
             {
@@ -40,7 +45,14 @@ namespace hasm.Parsing.Export
                 computedChecksum = Data.Aggregate(computedChecksum, (a, b) => (byte) (a + b));
                 Checksum = (byte) -computedChecksum;
             }
-            
+
+            public byte Code => (byte) ':';
+            public byte Length => (byte) (Data?.Length ?? 0);
+            public short Address { get; }
+            public byte Type { get; set; }
+            public byte[] Data { get; }
+            public byte Checksum { get; set; }
+
             public override string ToString()
             {
                 var builder = new StringBuilder();
@@ -61,28 +73,15 @@ namespace hasm.Parsing.Export
 
             public static HexRecord FromAssembled(IAssembled assembled)
             {
-                var address = (short)assembled.Address;
+                var address = (short) assembled.Address;
                 var data = BitConverter.GetBytes(assembled.Assembled);
 
-                var rounded = (int)Math.Ceiling(assembled.Count / 8.0);
+                var rounded = (int) Math.Ceiling(assembled.Count/8.0);
                 Array.Resize(ref data, rounded);
                 Array.Reverse(data);
 
                 return new HexRecord(address, data);
             }
-
-            public static readonly HexRecord EOF;
-
-            static HexRecord()
-            {
-                EOF = new HexRecord(0, null)
-                {
-                    Checksum = 0xFF,
-                    Type = 0x01
-                };
-            }
         }
-
-        public IntelHexExporter(Stream stream) : base(stream) {}
     }
 }

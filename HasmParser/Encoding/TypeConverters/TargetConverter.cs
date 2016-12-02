@@ -7,7 +7,7 @@ namespace hasm.Parsing.Encoding.TypeConverters
     internal sealed class TargetConverter : TypeConverter
     {
         private const long TARGET_DISABLED = 0x0F;
-        
+
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
             if (value is OperandConverter == false)
@@ -19,7 +19,7 @@ namespace hasm.Parsing.Encoding.TypeConverters
                 : target.Value;
         }
 
-        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => 
-            sourceType == typeof(OperandConverter) || base.CanConvertFrom(context, sourceType);
+        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) =>
+            (sourceType == typeof(OperandConverter)) || base.CanConvertFrom(context, sourceType);
     }
 }
