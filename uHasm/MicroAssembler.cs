@@ -35,11 +35,11 @@ namespace hasm
 
             var lastNop = MicroInstruction.NOP;
             lastNop.Location = 0xFFFF;
-            //microInstructions.Add(new AssembledInstruction(lastNop));
+            microInstructions.Add(new AssembledInstruction(lastNop));
 
             sw.Stop();
             _logger.Info($"Assembled {microInstructions.Count} micro-instructions in {sw.Elapsed}");
-
+            
             return microInstructions;
         }
 
@@ -150,7 +150,7 @@ namespace hasm
             public MicroInstruction Instruction { get; }
 
             public long Assembled { get; } //=> PropertyEncoder.Encode(Instruction);
-            public int Address { get; }
+            public int Address { get; set; }
             public int Count => 40;
 
             public override string ToString() => Instruction.ToString();

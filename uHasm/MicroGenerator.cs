@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
-using hasm.Parsing;
-using hasm.Parsing.DependencyInjection;
+using hasm.Parsing.Export;
 using hasm.Parsing.Grammars;
 using hasm.Parsing.Models;
 using NLog;
@@ -16,16 +13,34 @@ namespace hasm
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
+        public static IEnumerable<IAssembled> GenerateGaps(IEnumerable<IAssembled> listing)
+        {
+            IAssembled previous = null;
+            foreach (var assembled in listing)
+            {
+                if (previous != null)
+                {
+                    var gaps = assembled.Address - previous.Address - 1;
+                    for (var i = 1; i < gaps; ++i)
+                    {
+                        ++previous.Address;
+                        yield return previous;
+                    }
+                }
+
+                previous = assembled;
+                yield return assembled;
+            }
+        }
+
         public static IList<MicroFunction> GenerateMicroInstructions(IList<MicroFunction> microFunctions)
         {
             _logger.Info("Generating all possible instructions..");
 
             var sw = Stopwatch.StartNew();
 #if DEBUG
-            //microFunctions = new[] { microFunctions.ElementAt(40) };
+            // microFunctions = new[] { microFunctions.ElementAt(57) };
 #endif
-            microFunctions = microFunctions.Take(10).ToList();
-
 
 #if PARALLEL
             var concurrentQueue = new ConcurrentQueue<MicroFunction>();
@@ -101,7 +116,7 @@ namespace hasm
                 function.Instruction = function.Instruction.Replace(operands[i].Type, operands[i].Value);
             }
         }
-        
+
         private static IEnumerable<Operand> SplitAggregated(Operand keyValue)
         {
             var types = keyValue.Type.Split(new[] {' ', '+'}, StringSplitOptions.RemoveEmptyEntries);
@@ -127,7 +142,7 @@ namespace hasm
             case OperandEncodingType.KeyValue:
                 return encoding.Pairs.Select(p => p.Key);
             case OperandEncodingType.Range:
-                return Enumerable.Range(encoding.Minimum, encoding.Maximum - encoding.Minimum).Select(i => i.ToString());
+                return new[] {"0"}; // Enumerable.Range(encoding.Minimum, encoding.Maximum - encoding.Minimum).Select(i => i.ToString());
             case OperandEncodingType.Aggregation:
             {
                 var splitted = operand.Split(new[] {' ', '+'}, StringSplitOptions.RemoveEmptyEntries);
@@ -139,7 +154,7 @@ namespace hasm
                 throw new ArgumentOutOfRangeException();
             }
         }
-        
+
         public struct Operand
         {
             public string Type { get; }

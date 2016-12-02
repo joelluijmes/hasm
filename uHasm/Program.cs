@@ -60,32 +60,32 @@ namespace hasm
                 var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
                 consoleRule.EnableLoggingForLevel(LogLevel.Debug);
             }
-            else
-            {
-                var commandParser = new FluentCommandLineParser<ApplicationArguments>();
-                commandParser.Setup(a => a.LiveMode)
-                    .As('l', "live-mode")
-                    .WithDescription("Use live mode");
-                commandParser.SetupHelp("?", "help")
-                    .WithHeader("Invalid usage: ")
-                    .Callback(c => Console.WriteLine(c));
+            //else
+            //{
+            //    var commandParser = new FluentCommandLineParser<ApplicationArguments>();
+            //    commandParser.Setup(a => a.LiveMode)
+            //        .As('l', "live-mode")
+            //        .WithDescription("Use live mode");
+            //    commandParser.SetupHelp("?", "help")
+            //        .WithHeader("Invalid usage: ")
+            //        .Callback(c => Console.WriteLine(c));
 
-                var result = commandParser.Parse(args);
-                if (result.HasErrors || result.EmptyArgs)
-                {
-                    commandParser.HelpOption.ShowHelp(commandParser.Options);
-                    return;
-                }
+            //    var result = commandParser.Parse(args);
+            //    if (result.HasErrors || result.EmptyArgs)
+            //    {
+            //        commandParser.HelpOption.ShowHelp(commandParser.Options);
+            //        return;
+            //    }
 
-                await HandleArguments(commandParser.Object);
-            }
+            //    await HandleArguments(commandParser.Object);
+            //}
 
             //await LiveMode();
-            
+
             var microInstructions = MicroGenerator.GenerateMicroInstructions(microParser.Items);
 
 		    var assembler = KernelFactory.Resolve<MicroAssembler>();
-            var assembled = assembler.Assemble(microInstructions).ToList();
+		    var assembled = MicroGenerator.GenerateGaps(assembler.Assemble(microInstructions)).ToArray();
 
             using (var stream = File.Open("_format.txt", FileMode.Create, FileAccess.Write))
             using (var exporter = new FormattedExporter(stream) { Base = 2, AppendToString = true })

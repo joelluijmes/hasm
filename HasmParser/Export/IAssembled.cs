@@ -2,7 +2,7 @@
 {
     public interface IAssembled
     {
-        int Address { get; }
+        int Address { get; set; }
         int Count { get; }
         long Assembled { get; }
     }
