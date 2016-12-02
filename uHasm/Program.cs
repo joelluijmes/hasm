@@ -80,27 +80,24 @@ namespace hasm
                 await HandleArguments(commandParser.Object);
             }
 
-            await LiveMode();
+            //await LiveMode();
+            
+            var microInstructions = MicroGenerator.GenerateMicroInstructions(microParser.Items);
 
-            //var rule = MicroHasmGrammar.Alu;
-            //Console.WriteLine(rule.PrettyFormat());
-            //Console.WriteLine();
+		    var assembler = KernelFactory.Resolve<MicroAssembler>();
+            var assembled = assembler.Assemble(microInstructions).ToList();
 
-            //var tree = rule.ParseTree("0xFF-DST");
+            using (var stream = File.Open("_format.txt", FileMode.Create, FileAccess.Write))
+            using (var exporter = new FormattedExporter(stream) { Base = 2, AppendToString = true })
+            { 
+                await exporter.Export(assembled);
+            }
 
-            //Console.WriteLine(tree.PrettyFormat());
-
-            //var microInstructions = MicroGenerator.GenerateMicroInstructions(microParser.Items);
-
-            //var assembler = new MicroAssembler();
-            //var assembled = assembler.Assemble(microInstructions);
-
-            //using (var stream = File.Open("out.txt", FileMode.Create, FileAccess.Write))
-            //{
-            //	var exporter = new FormattedExporter(stream) {Base = 2, AppendToString = true};
-            //	//var exporter = new IntelHexExporter(stream);
-            //	await exporter.Export(assembled);
-            //}
+            using (var stream = File.Open("_intel.txt", FileMode.Create, FileAccess.Write))
+            using (var exporter = new IntelHexExporter(stream))
+            { 
+                await exporter.Export(assembled);
+            }
         }
 
         private static async Task HandleArguments(ApplicationArguments arguments)
