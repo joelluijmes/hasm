@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Fclp;
 using hasm.Parsing.DependencyInjection;
@@ -162,12 +163,13 @@ namespace hasm
             //instruction = null;
 
             var memory = Grammar.MatchChar(';') + Grammar.EnumValue<MemoryOperation>("memory");
-            var next = Grammar.MatchChar(';') + Grammar.Node("next", Grammar.MatchString("next"));
-            var statusEnabled = Grammar.MatchChar(';') + Grammar.Node("status", Grammar.MatchString("status"));
+            var next = Grammar.MatchChar(';') + Grammar.Node("next", Grammar.MatchString("NEXT"));
+            var statusEnabled = Grammar.MatchChar(';') + Grammar.Node("status", Grammar.MatchString("STATUS"));
             var address = Grammar.MatchChar(';') + Grammar.Int32("addr");
 
             var rule = MicroHasmGrammar.Alu.Optional + memory.Optional + next.Optional + statusEnabled.Optional + address.Optional + Grammar.MatchChar(';').Optional;
 
+            input = Regex.Replace(input, @"\s+", "").ToUpper();
             var tree = rule.ParseTree(input);
             var aluNode = tree.FirstNodeByNameOrDefault("alu");
             var alu = aluNode != null
