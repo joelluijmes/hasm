@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Fclp;
 using hasm.Parsing.DependencyInjection;
 using hasm.Parsing.Export;
 using hasm.Parsing.Grammars;
@@ -18,22 +16,22 @@ using ParserLib.Parsing;
 
 namespace hasm
 {
-	internal class Program
-	{
-		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-		private static IList<MicroFunction> _microFunctions;
+    internal class Program
+    {
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private static IList<MicroFunction> _microFunctions;
 
-		private static bool Debugging =>
+        private static bool Debugging =>
 #if DEBUG
-			Debugger.IsAttached;
+            Debugger.IsAttached;
 #else
 			false;
 #endif
 
-		private static void Main(string[] args)
-		{
+        private static void Main(string[] args)
+        {
 #if DEBUG
-			MainImpl(args).Wait();
+            MainImpl(args).Wait();
 #else
 			try
 			{
@@ -48,10 +46,13 @@ namespace hasm
 				UnhandledException(e);
 			}
 #endif
-		}
+        }
 
-		private static async Task MainImpl(string[] args)
-		{
+        private static async Task MainImpl(string[] args)
+        {
+            if (File.Exists("Instructionset.xlsx"))
+                BaseSheetProvider.Instructionset = File.ReadAllBytes("Instructionset.xlsx");
+
             var microParser = new MicroFunctionSheetProvider();
             _microFunctions = microParser.Items;
 
@@ -80,23 +81,23 @@ namespace hasm
             //    await HandleArguments(commandParser.Object);
             //}
 
-            //await LiveMode();
+            await LiveMode();
 
             var microInstructions = MicroGenerator.GenerateMicroInstructions(microParser.Items);
 
-		    var assembler = KernelFactory.Resolve<MicroAssembler>();
-		    var assembled = MicroGenerator.GenerateGaps(assembler.Assemble(microInstructions)).ToArray();
+            var assembler = KernelFactory.Resolve<MicroAssembler>();
+            var assembled = MicroGenerator.GenerateGaps(assembler.Assemble(microInstructions)).ToArray();
 
             using (var stream = File.Open("_format.txt", FileMode.Create, FileAccess.Write))
-            using (var exporter = new FormattedExporter(stream) { Base = 2, AppendToString = true })
-            { 
-                await exporter.Export(assembled);
+            {
+                using (var exporter = new FormattedExporter(stream) {Base = 2, AppendToString = true})
+                    await exporter.Export(assembled);
             }
 
             using (var stream = File.Open("_intel.txt", FileMode.Create, FileAccess.Write))
-            using (var exporter = new IntelHexExporter(stream))
-            { 
-                await exporter.Export(assembled);
+            {
+                using (var exporter = new IntelHexExporter(stream))
+                    await exporter.Export(assembled);
             }
         }
 
@@ -111,42 +112,47 @@ namespace hasm
             var assembler = KernelFactory.Resolve<MicroAssembler>();
 
             using (var stream = Console.OpenStandardOutput())
-            using (var exporter = new FormattedExporter(stream) { AppendToString = true, Base = 2 })
-            //using (var exporter = new IntelHexExporter(stream))
             {
-                exporter.Writer.AutoFlush = true;
-                Console.SetOut(exporter.Writer);
-
-                while (true)
+                using (var exporter = new FormattedExporter(stream) {AppendToString = true, Base = 2})
+                    //using (var exporter = new IntelHexExporter(stream))
                 {
-                    Console.Write("Enter instruction: ");
-                    var input = Console.ReadLine();
-                    var index = input.IndexOf(':');
-                    var address = 0;
-                    if (index != -1)
-                    {
-                        address = int.Parse(input.Substring(0, index));
-                        input = input.Substring(index + 1).Trim();
-                    }
-                    
-                    MicroFunction function;
-                    MicroInstruction instruction;
-                    IEnumerable<IAssembled> assembled;
+                    exporter.Writer.AutoFlush = true;
+                    Console.SetOut(exporter.Writer);
 
-                    if (TryParseInstruction(input, out function))
+                    while (true)
                     {
-                        assembled = assembler.Assemble(new[] { function }, address);
-                        await exporter.Export(assembled);
-                    }
-                    else if (TryParseMicroInstruction(input, out instruction))
-                    {
-                        assembled = new[] {assembler.Assemble(instruction)};
-                        await exporter.Export(assembled);
-                    }
-                    else
-                        Console.WriteLine("Unable to parse input.");
+                        Console.Write("Enter instruction: ");
+                        var input = Console.ReadLine();
+                        var index = input.IndexOf(':');
+                        var address = 0;
+                        if (index != -1)
+                        {
+                            address = int.Parse(input.Substring(0, index));
+                            input = input.Substring(index + 1).Trim();
+                        }
 
-                    Console.WriteLine();
+                        MicroFunction function;
+                        MicroInstruction instruction;
+                        IEnumerable<IAssembled> assembled;
+
+                        if (TryParseInstruction(input, out function))
+                        {
+                            assembled = assembler.Assemble(new[] {function}, address);
+                            await exporter.Export(assembled);
+                        }
+                        else
+                        {
+                            if (TryParseMicroInstruction(input, out instruction))
+                            {
+                                assembled = new[] {assembler.Assemble(instruction)};
+                                await exporter.Export(assembled);
+                            }
+                            else
+                                Console.WriteLine("Unable to parse input.");
+                        }
+
+                        Console.WriteLine();
+                    }
                 }
             }
         }
@@ -181,45 +187,46 @@ namespace hasm
         }
 
         private static bool TryParseInstruction(string input, out MicroFunction function)
-	    {
-	        function = null;
+        {
+            function = null;
             var opcode = HasmGrammar.Opcode.FirstValueOrDefault(input);
-	        if (string.IsNullOrEmpty(opcode))
-	            return false;
+            if (string.IsNullOrEmpty(opcode))
+                return false;
 
-	        function = _microFunctions.FirstOrDefault(m => m.Instruction.ToLower().StartsWith(opcode.ToLower()));
+            function = _microFunctions.FirstOrDefault(m => m.Instruction.ToLower().StartsWith(opcode.ToLower()));
             if (function == null)
                 return false;
 
             var operands = HasmGrammar.GetOperands(function.Instruction).Zip(HasmGrammar.GetOperands(input), (type, operand) => new MicroGenerator.Operand(type, operand));
             function = MicroGenerator.PermuteFunction(operands, function);
-	        return true;
-	    }
+            return true;
+        }
 
-	    private static void UnhandledException(object sender, UnhandledExceptionEventArgs e)
-		{
-			var exception = e.ExceptionObject as Exception;
-			if (exception == null)
-			{
-				_logger.Fatal($"ExceptionObject is not an exception: {e.ExceptionObject}");
-				Environment.Exit(-1);
-			}
-			else
-				UnhandledException(exception);
-		}
+        private static void UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            var exception = e.ExceptionObject as Exception;
+            if (exception == null)
+            {
+                _logger.Fatal($"ExceptionObject is not an exception: {e.ExceptionObject}");
+                Environment.Exit(-1);
+            }
+            else
+                UnhandledException(exception);
+        }
 
-		private static void UnhandledException(Exception e)
-		{
-			_logger.Fatal(e, "Unhandled exception");
-			Environment.Exit(-1);
-		}
+        private static void UnhandledException(Exception e)
+        {
+            _logger.Fatal(e, "Unhandled exception");
+            Environment.Exit(-1);
+        }
 
-		private static void IfDebugging(Action action)
-		{
+        private static void IfDebugging(Action action)
+        {
 #if DEBUG
-			action();
+            action();
 #endif
-		}
+        }
+
         private class ApplicationArguments
         {
             public bool LiveMode { get; set; }
