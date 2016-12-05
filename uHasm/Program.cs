@@ -80,7 +80,7 @@ namespace hasm
             //    await HandleArguments(commandParser.Object);
             //}
 
-            await LiveMode();
+            //await LiveMode();
 
             var microInstructions = MicroGenerator.GenerateMicroInstructions(microParser.Items);
 
