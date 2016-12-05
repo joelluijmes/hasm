@@ -38,10 +38,28 @@ namespace hasm.Parsing.Providers.SheetParser
             var bits = !string.IsNullOrEmpty(row[SHEET_BITS])
                 ? int.Parse(row[SHEET_BITS])
                 : 0;
+
+            var bus = OperandInputBus.Unkown;
+            if (!string.IsNullOrEmpty(row[SHEET_BUS]))
+            {
+                switch (row[SHEET_BUS])
+                {
+                case "A":
+                    bus = OperandInputBus.Left;
+                    break;
+                case "B":
+                    bus = OperandInputBus.Right;
+                    break;
+                case "A;B":
+                    bus = OperandInputBus.Both;
+                    break;
+                }
+            }
+
             if (!string.IsNullOrEmpty(row[SHEET_KEY]) && !string.IsNullOrEmpty(row[SHEET_VALUE]) && string.IsNullOrEmpty(row[SHEET_MIN]) && string.IsNullOrEmpty(row[SHEET_MAX]))
             { // keyvalue
                 var keyValue = new KeyValuePair<string, int>(row[SHEET_KEY], int.Parse(row[SHEET_VALUE]));
-                operandEncoding = new OperandEncoding(operand, mask, bits, keyValue);
+                operandEncoding = new OperandEncoding(operand, mask, bits, keyValue, bus);
             }
             else
             {
@@ -49,7 +67,7 @@ namespace hasm.Parsing.Providers.SheetParser
                 { // range
                     var min = int.Parse(row[SHEET_MIN]);
                     var max = int.Parse(row[SHEET_MAX]);
-                    operandEncoding = new OperandEncoding(operand, mask, bits, min, max);
+                    operandEncoding = new OperandEncoding(operand, mask, bits, min, max, bus);
                 }
                 else
                 {
@@ -67,6 +85,7 @@ namespace hasm.Parsing.Providers.SheetParser
                 operandEncoding.Operands = previous.Operands;
                 operandEncoding.EncodingMask = previous.EncodingMask;
                 operandEncoding.Size = previous.Size;
+                operandEncoding.Bus = previous.Bus;
             }
 
             return operandEncoding;

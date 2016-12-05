@@ -39,7 +39,7 @@ namespace hasm
 
             var sw = Stopwatch.StartNew();
 #if DEBUG
-            // microFunctions = new[] { microFunctions.ElementAt(57) };
+             microFunctions = new[] { microFunctions.ElementAt(20) };
 #endif
 
 #if PARALLEL
@@ -65,14 +65,12 @@ namespace hasm
             foreach (var microFunction in microFunctions)
             {
                 var operands = HasmGrammar.GetOperands(microFunction.Instruction)
-                                          .Select(type => PermuteOperands(type) // generate all permutations of operand
-                                              .Select(operand => new Operand(type, operand)));
+                                          .Select(type => PermuteOperands(type).Select(operand => new Operand(type, operand)))
+                                          .CartesianProduct();
 
-                foreach (var permutation in operands.CartesianProduct())
+                foreach (var permutation in operands)
                 {
-                    var function = microFunction.Clone();
-                    PermuteFunction(permutation, function);
-
+                    var function = PermuteFunction(permutation, microFunction);
                     list.Add(function);
                 }
             }
@@ -84,8 +82,10 @@ namespace hasm
             return list;
         }
 
-        public static void PermuteFunction(IEnumerable<Operand> permutation, MicroFunction function)
+        public static MicroFunction PermuteFunction(IEnumerable<Operand> permutation, MicroFunction blueprint)
         {
+            var function = blueprint.Clone();
+
             var operands = permutation.SelectMany(SplitAggregated).ToArray();
             for (var i = 0; i < operands.Length; i++)
             {
@@ -115,6 +115,8 @@ namespace hasm
 
                 function.Instruction = function.Instruction.Replace(operands[i].Type, operands[i].Value);
             }
+
+            return function;
         }
 
         private static IEnumerable<Operand> SplitAggregated(Operand keyValue)

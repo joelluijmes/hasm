@@ -12,16 +12,17 @@ namespace hasm.Parsing.Models
             Type = OperandEncodingType.Aggregation;
         }
 
-        public OperandEncoding(string[] operands, char encodingMask, int size, KeyValuePair<string, int> keyValue)
+        public OperandEncoding(string[] operands, char encodingMask, int size, KeyValuePair<string, int> keyValue, OperandInputBus bus)
         {
             Operands = operands;
             EncodingMask = encodingMask;
             Size = size;
             Pairs = new[] {keyValue};
             Type = OperandEncodingType.KeyValue;
+            Bus = bus;
         }
 
-        public OperandEncoding(string[] operands, char encodingMask, int size, int minimum, int maximum)
+        public OperandEncoding(string[] operands, char encodingMask, int size, int minimum, int maximum, OperandInputBus bus)
         {
             Operands = operands;
             EncodingMask = encodingMask;
@@ -29,6 +30,7 @@ namespace hasm.Parsing.Models
             Minimum = minimum;
             Maximum = maximum;
             Type = OperandEncodingType.Range;
+            Bus = bus;
         }
 
         public string[] Operands { get; set; }
@@ -38,6 +40,7 @@ namespace hasm.Parsing.Models
         public int Minimum { get; set; }
         public int Maximum { get; set; }
         public OperandEncodingType Type { get; set; }
+        public OperandInputBus Bus { get; set; } = OperandInputBus.Both;
 
         public override string ToString()
         {

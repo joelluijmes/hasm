@@ -80,7 +80,7 @@ namespace hasm
             //    await HandleArguments(commandParser.Object);
             //}
 
-            //await LiveMode();
+            await LiveMode();
 
             var microInstructions = MicroGenerator.GenerateMicroInstructions(microParser.Items);
 
@@ -192,7 +192,7 @@ namespace hasm
                 return false;
 
             var operands = HasmGrammar.GetOperands(function.Instruction).Zip(HasmGrammar.GetOperands(input), (type, operand) => new MicroGenerator.Operand(type, operand));
-	        MicroGenerator.PermuteFunction(operands, function);
+            function = MicroGenerator.PermuteFunction(operands, function);
 	        return true;
 	    }
 

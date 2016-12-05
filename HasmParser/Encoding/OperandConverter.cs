@@ -6,6 +6,8 @@ namespace hasm.Parsing.Encoding
 {
     internal struct OperandConverter
     {
+        public static OperandConverter Invalid = default(OperandConverter);
+
         private readonly OperandParser _parser;
         private string _operand;
 
@@ -21,7 +23,7 @@ namespace hasm.Parsing.Encoding
             }
         }
 
-        public bool IsImmediate => (this != default(OperandConverter)) && ((_parser == null) || (_parser.OperandEncoding?.Type == OperandEncodingType.Range));
+        public bool IsImmediate => (this != Invalid) && ((_parser == null) || (_parser.OperandEncoding?.Type == OperandEncodingType.Range));
 
         public OperandConverter(string operand)
         { // operand can be null
@@ -32,6 +34,8 @@ namespace hasm.Parsing.Encoding
 
         private long? _value;
         public long Value => _value ?? (_value = _parser?.Parse(Operand)) ?? 0;
+
+        public OperandInputBus Bus => _parser?.OperandEncoding.Bus ?? OperandInputBus.Unkown;
 
         public override string ToString() => $"{Operand}: {Value}";
 

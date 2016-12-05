@@ -75,7 +75,7 @@ namespace hasm.Parsing.Models
         }
 
         [EncodableProperty(ENCODING_CONDITION, 3)]
-        public Condition Condition { get; set; }
+        public Condition Condition { get; set; } = Condition.None;
 
         [EncodableProperty(ENCODING_CONDITION_INVERTED)]
         public bool InvertedCondition { get; set; }
@@ -220,29 +220,35 @@ namespace hasm.Parsing.Models
 
         private void FixOperands()
         {
-            // immediates must be placed on B bus (right), so for certain cases we have to swap the operands
-            // so that the right is the immediate
-            if (!_leftOperand.IsImmediate)
+            if (_leftOperand == OperandConverter.Invalid && _rightOperand == OperandConverter.Invalid)
                 return;
 
-            if (_rightOperand == default(OperandConverter)) // assignment
+            var swapped = false;
+            if (_leftOperand.Bus == OperandInputBus.Right)
             {
-                _rightOperand = _leftOperand;
-                _leftOperand = default(OperandConverter);
-            }
-            else
-            {
-                if (AluOperation == AluOperation.Minus) // com, neg (immedate - register)
-                {
-                    var temp = _rightOperand;
-                    _rightOperand = _leftOperand;
-                    _leftOperand = temp;
+                if (_rightOperand != OperandConverter.Invalid && !_rightOperand.Bus.HasFlag(OperandInputBus.Left))
+                    throw new InvalidOperationException();
 
-                    AluOperation = AluOperation.InverseMinus;
-                }
-                else
-                    throw new NotImplementedException();
+                var tmp = _rightOperand;
+                _rightOperand = _leftOperand;
+                _leftOperand = tmp;
+
+                swapped = true;
             }
+            else if (_rightOperand.Bus == OperandInputBus.Left)
+            {
+                if (_leftOperand != OperandConverter.Invalid && !_leftOperand.Bus.HasFlag(OperandInputBus.Right))
+                    throw new InvalidOperationException();
+
+                var tmp = _rightOperand;
+                _rightOperand = _leftOperand;
+                _leftOperand = tmp;
+
+                swapped = true;
+            }
+
+            if (swapped && AluOperation == AluOperation.Minus)
+                AluOperation = AluOperation.InverseMinus;
         }
     }
 }
