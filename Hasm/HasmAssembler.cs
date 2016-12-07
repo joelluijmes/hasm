@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using hasm.Exceptions;
-using hasm.Parsing;
-using hasm.Parsing.DependencyInjection;
 using hasm.Parsing.Encoding;
 using hasm.Parsing.Grammars;
 using NLog;
@@ -16,62 +14,66 @@ namespace hasm
     public sealed class HasmAssembler
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly object _lockObject = new object();
+
         private readonly HasmEncoder _encoder;
         private readonly IDictionary<string, int> _labelLookup;
-        private readonly IList<Instruction> _listing;
         private readonly Instruction _nopInstruction;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="HasmAssembler" /> class.
         /// </summary>
-        /// <param name="listing">The listing to assemble.</param>
-        public HasmAssembler(HasmEncoder encoder, IEnumerable<string> listing)
+        /// <param name="encoder">Encoder for encoding the instructions.</param>
+        public HasmAssembler(HasmEncoder encoder)
         {
             _encoder = encoder;
-            _listing = listing
-                .Where(l => !string.IsNullOrWhiteSpace(l))
-                .Select(ParseFromLine)
-                .Where(l => !string.IsNullOrEmpty(l.Input)) // only those containing an instruction
-                .ToList();
-
             _labelLookup = new Dictionary<string, int>();
-
             _nopInstruction = new Instruction("nop");
             SecondPass(_nopInstruction);
-
-            _logger.Info($"Instantiated Assembler with {_listing.Count} instructions");
         }
 
         /// <summary>
         ///     Assembles the listing given in the ctor.
         /// </summary>
         /// <returns>Assembled listing</returns>
-        public IEnumerable<byte> Process()
+        public IEnumerable<byte> Process(IEnumerable<string> listing)
         {
-            _logger.Info("Started processing instructions..");
-            var address = 0;
-            foreach (var instruction in _listing)
-                FirstPass(instruction, ref address);
-            _logger.Debug($"Performed first pass. Last instruction at: {address}");
+            var instructions = listing
+                .Where(l => !string.IsNullOrWhiteSpace(l))
+                .Select(ParseFromLine)
+                .Where(l => !string.IsNullOrEmpty(l.Input)) // only those containing an instruction
+                .ToList();
 
-            // check if we didn't skip a address (due alignment)
-            for (var i = 1; i < _listing.Count; i++)
+            lock (_lockObject)
             {
-                var instruction = _listing[i];
-                var previous = _listing[i - 1];
-                for (var j = instruction.Address - instruction.Encoding.Length; j > previous.Address; --j)
+                _labelLookup.Clear();
+
+                _logger.Info($"Started processing {instructions.Count} instructions..");
+                var address = 0;
+                foreach (var instruction in instructions)
+                    FirstPass(instruction, ref address);
+
+                _logger.Debug($"Performed first pass. Last instruction at: {address}");
+
+                // check if we didn't skip a address (due alignment)
+                for (var i = 1; i < instructions.Count; i++)
                 {
-                    _logger.Info($"Address not sequential. Inserting a nop at {i}..");
-                    _listing.Insert(i++, _nopInstruction);
+                    var instruction = instructions[i];
+                    var previous = instructions[i - 1];
+                    for (var j = instruction.Address - instruction.Encoding.Length; j > previous.Address; --j)
+                    {
+                        _logger.Info($"Address not sequential. Inserting a nop at {i}..");
+                        instructions.Insert(i++, _nopInstruction);
+                    }
                 }
+
+                _logger.Debug($"Performing second pass..");
+                foreach (var instruction in instructions.Where(l => !l.Completed))
+                    SecondPass(instruction);
+
+                _logger.Info("Assembler done");
+                return instructions.SelectMany(l => l.Encoding);
             }
-
-            _logger.Debug($"Performing second pass..");
-            foreach (var instruction in _listing.Where(l => !l.Completed))
-                SecondPass(instruction);
-
-            _logger.Info("Assembler done");
-            return _listing.SelectMany(l => l.Encoding);
         }
 
         private void SecondPass(Instruction instruction)

@@ -62,8 +62,8 @@ namespace hasm
                 .As('o', "output")
                 .WithDescription("Output file of the micro-assembler");
             commandParser.Setup(a => a.InputInstructionFile)
-                .As('i', "input")
-                .WithDescription("\tInput instruction file");
+                .As("instruction")
+                .WithDescription("\tIf set overrides default Instructionset sheet with given");
             commandParser.Setup(a => a.ExportDefaultInstructionset)
                 .As('e', "export")
                 .WithDescription("Export default Instructionset (saved as InstructionSet-default.xlsx)");
@@ -85,10 +85,6 @@ namespace hasm
             }
 
             await HandleArguments(commandParser.Object);
-            
-
-            //await LiveMode();
-            
         }
 
         private static async Task HandleArguments(ApplicationArguments arguments)

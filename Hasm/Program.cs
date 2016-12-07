@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Fclp;
-using hasm.Parsing;
 using hasm.Parsing.DependencyInjection;
 using hasm.Parsing.Encoding;
-using hasm.Parsing.Grammars;
-using hasm.Parsing.Models;
-using hasm.Properties;
+using hasm.Parsing.Providers.SheetParser;
 using Ninject.Parameters;
 using NLog;
 
@@ -18,7 +14,6 @@ namespace hasm
     internal class Program
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private static HasmEncoder _hasmEncoder;
 
         private static bool Debugging =>
 #if DEBUG
@@ -53,72 +48,61 @@ namespace hasm
             {
                 var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
                 consoleRule.EnableLoggingForLevel(LogLevel.Debug);
-
-                Init();
-
-				LiveMode();
-
-                var listing = new List<string>();
-                using (var memoryStream = new MemoryStream(Resources.listing))
-                {
-                    using (var reader = new StreamReader(memoryStream))
-                    {
-                        while (!reader.EndOfStream)
-                            listing.Add(reader.ReadLine());
-                    }
-                }
-
-                var assembler = KernelFactory.Resolve<HasmAssembler>(new ConstructorArgument(nameof(listing), listing));
-                var assembled = assembler.Process();
-
-                var encoded = assembled.Aggregate("", (a, b) => $"{a} {b:X2}");
-                File.WriteAllText("test.bin", encoded);
             }
-            else
+
+            var commandParser = new FluentCommandLineParser<ApplicationArguments>();
+            commandParser.Setup(a => a.InputFile)
+                .As('i', "input")
+                .WithDescription("\tInput file to be assembled");
+            commandParser.Setup(a => a.InputInstructionFile)
+                .As("instruction")
+                .WithDescription("\tIf set overrides default Instructionset sheet with given");
+            commandParser.Setup(a => a.OutputFile)
+                .As('o', "output")
+                .WithDescription("Output file of the assembler");
+            commandParser.Setup(a => a.ExportDefaultInstructionset)
+                .As('e', "export")
+                .WithDescription("Export default Instructionset (saved as InstructionSet-default.xlsx)");
+            commandParser.Setup(a => a.LiveMode)
+                .As('l', "live-mode")
+                .WithDescription("Use live mode");
+            commandParser.SetupHelp("?", "help")
+                .WithHeader("Invalid usage: ")
+                .Callback(c => Console.WriteLine(c));
+
+            var result = commandParser.Parse(args);
+            if (result.HasErrors || result.EmptyArgs)
             {
-                var commandParser = new FluentCommandLineParser<ApplicationArguments>();
-                commandParser.Setup(a => a.InputFile)
-                    .As('i', "input")
-                    .WithDescription("\tInput file to be assembled");
-                commandParser.Setup(a => a.OutputFile)
-                    .As('o', "output")
-                    .WithDescription("Output file of the assembler");
-                commandParser.Setup(a => a.LiveMode)
-                    .As('l', "live-mode")
-                    .WithDescription("Use live mode");
-                commandParser.SetupHelp("?", "help")
-                    .WithHeader("Invalid usage: ")
-                    .Callback(c => Console.WriteLine(c));
-
-                var result = commandParser.Parse(args);
-                if (result.HasErrors || result.EmptyArgs)
-                {
-                    commandParser.HelpOption.ShowHelp(commandParser.Options);
-                    return;
-                }
-
-                Init();
-                HandleArguments(commandParser.Object);
+                commandParser.HelpOption.ShowHelp(commandParser.Options);
+                return;
             }
-        }
 
-        private static void Init()
-        {
-            _hasmEncoder = KernelFactory.Resolve<HasmEncoder>();
+            HandleArguments(commandParser.Object);
         }
 
         private static void HandleArguments(ApplicationArguments arguments)
         {
+            if (arguments.ExportDefaultInstructionset)
+                File.WriteAllBytes("Instructionset-default.xlsx", BaseSheetProvider.Instructionset);
+
+            if (!string.IsNullOrEmpty(arguments.InputInstructionFile))
+                BaseSheetProvider.Instructionset = File.ReadAllBytes(arguments.InputInstructionFile);
+
             if (arguments.LiveMode)
                 LiveMode();
-            else if (string.IsNullOrEmpty(arguments.InputFile) || string.IsNullOrEmpty(arguments.OutputFile))
-                throw new InvalidOperationException("If you haven't chosen for live mode you want to assemble a listing. Therefor you need to give the input- and output file.");
+            else
+            {
+                if (string.IsNullOrEmpty(arguments.InputFile) || string.IsNullOrEmpty(arguments.OutputFile))
+                    throw new InvalidOperationException("If you haven't chosen for live mode you want to assemble a listing. Therefor you need to give the input- and output file.");
+            }
 
             AssembleFile(arguments.InputFile, arguments.OutputFile);
         }
 
         private static void LiveMode()
         {
+            var encoder = KernelFactory.Resolve<HasmEncoder>();
+
             while (true)
             {
                 Console.Write("Enter instruction: ");
@@ -126,7 +110,7 @@ namespace hasm
                 if (string.IsNullOrEmpty(line))
                     break;
 
-                var encoded = _hasmEncoder.Encode(line);
+                var encoded = encoder.Encode(line);
                 var value = ConvertToInt(encoded);
 
                 _logger.Info($"Parsed {line} to encoding {Convert.ToString(value, 2).PadLeft(16, '0')}");
@@ -138,8 +122,8 @@ namespace hasm
         private static void AssembleFile(string input, string output)
         {
             var listing = File.ReadAllLines(input);
-            var assembler = KernelFactory.Resolve<HasmAssembler>(new ConstructorArgument(nameof(listing), listing));
-            var assembled = assembler.Process();
+            var assembler = KernelFactory.Resolve<HasmAssembler>();
+            var assembled = assembler.Process(listing);
 
             var encoded = assembled.Aggregate("", (a, b) => $"{a} {b:X2}");
             File.WriteAllText(output, encoded);
@@ -153,7 +137,8 @@ namespace hasm
                 _logger.Fatal($"ExceptionObject is not an exception: {e.ExceptionObject}");
                 Environment.Exit(-1);
             }
-            else UnhandledException(exception);
+            else
+                UnhandledException(exception);
         }
 
         private static void UnhandledException(Exception e)
@@ -164,26 +149,23 @@ namespace hasm
 
         private static int ConvertToInt(byte[] array)
         {
+            if (array == null)
+                throw new ArgumentNullException(nameof(array));
+
             var result = 0;
             for (var i = 0; i < array.Length; i++)
-                result |= array[i] << (i * 8);
+                result |= array[i] << (i*8);
 
             return result;
         }
-
-        private static void IfDebugging(Action action)
-        {
-#if DEBUG
-            action();
-#endif
-        }
-
+        
         private class ApplicationArguments
         {
+            public string InputInstructionFile { get; set; }
             public string InputFile { get; set; }
             public string OutputFile { get; set; }
             public bool LiveMode { get; set; }
+            public bool ExportDefaultInstructionset { get; set; }
         }
-
     }
 }
