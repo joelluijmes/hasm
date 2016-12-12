@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using hasm.Exceptions;
 using hasm.Parsing.Grammars;
 using ParserLib.Evaluation;
 using ParserLib.Parsing;
+using ParserLib.Parsing.Rules;
 
 namespace hasm.Assembler.Directives
 {
@@ -25,10 +27,13 @@ namespace hasm.Assembler.Directives
                 if (string.IsNullOrWhiteSpace(line.Label))
                     throw new AssemblerException("Invalid input, when using the EQU directive a label should be specified or the format must be 'key=value'");
 
-                if (!Grammar.Integer.Match(line.Operands))
+                if (!HasmGrammar.Expression.Match(line.Operands))
                     throw new AssemblerException("Value must be a numeric value.");
 
-                Lookup[line.Label] = line.Operands;
+                var tree = HasmGrammar.Expression.ParseTree(line.Operands);
+                var value = HasmGrammar.Evaluate(tree, Lookup);
+
+                Lookup[line.Label] = value.ToString();
             }
             
             return null;

@@ -33,6 +33,8 @@ namespace hasm.Parsing.Grammars
             var encodingProvider = KernelFactory.Resolve<IProvider<OperandEncoding>>();
             foreach (var encoding in encodingProvider.Items)
                 _operandParsers.Add(OperandParser.Create(encoding));
+
+            _expressionA = (Whitespace.Optional + Text("operation", MatchAnyString("+ - << >> * / % | &")) + Whitespace.Optional + Int32("right") + Whitespace.Optional + _expressionFunc) | End();
         }
 
         public IList<OperandParser> Items => _operandParsers;
