@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using hasm.Assembler;
+using hasm.Assembler.Directives;
 using hasm.Exceptions;
 using hasm.Parsing.Encoding;
 using hasm.Parsing.Export;
@@ -19,11 +23,12 @@ namespace hasm
     public sealed class HasmAssembler
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private static IDictionary<DirectiveTypes, IDirective> _directiveParsers;
 
         private readonly HasmEncoder _encoder;
         private readonly IDictionary<string, string> _labelLookup;
-        private readonly IAssembledInstruction _nopAssembledInstruction;
-        
+        private readonly IAssemblingInstruction _nopAssembledInstruction;
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="HasmAssembler" /> class.
         /// </summary>
@@ -32,6 +37,12 @@ namespace hasm
         {
             _encoder = encoder;
             _labelLookup = new Dictionary<string, string>();
+
+            _directiveParsers = Assembly.GetExecutingAssembly()
+                .GetTypes()
+                .Where(t => typeof(IDirective).IsAssignableFrom(t) && !t.IsAbstract)
+                .Select(t => (IDirective) Activator.CreateInstance(t, _labelLookup))
+                .ToDictionary(k => k.DirectiveType, v => v);
             
             var nop = ParseLine("nop");
             var instruction = FirstPass(nop);
@@ -92,8 +103,8 @@ namespace hasm
             var completed = _encoder.TryEncode(line.Instruction, out encoded);
             if (encoded == null)
                 throw new AssemblerException($"Couldn't parse '{line.Instruction}'. Please check your grammar and/or input.");
-            
-            IAssembledInstruction assembled = new AssembledInstruction(encoded, 0, completed);
+
+            IAssemblingInstruction assembled = new AssembledInstruction(encoded, 0, completed);
             return new ParsedInstructionModel(line, assembled);
         }
 
@@ -101,9 +112,9 @@ namespace hasm
         {
             if (line.IsDirective)
             {
-                var directive = ParseDirective(line, ref address);
-                return directive == null 
-                    ? null 
+                var directive = _directiveParsers[line.Directive].Parse(line, ref address);
+                return directive == null
+                    ? null
                     : new ParsedInstructionModel(line, directive);
             }
 
@@ -127,7 +138,7 @@ namespace hasm
                 _logger.Debug($"Fixed '{line.Instruction}' at {address}");
             }
 
-            IAssembledInstruction assembled = new AssembledInstruction(encoded, address, completed);
+            IAssemblingInstruction assembled = new AssembledInstruction(encoded, address, completed);
             address += encoded.Length;
             return new ParsedInstructionModel(line, assembled);
         }
@@ -166,50 +177,7 @@ namespace hasm
             var assembled = new AssembledInstruction(encoded, instruction.Assembled.First().Address, true);
             return new ParsedInstructionModel(instruction.Input, assembled);
         }
-
-        private IList<IAssembledInstruction> ParseDirective(Line line, ref int address)
-        {
-            switch (line.Directive)
-            {
-            case DirectiveTypes.EQU:
-            {
-                var label = HasmGrammar.DirectiveEqual.FirstValueByName<string>(line.Operands, "label");
-                var value = HasmGrammar.DirectiveEqual.FirstValueByName<int>(line.Operands, "value");
-
-                _labelLookup[label] = value.ToString();
-                return null;
-            }
-
-            case DirectiveTypes.DEF:
-            {
-                var label = HasmGrammar.DirectiveDefine.FirstValueByName<string>(line.Operands, "label");
-                var value = HasmGrammar.DirectiveDefine.FirstValueByName<string>(line.Operands, "text");
-
-                _labelLookup[label] = value;
-                return null;
-            }
-
-            case DirectiveTypes.DB:
-            {
-                _labelLookup[line.Label] = address.ToString();
-                var tree = HasmGrammar.DefineByte.ParseTree(line.Operands);
-
-                var list = new List<IAssembledInstruction>();
-                foreach (var node in tree.Descendents(n => n.IsValueNode<byte>()))
-                {
-                    var value = node.FirstValue<byte>();
-                    list.Add(new DefinedByte(value, address));
-                    address += 2;
-                }
-
-                return list;
-            }
-            }
-
-
-            throw new NotImplementedException();
-        }
-
+        
         private static Line ParseLine(string line)
         {
             if (string.IsNullOrWhiteSpace(line))
@@ -222,7 +190,7 @@ namespace hasm
             var strDirective = tree.FirstValueByNameOrDefault<string>("directive");
             var operands = tree.FirstValueByNameOrDefault<string>("operands");
             var comment = tree.FirstValueByNameOrDefault<string>("comment");
-            
+
             if ((instruction == null) && (strDirective != null) && (operands != null))
             {
                 try
@@ -239,24 +207,15 @@ namespace hasm
             if ((instruction != null) && (strDirective == null) && (operands == null))
                 return new Line(label, instruction, comment);
 
+            if ((instruction == null) && (strDirective == null) && (operands == null))
+                return null;
+
             throw new AssemblerException($"Invalid input, couldn't detect if it supposed to be instruction or a directive. Input: {line}");
         }
+
         
-        private class DefinedByte : IAssembledInstruction
-        {
-            public DefinedByte(byte assembled, int address)
-            {
-                Assembled = assembled;
-                Address = address;
-            }
 
-            public int Address { get; set; }
-            public int Count => 8;
-            public long Assembled { get; }
-            public bool FullyAssembled => true;
-        }
-
-        private class AssembledInstruction : IAssembledInstruction
+        private class AssembledInstruction : IAssemblingInstruction
         {
             public AssembledInstruction(byte[] encoding, int address, bool fullyAssembled)
             {
@@ -286,26 +245,21 @@ namespace hasm
 
         private class ParsedInstructionModel
         {
-            public ParsedInstructionModel(Line input, IAssembledInstruction assembled)
+            public ParsedInstructionModel(Line input, IAssemblingInstruction assembled)
             {
                 Assembled = new[] {assembled};
                 Input = input;
             }
 
-            public ParsedInstructionModel(Line input, IList<IAssembledInstruction> assembled)
+            public ParsedInstructionModel(Line input, IList<IAssemblingInstruction> assembled)
             {
                 Assembled = assembled;
                 Input = input;
             }
 
             public Line Input { get; }
-            public IList<IAssembledInstruction> Assembled { get; }
+            public IList<IAssemblingInstruction> Assembled { get; }
             public bool FullyAssembled => Assembled.All(i => i.FullyAssembled);
-        }
-
-        private interface IAssembledInstruction : IAssembled
-        {
-            bool FullyAssembled { get; }
         }
     }
 }

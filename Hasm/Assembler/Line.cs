@@ -1,6 +1,7 @@
 ﻿using System.Text;
+using hasm.Assembler.Directives;
 
-namespace hasm
+namespace hasm.Assembler
 {
     internal sealed class Line
     {

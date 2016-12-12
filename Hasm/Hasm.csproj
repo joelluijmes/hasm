@@ -84,12 +84,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assembler\AssembledLine.cs" />
-    <Compile Include="Assembler\Directive.cs" />
-    <Compile Include="Assembler\Directive\DefineDirective.cs" />
-    <Compile Include="Assembler\Directive\DirectiveTypes.cs" />
-    <Compile Include="Assembler\Directive\EqualDirective.cs" />
+    <Compile Include="Assembler\Directives\DefineByteDirective.cs" />
+    <Compile Include="Assembler\Directives\DefineDirective.cs" />
+    <Compile Include="Assembler\Directives\DirectiveTypes.cs" />
+    <Compile Include="Assembler\Directives\EqualDirective.cs" />
+    <Compile Include="Assembler\Directives\IDirective.cs" />
+    <Compile Include="Assembler\IAssemblingInstruction.cs" />
     <Compile Include="Assembler\Line.cs" />
-    <Compile Include="HasmAssembler.cs" />
+    <Compile Include="Assembler\HasmAssembler.cs" />
     <Compile Include="Exceptions\AssemblerException.cs" />
     <Compile Include="HasmModule.cs" />
     <Compile Include="Assembler\Instruction.cs" />

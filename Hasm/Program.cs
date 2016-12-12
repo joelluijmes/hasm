@@ -8,7 +8,6 @@ using hasm.Parsing.DependencyInjection;
 using hasm.Parsing.Encoding;
 using hasm.Parsing.Export;
 using hasm.Parsing.Providers.SheetParser;
-using Ninject.Parameters;
 using NLog;
 
 namespace hasm
@@ -129,7 +128,7 @@ namespace hasm
 
             using (var stream = File.Open($"{output}_format.txt", FileMode.Create, FileAccess.Write))
             {
-                using (var exporter = new FormattedExporter(stream) { Base = 2, AppendToString = true })
+                using (var exporter = new FormattedExporter(stream) {Base = 2, AppendToString = true})
                     await exporter.Export(assembled);
             }
 
@@ -175,7 +174,7 @@ namespace hasm
 
             return result;
         }
-        
+
         private class ApplicationArguments
         {
             public string InputInstructionFile { get; set; }

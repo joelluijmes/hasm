@@ -1,4 +1,4 @@
-﻿namespace hasm
+﻿namespace hasm.Assembler.Directives
 {
     internal enum DirectiveTypes
     {

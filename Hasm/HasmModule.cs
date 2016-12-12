@@ -1,5 +1,4 @@
-﻿using hasm.Parsing.Encoding;
-using Ninject.Modules;
+﻿using Ninject.Modules;
 
 namespace hasm
 {

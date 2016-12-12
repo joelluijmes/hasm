@@ -11,17 +11,13 @@ namespace hasm.Exceptions
         /// <summary>
         ///     Initializes a new instance of the <see cref="AssemblerException" /> class.
         /// </summary>
-        public AssemblerException()
-        {
-        }
+        public AssemblerException() {}
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="AssemblerException" /> class.
         /// </summary>
         /// <param name="message">The message that describes the error.</param>
-        public AssemblerException(string message) : base(message)
-        {
-        }
+        public AssemblerException(string message) : base(message) {}
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="AssemblerException" /> class.
@@ -31,8 +27,6 @@ namespace hasm.Exceptions
         ///     The exception that is the cause of the current exception, or a null reference (Nothing in
         ///     Visual Basic) if no inner exception is specified.
         /// </param>
-        public AssemblerException(string message, Exception innerException) : base(message, innerException)
-        {
-        }
+        public AssemblerException(string message, Exception innerException) : base(message, innerException) {}
     }
 }

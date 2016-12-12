@@ -1,4 +1,4 @@
-﻿namespace hasm
+﻿namespace hasm.Assembler
 {
     /// <summary>
     ///     Model used to assemble a line into the correct encoding.
