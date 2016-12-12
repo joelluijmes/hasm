@@ -1,10 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using hasm.Exceptions;
 using hasm.Parsing.Encoding;
+using hasm.Parsing.Export;
 using hasm.Parsing.Grammars;
 using NLog;
 using ParserLib.Evaluation;
+using ParserLib.Parsing;
 
 namespace hasm
 {
@@ -14,12 +18,11 @@ namespace hasm
     public sealed class HasmAssembler
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private static readonly object _lockObject = new object();
 
         private readonly HasmEncoder _encoder;
         private readonly IDictionary<string, int> _labelLookup;
-        private readonly Instruction _nopInstruction;
-
+        private readonly IAssembledInstruction _nopAssembledInstruction;
+        
         /// <summary>
         ///     Initializes a new instance of the <see cref="HasmAssembler" /> class.
         /// </summary>
@@ -28,89 +31,87 @@ namespace hasm
         {
             _encoder = encoder;
             _labelLookup = new Dictionary<string, int>();
-            _nopInstruction = new Instruction("nop");
-            SecondPass(_nopInstruction);
+            
+            var nop = ParseLine("nop");
+            var instruction = FirstPass(nop);
+            _nopAssembledInstruction = instruction.Assembled.Single();
         }
 
         /// <summary>
         ///     Assembles the listing given in the ctor.
         /// </summary>
         /// <returns>Assembled listing</returns>
-        public IEnumerable<byte> Process(IEnumerable<string> listing)
+        public IEnumerable<IAssembled> Process(IEnumerable<string> listing)
         {
-            var instructions = listing
-                .Where(l => !string.IsNullOrWhiteSpace(l))
-                .Select(ParseFromLine)
-                .Where(l => !string.IsNullOrEmpty(l.Input)) // only those containing an instruction
+            var preparsing = listing
+                .Select(s => s.Trim())
+                .Select(ParseLine)
+                .Where(n => n != null)
+                .ToArray();
+
+            var address = 0;
+            _logger.Info($"Started processing {preparsing.Length} instructions..");
+            _labelLookup.Clear();
+
+            var instructions = preparsing
+                .Select(line => FirstPass(line, ref address))
+                .Where(a => a != null)
                 .ToList();
 
-            lock (_lockObject)
+            _logger.Debug($"Performed first pass. Last instruction at: {address}");
+            _logger.Debug($"Performing second pass..");
+
+            instructions = instructions.Select(SecondPass).ToList();
+            var assembled = instructions
+                .SelectMany(m => m.Assembled)
+                .OrderBy(m => m.Address)
+                .ToList();
+
+            for (var i = 1; i < assembled.Count; i++)
             {
-                _labelLookup.Clear();
-
-                _logger.Info($"Started processing {instructions.Count} instructions..");
-                var address = 0;
-                foreach (var instruction in instructions)
-                    FirstPass(instruction, ref address);
-
-                _logger.Debug($"Performed first pass. Last instruction at: {address}");
-
-                // check if we didn't skip a address (due alignment)
-                for (var i = 1; i < instructions.Count; i++)
+                var instruction = assembled[i];
+                var previous = assembled[i - 1];
+                for (var j = instruction.Address - instruction.Count/8; j > previous.Address; --j)
                 {
-                    var instruction = instructions[i];
-                    var previous = instructions[i - 1];
-                    for (var j = instruction.Address - instruction.Encoding.Length; j > previous.Address; --j)
-                    {
-                        _logger.Info($"Address not sequential. Inserting a nop at {i}..");
-                        instructions.Insert(i++, _nopInstruction);
-                    }
+                    _logger.Debug($"Address not sequential. Inserting a nop at {i}..");
+
+                    _nopAssembledInstruction.Address = i;
+                    assembled.Insert(i++, _nopAssembledInstruction);
                 }
-
-                _logger.Debug($"Performing second pass..");
-                foreach (var instruction in instructions.Where(l => !l.Completed))
-                    SecondPass(instruction);
-
-                _logger.Info("Assembler done");
-                return instructions.SelectMany(l => l.Encoding);
-            }
-        }
-
-        private void SecondPass(Instruction instruction)
-        {
-            var opcode = HasmGrammar.Opcode.FirstValue(instruction.Input);
-            if (instruction.Input != opcode)
-            {
-                var operand = instruction.Input.Substring(opcode.Length + 1); // skip the space
-
-                int address;
-                if (!_labelLookup.TryGetValue(operand, out address))
-                    throw new AssemblerException($"Couldn't find definition for '{operand}'. Expected a label.");
-
-                instruction.Input = $"{opcode} {address}";
             }
 
-            instruction.Encoding = _encoder.Encode(instruction.Input);
-            instruction.Completed = true;
+            _logger.Info("Assembler done");
+
+            return assembled;
         }
 
-        private void FirstPass(Instruction instruction, ref int address)
+        private ParsedInstructionModel FirstPass(Line line)
         {
             byte[] encoded;
-            var completed = _encoder.TryEncode(instruction.Input, out encoded);
+            var completed = _encoder.TryEncode(line.Instruction, out encoded);
             if (encoded == null)
-                throw new AssemblerException($"Couldn't parse '{instruction.Input}'. Please check your grammar and/or input.");
-
-            instruction.Encoding = encoded;
-            instruction.Completed = completed;
-
-            _logger.Debug($"Instruction {instruction.Input} is fully assembled: {instruction.Completed} ({instruction.Encoding.Length*8} - bits)");
-            CheckLabel(instruction, ref address);
+                throw new AssemblerException($"Couldn't parse '{line.Instruction}'. Please check your grammar and/or input.");
+            
+            IAssembledInstruction assembled = new AssembledInstruction(encoded, 0, completed);
+            return new ParsedInstructionModel(line, assembled);
         }
 
-        private void CheckLabel(Instruction instruction, ref int address)
+        private ParsedInstructionModel FirstPass(Line line, ref int address)
         {
-            if (!string.IsNullOrEmpty(instruction.Label))
+            if (line.IsDirective)
+            {
+                var directive = ParseDirective(line, ref address);
+                return directive == null 
+                    ? null 
+                    : new ParsedInstructionModel(line, directive);
+            }
+
+            byte[] encoded;
+            var completed = _encoder.TryEncode(line.Instruction, out encoded);
+            if (encoded == null)
+                throw new AssemblerException($"Couldn't parse '{line.Instruction}'. Please check your grammar and/or input.");
+
+            if (!string.IsNullOrEmpty(line.Label))
             {
                 if (address%2 != 0)
                 {
@@ -118,46 +119,175 @@ namespace hasm
                     _logger.Debug("Address not aligned on 16 bit");
                 }
 
-                if (_labelLookup.ContainsKey(instruction.Label))
+                if (_labelLookup.ContainsKey(line.Label))
                     throw new AssemblerException("Label was already defined in listing");
 
-                _labelLookup[instruction.Label] = address;
-                _logger.Debug($"Fixed {instruction.Input} at {address}");
+                _labelLookup[line.Label] = address;
+                _logger.Debug($"Fixed '{line.Instruction}' at {address}");
             }
 
-            address += instruction.Encoding.Length;
-            instruction.Address = address;
+            IAssembledInstruction assembled = new AssembledInstruction(encoded, address, completed);
+            address += encoded.Length;
+            return new ParsedInstructionModel(line, assembled);
         }
 
-        private static Instruction ParseFromLine(string line)
+        private ParsedInstructionModel SecondPass(ParsedInstructionModel instruction)
         {
-            line = line.Trim();
-            if (string.IsNullOrEmpty(line))
+            if (instruction.FullyAssembled)
+                return instruction;
+
+            if (instruction.Assembled.Count > 1)
+                throw new NotImplementedException();
+
+            var opcode = HasmGrammar.Opcode.FirstValue(instruction.Input.Instruction);
+            if (instruction.Input.Instruction == opcode)
+                throw new NotImplementedException();
+
+            var operands = HasmGrammar.GetOperands(instruction.Input.Instruction);
+
+            var input = new StringBuilder(opcode);
+
+            for (var i = 0; i < operands.Length; i++)
+            {
+                var operand = operands[i];
+
+                int address;
+                input.Append(' ');
+                input.Append(_labelLookup.TryGetValue(operand, out address)
+                    ? address.ToString()
+                    : operand);
+
+                if (i < operands.Length - 1)
+                    input.Append(',');
+            }
+
+            var encoded = _encoder.Encode(input.ToString());
+            var assembled = new AssembledInstruction(encoded, instruction.Assembled.First().Address, true);
+            return new ParsedInstructionModel(instruction.Input, assembled);
+        }
+        
+        private IList<IAssembledInstruction> ParseDirective(Line line, ref int address)
+        {
+            switch (line.Directive)
+            {
+            case DirectiveTypes.EQU:
+            {
+                var label = HasmGrammar.DirectiveEqual.FirstValueByName<string>(line.Operands, "label");
+                var value = HasmGrammar.DirectiveEqual.FirstValueByName<int>(line.Operands, "value");
+
+                _labelLookup[label] = value;
+
+                return null;
+            }
+
+            case DirectiveTypes.DB:
+            {
+                var tree = HasmGrammar.DefineByte.ParseTree(line.Operands);
+
+                var list = new List<IAssembledInstruction>();
+                foreach (var node in tree.Descendents(n => n.IsValueNode<byte>()))
+                {
+                    var value = node.FirstValue<byte>();
+                    list.Add(new DefinedByte(value, address));
+                    address += 2;
+                }
+
+                return list;
+            }
+            }
+
+            throw new NotImplementedException();
+        }
+        
+        private static Line ParseLine(string line)
+        {
+            if (string.IsNullOrWhiteSpace(line))
                 return null;
 
-            var startColon = line.IndexOf(':');
-            var startSemicolon = line.IndexOf(';');
-            string label;
-            if ((startColon != -1) && ((startSemicolon == -1) || (startColon < startSemicolon)))
+            var tree = HasmGrammar.Line.ParseTree(line);
+
+            var label = tree.FirstValueByNameOrDefault<string>("label");
+            var instruction = tree.FirstValueByNameOrDefault<string>("instruction");
+            var strDirective = tree.FirstValueByNameOrDefault<string>("directive");
+            var operands = tree.FirstValueByNameOrDefault<string>("operands");
+            var comment = tree.FirstValueByNameOrDefault<string>("comment");
+
+            if ((instruction == null) && (strDirective != null) && (operands != null))
             {
-                label = HasmGrammar.ListingLabel.FirstValueOrDefault(line);
-                if (string.IsNullOrEmpty(label))
-                    throw new AssemblerException($"Invalid label name in {line}.");
-
-                line = line.Substring(label.Length + 1).Trim();
-                label = label.Trim();
+                var directive = Grammar.EnumValue<DirectiveTypes>().FirstValue(strDirective);
+                return new Line(label, directive, operands, comment);
             }
-            else
-                label = null;
 
-            var input = line == string.Empty
-                ? string.Empty
-                : HasmGrammar.ListingInstruction.FirstValueOrDefault(line);
+            if ((instruction != null) && (strDirective == null) && (operands == null))
+                return new Line(label, instruction, comment);
 
-            if (!string.IsNullOrEmpty(input))
-                input = input.Trim();
+            throw new NotImplementedException();
+        }
+        
+        private class DefinedByte : IAssembledInstruction
+        {
+            public DefinedByte(byte assembled, int address)
+            {
+                Assembled = assembled;
+                Address = address;
+            }
 
-            return new Instruction(label, input);
+            public int Address { get; set; }
+            public int Count => 8;
+            public long Assembled { get; }
+            public bool FullyAssembled => true;
+        }
+
+        private class AssembledInstruction : IAssembledInstruction
+        {
+            public AssembledInstruction(byte[] encoding, int address, bool fullyAssembled)
+            {
+                Assembled = ConvertToInt(encoding);
+                Count = encoding.Length*8;
+                Address = address;
+                FullyAssembled = fullyAssembled;
+            }
+
+            public int Address { get; set; }
+            public int Count { get; }
+            public long Assembled { get; }
+            public bool FullyAssembled { get; }
+
+            private static long ConvertToInt(byte[] array)
+            {
+                if (array == null)
+                    throw new ArgumentNullException(nameof(array));
+
+                var result = 0;
+                for (var i = 0; i < array.Length; i++)
+                    result |= array[i] << (i*8);
+
+                return result;
+            }
+        }
+
+        private class ParsedInstructionModel
+        {
+            public ParsedInstructionModel(Line input, IAssembledInstruction assembled)
+            {
+                Assembled = new[] {assembled};
+                Input = input;
+            }
+
+            public ParsedInstructionModel(Line input, IList<IAssembledInstruction> assembled)
+            {
+                Assembled = assembled;
+                Input = input;
+            }
+
+            public Line Input { get; }
+            public IList<IAssembledInstruction> Assembled { get; }
+            public bool FullyAssembled => Assembled.All(i => i.FullyAssembled);
+        }
+
+        private interface IAssembledInstruction : IAssembled
+        {
+            bool FullyAssembled { get; }
         }
     }
 }

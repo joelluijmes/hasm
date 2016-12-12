@@ -3,7 +3,7 @@
     /// <summary>
     ///     Model used to assemble a line into the correct encoding.
     /// </summary>
-    internal class Instruction
+    internal sealed class Instruction
     {
         /// <summary>
         ///     Initializes a new instance of the <see cref="Instruction" /> class.

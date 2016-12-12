@@ -59,15 +59,5 @@ namespace hasm.Properties {
                 resourceCulture = value;
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] listing {
-            get {
-                object obj = ResourceManager.GetObject("listing", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
     }
 }
