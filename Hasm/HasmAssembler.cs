@@ -72,7 +72,7 @@ namespace hasm
             {
                 var instruction = assembled[i];
                 var previous = assembled[i - 1];
-                for (var j = instruction.Address - instruction.Count/8; j > previous.Address; --j)
+                for (var j = previous.Address + previous.Count/8; j < instruction.Address; ++j)
                 {
                     _logger.Debug($"Address not sequential. Inserting a nop at {i}..");
 

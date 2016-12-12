@@ -2,9 +2,11 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Fclp;
 using hasm.Parsing.DependencyInjection;
 using hasm.Parsing.Encoding;
+using hasm.Parsing.Export;
 using hasm.Parsing.Providers.SheetParser;
 using Ninject.Parameters;
 using NLog;
@@ -25,12 +27,12 @@ namespace hasm
         private static void Main(string[] args)
         {
 #if DEBUG
-            MainImpl(args);
+            MainImpl(args).Wait();
 #else
 			try
 			{
 				AppDomain.CurrentDomain.UnhandledException += UnhandledException;
-				MainImpl(args);
+				MainImpl(args).Wait();
 			}
 			catch (Exception e)
 			{
@@ -42,7 +44,7 @@ namespace hasm
 #endif
         }
 
-        private static void MainImpl(string[] args)
+        private static async Task MainImpl(string[] args)
         {
             if (Debugging)
             {
@@ -77,10 +79,10 @@ namespace hasm
                 return;
             }
 
-            HandleArguments(commandParser.Object);
+            await HandleArguments(commandParser.Object);
         }
 
-        private static void HandleArguments(ApplicationArguments arguments)
+        private static async Task HandleArguments(ApplicationArguments arguments)
         {
             if (arguments.ExportDefaultInstructionset)
                 File.WriteAllBytes("Instructionset-default.xlsx", BaseSheetProvider.Instructionset);
@@ -96,7 +98,7 @@ namespace hasm
                     throw new InvalidOperationException("If you haven't chosen for live mode you want to assemble a listing. Therefor you need to give the input- and output file.");
             }
 
-            AssembleFile(arguments.InputFile, arguments.OutputFile);
+            await AssembleFile(arguments.InputFile, arguments.OutputFile);
         }
 
         private static void LiveMode()
@@ -119,14 +121,29 @@ namespace hasm
             }
         }
 
-        private static void AssembleFile(string input, string output)
+        private static async Task AssembleFile(string input, string output)
         {
             var listing = File.ReadAllLines(input);
             var assembler = KernelFactory.Resolve<HasmAssembler>();
-            var assembled = assembler.Process(listing);
+            var assembled = assembler.Process(listing).ToArray();
 
-            var encoded = assembled.Aggregate("", (a, b) => $"{a} {b:X2}");
-            File.WriteAllText(output, encoded);
+            using (var stream = File.Open($"{output}_format.txt", FileMode.Create, FileAccess.Write))
+            {
+                using (var exporter = new FormattedExporter(stream) { Base = 2, AppendToString = true })
+                    await exporter.Export(assembled);
+            }
+
+            using (var stream = File.Open($"{output}_intel.txt", FileMode.Create, FileAccess.Write))
+            {
+                using (var exporter = new IntelHexExporter(stream))
+                    await exporter.Export(assembled);
+            }
+
+            using (var stream = File.Open($"{output}_binary.txt", FileMode.Create, FileAccess.Write))
+            {
+                using (var exporter = new BinaryExporter(stream))
+                    await exporter.Export(assembled);
+            }
         }
 
         private static void UnhandledException(object sender, UnhandledExceptionEventArgs e)

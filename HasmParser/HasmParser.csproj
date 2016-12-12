@@ -92,6 +92,7 @@
     <Compile Include="Encoding\TypeConverters\RightConverter.cs" />
     <Compile Include="Encoding\TypeConverters\TargetConverter.cs" />
     <Compile Include="Export\BaseExporter.cs" />
+    <Compile Include="Export\BinaryExporter.cs" />
     <Compile Include="Export\IAssembled.cs" />
     <Compile Include="Export\FormattedExporter.cs" />
     <Compile Include="Export\IExporter.cs" />

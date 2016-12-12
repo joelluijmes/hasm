@@ -126,6 +126,12 @@ namespace hasm
                 using (var exporter = new IntelHexExporter(stream))
                     await exporter.Export(assembled);
             }
+
+            using (var stream = File.Open($"{output}_binary.txt", FileMode.Create, FileAccess.Write))
+            {
+                using (var exporter = new BinaryExporter(stream))
+                    await exporter.Export(assembled);
+            }
         }
 
         private static async Task LiveMode()
