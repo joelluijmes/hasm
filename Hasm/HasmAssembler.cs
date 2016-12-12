@@ -191,6 +191,7 @@ namespace hasm
 
             case DirectiveTypes.DB:
             {
+                _labelLookup[line.Label] = address.ToString();
                 var tree = HasmGrammar.DefineByte.ParseTree(line.Operands);
 
                 var list = new List<IAssembledInstruction>();
@@ -203,8 +204,6 @@ namespace hasm
 
                 return list;
             }
-
-
             }
 
 
