@@ -8,6 +8,7 @@ using hasm.Parsing.Export;
 using hasm.Parsing.Grammars;
 using NLog;
 using ParserLib.Evaluation;
+using ParserLib.Exceptions;
 using ParserLib.Parsing;
 
 namespace hasm
@@ -20,7 +21,7 @@ namespace hasm
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
         private readonly HasmEncoder _encoder;
-        private readonly IDictionary<string, int> _labelLookup;
+        private readonly IDictionary<string, string> _labelLookup;
         private readonly IAssembledInstruction _nopAssembledInstruction;
         
         /// <summary>
@@ -30,7 +31,7 @@ namespace hasm
         public HasmAssembler(HasmEncoder encoder)
         {
             _encoder = encoder;
-            _labelLookup = new Dictionary<string, int>();
+            _labelLookup = new Dictionary<string, string>();
             
             var nop = ParseLine("nop");
             var instruction = FirstPass(nop);
@@ -122,7 +123,7 @@ namespace hasm
                 if (_labelLookup.ContainsKey(line.Label))
                     throw new AssemblerException("Label was already defined in listing");
 
-                _labelLookup[line.Label] = address;
+                _labelLookup[line.Label] = address.ToString();
                 _logger.Debug($"Fixed '{line.Instruction}' at {address}");
             }
 
@@ -151,10 +152,10 @@ namespace hasm
             {
                 var operand = operands[i];
 
-                int address;
+                string address;
                 input.Append(' ');
                 input.Append(_labelLookup.TryGetValue(operand, out address)
-                    ? address.ToString()
+                    ? address
                     : operand);
 
                 if (i < operands.Length - 1)
@@ -165,7 +166,7 @@ namespace hasm
             var assembled = new AssembledInstruction(encoded, instruction.Assembled.First().Address, true);
             return new ParsedInstructionModel(instruction.Input, assembled);
         }
-        
+
         private IList<IAssembledInstruction> ParseDirective(Line line, ref int address)
         {
             switch (line.Directive)
@@ -175,8 +176,16 @@ namespace hasm
                 var label = HasmGrammar.DirectiveEqual.FirstValueByName<string>(line.Operands, "label");
                 var value = HasmGrammar.DirectiveEqual.FirstValueByName<int>(line.Operands, "value");
 
-                _labelLookup[label] = value;
+                _labelLookup[label] = value.ToString();
+                return null;
+            }
 
+            case DirectiveTypes.DEF:
+            {
+                var label = HasmGrammar.DirectiveDefine.FirstValueByName<string>(line.Operands, "label");
+                var value = HasmGrammar.DirectiveDefine.FirstValueByName<string>(line.Operands, "text");
+
+                _labelLookup[label] = value;
                 return null;
             }
 
@@ -194,11 +203,14 @@ namespace hasm
 
                 return list;
             }
+
+
             }
+
 
             throw new NotImplementedException();
         }
-        
+
         private static Line ParseLine(string line)
         {
             if (string.IsNullOrWhiteSpace(line))
@@ -211,17 +223,24 @@ namespace hasm
             var strDirective = tree.FirstValueByNameOrDefault<string>("directive");
             var operands = tree.FirstValueByNameOrDefault<string>("operands");
             var comment = tree.FirstValueByNameOrDefault<string>("comment");
-
+            
             if ((instruction == null) && (strDirective != null) && (operands != null))
             {
-                var directive = Grammar.EnumValue<DirectiveTypes>().FirstValue(strDirective);
-                return new Line(label, directive, operands, comment);
+                try
+                {
+                    var directive = Grammar.EnumValue<DirectiveTypes>().FirstValue(strDirective);
+                    return new Line(label, directive, operands, comment);
+                }
+                catch (ParserException e)
+                {
+                    throw new AssemblerException($"Invalid directive! Input: {line}", e);
+                }
             }
 
             if ((instruction != null) && (strDirective == null) && (operands == null))
                 return new Line(label, instruction, comment);
 
-            throw new NotImplementedException();
+            throw new AssemblerException($"Invalid input, couldn't detect if it supposed to be instruction or a directive. Input: {line}");
         }
         
         private class DefinedByte : IAssembledInstruction

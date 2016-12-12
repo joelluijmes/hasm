@@ -4,6 +4,7 @@
     {
         DB,
         DW,
-        EQU
+        EQU,
+        DEF
     }
 }

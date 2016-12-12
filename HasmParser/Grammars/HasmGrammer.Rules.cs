@@ -5,6 +5,8 @@ namespace hasm.Parsing.Grammars
 {
     public sealed partial class HasmGrammar
     {
+        private static readonly Rule _anythingTillComment = Text("text", MatchWhile(Not(MatchChar(';')) + MatchAnyChar()));
+
         /// <summary>
         ///     Rule for opcode.
         /// </summary>
@@ -20,9 +22,9 @@ namespace hasm.Parsing.Grammars
         /// <summary>
         ///     The listing instruction, just about anything till the end or ';'
         /// </summary>
-        public static readonly ValueRule<string> AssemblyInstruction = FirstValue<string>("instruction", Text(MatchWhile(Not(MatchChar(';')) + MatchAnyChar())));
+        public static readonly ValueRule<string> AssemblyInstruction = FirstValue<string>("instruction", _anythingTillComment);
 
-        public static readonly ValueRule<string> Operands = FirstValue<string>("operands", Text(MatchWhile(Not(MatchChar(';')) + MatchAnyChar())));
+        public static readonly ValueRule<string> Operands = FirstValue<string>("operands", _anythingTillComment);
 
         /// <summary>
         ///     The listing comment, must start with ';', matches till the end.
@@ -32,6 +34,7 @@ namespace hasm.Parsing.Grammars
         public static readonly Rule Line = (Optional(AssemblyLabel) + Optional(Whitespace) + (AssemblyDirective | AssemblyInstruction) + Optional(Whitespace) + Optional(Operands) + Optional(Whitespace) + Optional(AssemblyComment)) | AssemblyComment | End();
 
         public static readonly Rule DirectiveEqual = Text("label", Label) + MatchChar('=') + Int32("value");
+        public static readonly Rule DirectiveDefine = Text("label", Label) + MatchChar('=') + _anythingTillComment;
 
         public static readonly Rule DefineByte = Int8() + Optional(OneOrMore(MatchChar(',') + Optional(Whitespace) + Int8()));
     }
