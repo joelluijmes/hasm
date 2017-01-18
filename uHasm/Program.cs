@@ -26,7 +26,7 @@ namespace hasm
 #if DEBUG
             Debugger.IsAttached;
 #else
-			false;
+            false;
 #endif
 
         private static void Main(string[] args)
@@ -34,18 +34,18 @@ namespace hasm
 #if DEBUG
             MainImpl(args).Wait();
 #else
-			try
-			{
-				AppDomain.CurrentDomain.UnhandledException += UnhandledException;
-				MainImpl(args).Wait();
-			}
-			catch (Exception e)
-			{
-				if (Debugging)
-					throw;
+            try
+            {
+                AppDomain.CurrentDomain.UnhandledException += UnhandledException;
+                MainImpl(args).Wait();
+            }
+            catch (Exception e)
+            {
+                if (Debugging)
+                    throw;
 
-				UnhandledException(e);
-			}
+                UnhandledException(e);
+            }
 #endif
         }
 

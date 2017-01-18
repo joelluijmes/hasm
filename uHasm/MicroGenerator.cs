@@ -22,10 +22,7 @@ namespace hasm
                 {
                     var gaps = assembled.Address - previous.Address - 1;
                     for (var i = 1; i < gaps; ++i)
-                    {
-                        ++previous.Address;
-                        yield return previous;
-                    }
+                        yield return new CopyAssembled(previous) { Address =  previous.Address + i};
                 }
 
                 previous = assembled;
@@ -169,6 +166,26 @@ namespace hasm
                 Value = value;
                 ExternalOperand = false;
             }
+        }
+
+        private struct CopyAssembled : IAssembled
+        {
+            public int Address { get; set; }
+            public int Count { get; }
+            public long Assembled { get; }
+
+            private readonly string _str;
+
+            public CopyAssembled(IAssembled assembled)
+            {
+                Address = assembled.Address;
+                Count = assembled.Count;
+                Assembled = assembled.Assembled;
+
+                _str = assembled.ToString();
+            }
+
+            public override string ToString() => _str;
         }
     }
 }
