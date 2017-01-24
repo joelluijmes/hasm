@@ -100,6 +100,7 @@
     <Compile Include="Grammars\HasmGrammer.Rules.cs" />
     <Compile Include="Grammars\MicroHasmGrammar.cs" />
     <Compile Include="DependencyInjection\KernelFactory.cs" />
+    <Compile Include="Export\HexAddressedFormattedExporter.cs" />
     <Compile Include="Models\OperandInputBus.cs" />
     <Compile Include="Models\Operation.cs" />
     <Compile Include="Encoding\OperandConverter.cs" />

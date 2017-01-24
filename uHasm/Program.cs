@@ -117,7 +117,7 @@ namespace hasm
 
             using (var stream = File.Open($"{output}_format.txt", FileMode.Create, FileAccess.Write))
             {
-                using (var exporter = new FormattedExporter(stream) { Base = 2, AppendToString = true })
+                using (var exporter = new HexAddressedFormattedExporter(stream) { Base = 2, AppendToString = true })
                     await exporter.Export(assembled);
             }
 
