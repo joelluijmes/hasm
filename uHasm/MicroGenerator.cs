@@ -21,8 +21,8 @@ namespace hasm
                 if (previous != null)
                 {
                     var gaps = assembled.Address - previous.Address - 1;
-                    for (var i = 1; i < gaps; ++i)
-                        yield return new CopyAssembled(previous) { Address =  previous.Address + i};
+                    for (var i = 1; i <= gaps; ++i)
+                        yield return new CopyAssembled(previous) { Address = previous.Address + i};
                 }
 
                 previous = assembled;
@@ -36,7 +36,7 @@ namespace hasm
 
             var sw = Stopwatch.StartNew();
 #if DEBUG
-             //microFunctions = new[] { microFunctions.ElementAt(35) };
+             //microFunctions = new[] { microFunctions.ElementAt(61) };
 #endif
 
 #if PARALLEL

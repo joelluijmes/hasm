@@ -75,7 +75,7 @@ namespace hasm.Parsing.Models
         }
 
         [EncodableProperty(ENCODING_CONDITION, 3)]
-        public Condition Condition { get; set; } = Condition.None;
+        public Condition Condition { get; set; }
 
         [EncodableProperty(ENCODING_CONDITION_INVERTED)]
         public bool InvertedCondition { get; set; }
