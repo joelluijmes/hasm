@@ -139,7 +139,7 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="packages.config" />
-    <EmbeddedResource Include="Resources\Instructionset with Encoding %28rev3%29.xlsx" />
+    <None Include="Resources\Instructionset with Encoding %28rev 4%29.xlsx" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
