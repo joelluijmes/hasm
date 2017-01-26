@@ -6,6 +6,6 @@ namespace hasm.Assembler
     {
         public int Address { get; set; }
         public int Count { get; }
-        public long Assembled { get; }
+        public byte[] Bytes { get; }
     }
 }

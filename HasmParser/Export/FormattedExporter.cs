@@ -26,7 +26,7 @@ namespace hasm.Parsing.Export
             return _spaceRegex.Replace(str, "$0 ").Trim();
         }
 
-        protected virtual string FormatAssembled(long assembled, int padding)
+        protected virtual string FormatAssembled(byte[] bytes, int padding = 0)
         {
             if (padding == 0)
             {
@@ -37,6 +37,8 @@ namespace hasm.Parsing.Export
                         : 0;
             }
 
+            Array.Resize(ref bytes, sizeof(long));
+            var assembled = BitConverter.ToInt64(bytes, 0);
             var str = Convert.ToString(assembled, Base).ToUpper().PadLeft(padding, '0');
             return _spaceRegex.Replace(str, "$0 ").Trim();
         }
@@ -46,7 +48,7 @@ namespace hasm.Parsing.Export
             if (assembled == null)
                 return;
 
-            await Writer.WriteLineAsync($"{FormatAddress(assembled.Address)}: {FormatAssembled(assembled.Assembled, assembled.Count)} {(AppendToString ? assembled.ToString() : "")}");
+            await Writer.WriteLineAsync($"{FormatAddress(assembled.Address)}: {FormatAssembled(assembled.Bytes)} {(AppendToString ? assembled.ToString() : "")}");
         }
     }
 }

@@ -119,11 +119,16 @@ namespace hasm
             // first microinstruction/function address is the assembled (macro)instruction
             var encoded = _encoder.Encode(function.Instruction);
 
+            // TODO: Refactor this.
+
             switch (encoded.Length)
             {
             case 1:
                 encoded = new byte[] {0x00, encoded[0]};
                 break;
+            //case 2:
+            //    encoded = new [] { encoded[1], encoded[0]};
+            //    break;
             case 3:
                 encoded = new[] {encoded[1], encoded[2]};
                 break;
@@ -144,14 +149,16 @@ namespace hasm
             {
                 Instruction = instruction;
                 Address = instruction.Location;
-                Assembled = PropertyEncoder.Encode(instruction);
+
+                var assembled = PropertyEncoder.Encode(instruction);
+                Bytes = BitConverter.GetBytes(assembled);
+                // Array.Reverse(Bytes);
             }
 
             public MicroInstruction Instruction { get; }
 
-            public long Assembled { get; } //=> PropertyEncoder.Encode(Instruction);
+            public byte[] Bytes { get; }
             public int Address { get; set; }
-            public int Count => 40;
 
             public override string ToString() => Instruction.ToString();
         }

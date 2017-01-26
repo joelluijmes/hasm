@@ -14,11 +14,7 @@ namespace hasm.Parsing.Export
             if (assembled == null)
                 return;
 
-            var bytes = BitConverter.GetBytes(assembled.Assembled).Take(assembled.Count/8).ToArray();
-
-            Array.Reverse(bytes);
-            var str = bytes.Select(x => x.ToString("X2")).Aggregate((a, b) => $"{a} {b}");
-
+            var str = assembled.Bytes.Select(x => x.ToString("X2")).Aggregate((a, b) => $"{a} {b}");
             await Writer.WriteLineAsync(str);
         }
     }

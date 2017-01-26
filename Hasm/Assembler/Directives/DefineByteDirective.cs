@@ -29,13 +29,13 @@ namespace hasm.Assembler.Directives
         {
             public DefinedByte(byte assembled, int address)
             {
-                Assembled = assembled;
+                Bytes = new []{assembled};
                 Address = address;
             }
 
             public int Address { get; set; }
             public int Count => 8;
-            public long Assembled { get; }
+            public byte[] Bytes { get; }
             public bool FullyAssembled => true;
         }
     }

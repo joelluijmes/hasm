@@ -22,6 +22,8 @@ namespace hasm
     /// </summary>
     public sealed class HasmAssembler
     {
+        public const int WORDSIZE = 2;
+
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private static IDictionary<DirectiveTypes, IDirective> _directiveParsers;
 
@@ -83,7 +85,7 @@ namespace hasm
             {
                 var instruction = assembled[i];
                 var previous = assembled[i - 1];
-                for (var j = previous.Address + previous.Count/8; j < instruction.Address; ++j)
+                for (var j = previous.Address + previous.Bytes.Length; j < instruction.Address; ++j)
                 {
                     _logger.Debug($"Address not sequential. Inserting a nop at {i}..");
 
@@ -93,7 +95,6 @@ namespace hasm
             }
 
             _logger.Info("Assembler done");
-
             return assembled;
         }
 
@@ -125,17 +126,18 @@ namespace hasm
 
             if (!string.IsNullOrEmpty(line.Label))
             {
-                if (address%2 != 0)
+                while (address% WORDSIZE != 0)
                 {
                     ++address;
-                    _logger.Debug("Address not aligned on 16 bit");
+                    _logger.Debug($"Address not aligned on {WORDSIZE*8} bit");
                 }
 
                 if (_labelLookup.ContainsKey(line.Label))
                     throw new AssemblerException("Label was already defined in listing");
 
-                _labelLookup[line.Label] = address.ToString();
-                _logger.Debug($"Fixed '{line.Instruction}' at {address}");
+                var memoryAddress = address/WORDSIZE;
+                _labelLookup[line.Label] = memoryAddress.ToString();
+                _logger.Debug($"Fixed '{line.Instruction}' at {address:X4}h ({memoryAddress:X4}h in memory)");
             }
 
             IAssemblingInstruction assembled = new AssembledInstruction(encoded, address, completed);
@@ -219,28 +221,14 @@ namespace hasm
         {
             public AssembledInstruction(byte[] encoding, int address, bool fullyAssembled)
             {
-                Assembled = ConvertToInt(encoding);
-                Count = encoding.Length*8;
                 Address = address;
                 FullyAssembled = fullyAssembled;
+                Bytes = encoding;
             }
 
             public int Address { get; set; }
-            public int Count { get; }
-            public long Assembled { get; }
             public bool FullyAssembled { get; }
-
-            private static long ConvertToInt(byte[] array)
-            {
-                if (array == null)
-                    throw new ArgumentNullException(nameof(array));
-
-                var result = 0;
-                for (var i = 0; i < array.Length; i++)
-                    result |= array[i] << (i*8);
-
-                return result;
-            }
+            public byte[] Bytes { get; }
         }
 
         private class ParsedInstructionModel

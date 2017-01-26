@@ -11,17 +11,19 @@ namespace hasm.Parsing.Models
 
         private const int ENCODING_STATUS_EN = 15;
         private const int ENCODING_MEMORY = 12;
+        private const int ENCODING_BREAK = 39;
 
-        public static readonly MicroInstruction NOP = new MicroInstruction(Operation.NOP, MemoryOperation.None, true, false) {InternalInstruction = true};
+        public static readonly MicroInstruction NOP = new MicroInstruction(Operation.NOP, MemoryOperation.None, true, false, false) {InternalInstruction = true};
 
         private int _location;
 
-        public MicroInstruction(Operation operation, MemoryOperation memory, bool lastInstruction, bool statusEnabled)
+        public MicroInstruction(Operation operation, MemoryOperation memory, bool lastInstruction, bool statusEnabled, bool breakEnabled)
         {
             Operation = operation;
             LastInstruction = lastInstruction;
             Memory = memory;
             StatusEnabled = statusEnabled;
+            Break = breakEnabled;
         }
 
         public int Location
@@ -46,6 +48,9 @@ namespace hasm.Parsing.Models
 
         [EncodableProperty(ENCODING_MEMORY, 3)]
         public MemoryOperation Memory { get; set; }
+        
+        [EncodableProperty(ENCODING_BREAK)]
+        public bool Break { get; set; }
 
         [EncodableProperty(typeof(AluConverter), ExceedException = false)]
         public Operation Operation { get; set; }
@@ -107,7 +112,7 @@ namespace hasm.Parsing.Models
             return !Equals(left, right);
         }
 
-        public MicroInstruction Clone() => new MicroInstruction(Operation?.Clone(), Memory, LastInstruction, StatusEnabled);
+        public MicroInstruction Clone() => new MicroInstruction(Operation?.Clone(), Memory, LastInstruction, StatusEnabled, Break);
 
         private bool Equals(MicroInstruction other)
         {
@@ -116,7 +121,8 @@ namespace hasm.Parsing.Models
                    (StatusEnabled == other.StatusEnabled) &&
                    (Memory == other.Memory) &&
                    Operation.Equals(other.Operation) &&
-                   (InternalInstruction == other.InternalInstruction);
+                   (InternalInstruction == other.InternalInstruction) &&
+                   Break == other.Break;
         }
     }
 }

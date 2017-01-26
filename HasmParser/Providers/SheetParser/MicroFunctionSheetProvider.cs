@@ -14,8 +14,8 @@ namespace hasm.Parsing.Providers.SheetParser
         private const int SHEET_MEMORY = 2;
         private const int SHEET_GOTO = 3;
         private const int SHEET_STATUS = 4;
-
-
+        private const int SHEET_BREAK = 5;
+        
         protected override string SheetName => "MicroInstructions";
 
         protected override MicroFunction Parse(string[] row, MicroFunction previous)
@@ -42,11 +42,13 @@ namespace hasm.Parsing.Providers.SheetParser
 
             var gotoInstruction = row[SHEET_GOTO];
             var lastInstruction = gotoInstruction == "next";
-
+            
             var statusCell = row[SHEET_STATUS];
             var statusEnabled = statusCell == "1";
 
-            return new MicroInstruction(alu, memory, lastInstruction, statusEnabled);
+            var breakEnabled = row[SHEET_BREAK] == "1";
+
+            return new MicroInstruction(alu, memory, lastInstruction, statusEnabled, breakEnabled);
         }
     }
 }

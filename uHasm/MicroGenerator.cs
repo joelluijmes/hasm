@@ -22,7 +22,7 @@ namespace hasm
                 {
                     var gaps = assembled.Address - previous.Address - 1;
                     for (var i = 1; i <= gaps; ++i)
-                        yield return new CopyAssembled(previous) { Address = previous.Address + i};
+                        yield return new CopyAssembled(previous) { Address = previous.Address + i };
                 }
 
                 previous = assembled;
@@ -36,7 +36,7 @@ namespace hasm
 
             var sw = Stopwatch.StartNew();
 #if DEBUG
-             //microFunctions = new[] { microFunctions.ElementAt(61) };
+             // microFunctions = new[] { microFunctions.ElementAt(0) };
 #endif
 
 #if PARALLEL
@@ -171,16 +171,14 @@ namespace hasm
         private struct CopyAssembled : IAssembled
         {
             public int Address { get; set; }
-            public int Count { get; }
-            public long Assembled { get; }
+            public byte[] Bytes { get; }
 
             private readonly string _str;
 
             public CopyAssembled(IAssembled assembled)
             {
                 Address = assembled.Address;
-                Count = assembled.Count;
-                Assembled = assembled.Assembled;
+                Bytes = assembled.Bytes;
 
                 _str = assembled.ToString();
             }

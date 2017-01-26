@@ -28,7 +28,7 @@ namespace hasm.Parsing.Encoding
 
                 total += value << member.Encodable.Start;
             }
-
+            
             return total;
         }
 

@@ -19,7 +19,6 @@ namespace hasm.Parsing.Models
         private const int ENCODING_ALU = 33;
         private const int ENCODING_CARRY = 36;
         private const int ENCODING_SHIFT = 37;
-        private const int ENCODING_BREAK = 39;
 
         private static readonly Dictionary<string, AluOperation> _operations = new Dictionary<string, AluOperation>
         {
@@ -80,8 +79,6 @@ namespace hasm.Parsing.Models
         [EncodableProperty(ENCODING_CONDITION_INVERTED)]
         public bool InvertedCondition { get; set; }
 
-        [EncodableProperty(ENCODING_BREAK)]
-        public bool Break { get; set; }
 
         [EncodableProperty(ENCODING_CARRY)]
         public bool Carry { get; set; }

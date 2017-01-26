@@ -56,7 +56,7 @@ namespace hasm
                 var consoleRule = LogManager.Configuration.LoggingRules.First(r => r.Targets.Any(t => t.Name == "console"));
                 consoleRule.EnableLoggingForLevel(LogLevel.Debug);
             }
-            
+
             var commandParser = new FluentCommandLineParser<ApplicationArguments>();
             commandParser.Setup(a => a.OutputFile)
                 .As('o', "output")
@@ -150,13 +150,13 @@ namespace hasm
                     {
                         Console.Write("Enter instruction: ");
                         var input = Console.ReadLine();
-                        var index = input.IndexOf(':');
-                        var address = 0;
-                        if (index != -1)
-                        {
-                            address = int.Parse(input.Substring(0, index));
-                            input = input.Substring(index + 1).Trim();
-                        }
+                        //var index = input.IndexOf(':');
+                        //var address = 0;
+                        //if (index != -1)
+                        //{
+                        //    address = int.Parse(input.Substring(0, index));
+                        //    input = input.Substring(index + 1).Trim();
+                        //}
 
                         MicroFunction function;
                         MicroInstruction instruction;
@@ -164,7 +164,7 @@ namespace hasm
 
                         if (TryParseInstruction(input, out function))
                         {
-                            assembled = assembler.Assemble(new[] {function}, address);
+                            assembled = assembler.Assemble(new[] {function});
                             await exporter.Export(assembled);
                         }
                         else
@@ -191,9 +191,11 @@ namespace hasm
             var memory = Grammar.MatchChar(';') + Grammar.EnumValue<MemoryOperation>("memory");
             var next = Grammar.MatchChar(';') + Grammar.Node("next", Grammar.MatchString("NEXT"));
             var statusEnabled = Grammar.MatchChar(';') + Grammar.Node("status", Grammar.MatchString("STATUS"));
+            var breakEnabled = Grammar.MatchChar(';') + Grammar.Node("break", Grammar.MatchString("BREAK"));
+
             var address = Grammar.MatchChar(';') + Grammar.Int32("addr");
 
-            var rule = MicroHasmGrammar.Operation + memory.Optional + next.Optional + statusEnabled.Optional + address.Optional + Grammar.MatchChar(';').Optional;
+            var rule = MicroHasmGrammar.Operation + memory.Optional + next.Optional + statusEnabled.Optional + breakEnabled.Optional + address.Optional + Grammar.MatchChar(';').Optional;
 
             input = Regex.Replace(input, @"\s+", "").ToUpper();
             var tree = rule.ParseTree(input);
@@ -203,8 +205,9 @@ namespace hasm
             var last = tree.FirstNodeByNameOrDefault("next") != null;
             var status = tree.FirstNodeByNameOrDefault("status") != null;
             var addr = tree.FirstValueByNameOrDefault<int>("addr");
+            var breakLine = tree.FirstNodeByNameOrDefault("break") != null;
 
-            instruction = new MicroInstruction(alu, memoryOperation, last, status);
+            instruction = new MicroInstruction(alu, memoryOperation, last, status, breakLine);
 
             var nextInstruction = MicroInstruction.NOP;
             nextInstruction.Location = addr << 6;

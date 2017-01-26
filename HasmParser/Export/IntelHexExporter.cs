@@ -14,7 +14,7 @@ namespace hasm.Parsing.Export
         {
             var hexRecord = assembled == null
                 ? HexRecord.EOF
-                : HexRecord.FromAssembled(assembled);
+                : new HexRecord((short)assembled.Address, assembled.Bytes);
 
             await Writer.WriteLineAsync(hexRecord.ToString());
         }
@@ -69,18 +69,6 @@ namespace hasm.Parsing.Export
 
                 builder.Append(Checksum.ToString("X2"));
                 return builder.ToString();
-            }
-
-            public static HexRecord FromAssembled(IAssembled assembled)
-            {
-                var address = (short) assembled.Address;
-                var data = BitConverter.GetBytes(assembled.Assembled);
-
-                var rounded = (int) Math.Ceiling(assembled.Count/8.0);
-                Array.Resize(ref data, rounded);
-                Array.Reverse(data);
-
-                return new HexRecord(address, data);
             }
         }
     }

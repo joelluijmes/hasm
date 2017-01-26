@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Fclp;
+using hasm.Assembler;
 using hasm.Parsing.DependencyInjection;
 using hasm.Parsing.Encoding;
 using hasm.Parsing.Export;
@@ -20,7 +23,7 @@ namespace hasm
 #if DEBUG
             Debugger.IsAttached;
 #else
-			false;
+            false;
 #endif
 
         private static void Main(string[] args)
@@ -28,18 +31,18 @@ namespace hasm
 #if DEBUG
             MainImpl(args).Wait();
 #else
-			try
-			{
-				AppDomain.CurrentDomain.UnhandledException += UnhandledException;
-				MainImpl(args).Wait();
-			}
-			catch (Exception e)
-			{
-				if (Debugging)
-					throw;
+            try
+            {
+                AppDomain.CurrentDomain.UnhandledException += UnhandledException;
+                MainImpl(args).Wait();
+            }
+            catch (Exception e)
+            {
+                if (Debugging)
+                    throw;
 
-				UnhandledException(e);
-			}
+                UnhandledException(e);
+            }
 #endif
         }
 
@@ -56,7 +59,7 @@ namespace hasm
                 .As('i', "input")
                 .WithDescription("\tInput file to be assembled");
             commandParser.Setup(a => a.InputInstructionFile)
-                .As("instruction")
+                .As('s', "set")
                 .WithDescription("\tIf set overrides default Instructionset sheet with given");
             commandParser.Setup(a => a.OutputFile)
                 .As('o', "output")
@@ -108,13 +111,23 @@ namespace hasm
             {
                 Console.Write("Enter instruction: ");
                 var line = Console.ReadLine();
-                if (string.IsNullOrEmpty(line))
-                    break;
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
 
                 var encoded = encoder.Encode(line);
                 var value = ConvertToInt(encoded);
 
-                _logger.Info($"Parsed {line} to encoding {Convert.ToString(value, 2).PadLeft(16, '0')}");
+                var storeAddress = 0;
+                if (encoded.Length == 1)
+                    storeAddress = value << 7;
+                else if (encoded.Length == 2)
+                    storeAddress = value >> 1;
+                else if (encoded.Length == 3)
+                    storeAddress = value >> 9;
+
+                var spaceRegex = new Regex(".{4}");
+                var binary = spaceRegex.Replace(Convert.ToString(value, 2).PadLeft(40, '0'), "$0 ").Trim();
+                Console.WriteLine($"({storeAddress:X4}h): {value:X5}h {binary}");
 
                 Console.WriteLine();
             }
@@ -125,6 +138,7 @@ namespace hasm
             var listing = File.ReadAllLines(input);
             var assembler = KernelFactory.Resolve<HasmAssembler>();
             var assembled = assembler.Process(listing).ToArray();
+            assembled = PreProcess(assembled, HasmAssembler.WORDSIZE);
 
             using (var stream = File.Open($"{output}_format.txt", FileMode.Create, FileAccess.Write))
             {
@@ -143,6 +157,34 @@ namespace hasm
                 using (var exporter = new BinaryExporter(stream))
                     await exporter.Export(assembled);
             }
+        }
+
+        private static IAssembled[] PreProcess(IEnumerable<IAssembled> assembled, int size = 2)
+        {
+            var data = assembled.Select(a =>
+            {
+                var tmp = a.Bytes.ToArray();
+                Array.Reverse(tmp);
+                return tmp;
+            }).SelectMany(a => a).ToArray();
+            var padding = data.Length%size;
+
+            // add nops to the end
+            if (padding != 0)
+            {
+                Array.Resize(ref data, data.Length + padding);
+                for (var i = data.Length - 1; i < data.Length; ++i)
+                    data[i] = 0xFF;
+            }
+
+            var aligned = new IAssembled[data.Length/size];
+            for (var i = 0; i < data.Length/size; ++i)
+            {
+                var buf = data.Skip(i*size).Take(size).ToArray();
+                aligned[i] = new RawAssembled(i, buf);
+            }
+
+            return aligned;
         }
 
         private static void UnhandledException(object sender, UnhandledExceptionEventArgs e)

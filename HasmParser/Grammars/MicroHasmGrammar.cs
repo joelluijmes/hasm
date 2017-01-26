@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using hasm.Parsing.Models;
 using ParserLib.Evaluation;
 using ParserLib.Parsing;
@@ -39,21 +40,22 @@ namespace hasm.Parsing.Grammars
 
         private static readonly Rule _assignment = _target + _left + Optional((_aluOperation + _right + Optional(_carry)) | _rightShift);
         private static readonly Rule _operation = (_left + _aluOperation + _right + Optional(_carry)) | _right;
-        private static readonly Rule _aluRule = _assignment | _operation;
+        private static readonly Rule _aluRule = Optional(_if) + (_assignment | _operation);
 
         public static readonly Rule Alu = ConvertToValue("alu", ConvertToOperation, _aluRule);
-        public static readonly Rule Operation = Node("operation", Optional(_if) + (_nop | Alu));
-
+        public static readonly Rule Operation = Node("operation", _nop | Alu);
+        
         private static Operation ConvertToOperation(Node node)
         {
             var condition = Condition.None;
             var inverted = false;
-            if (node.FirstNodeByNameOrDefault("if") != null)
+            var ifNode = node.FirstNodeByNameOrDefault("if");
+            if (ifNode != null)
             {
-                var status = node.FirstValueByNameOrDefault<string>("status");
+                var status = ifNode.FirstValueByNameOrDefault<string>("status");
 
                 if (_conditions.TryGetValue(status, out condition))
-                    inverted = node.FirstValueByNameOrDefault<string>("cond") == "0";
+                    inverted = ifNode.FirstValueByNameOrDefault<string>("cond") == "0";
             }
 
             var target = node.FirstValueByNameOrDefault<string>("target");

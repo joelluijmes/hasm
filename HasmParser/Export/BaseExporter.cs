@@ -9,7 +9,7 @@ namespace hasm.Parsing.Export
     {
         protected BaseExporter(Stream stream)
         {
-            Writer = new StreamWriter(stream, System.Text.Encoding.UTF8, 1024, true);
+            Writer = new StreamWriter(stream, System.Text.Encoding.ASCII, 1024, true);
         }
 
         public StreamWriter Writer { get; }

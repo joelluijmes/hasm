@@ -100,7 +100,7 @@ namespace hasm.Parsing.Grammars
                 var encodedAsInteger = node.FirstValue<int>();
                 var encoded = BitConverter.GetBytes(encodedAsInteger);
                 Array.Resize(ref encoded, instruction.Count);
-
+                
                 return encoded;
             };
 
