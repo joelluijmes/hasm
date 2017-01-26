@@ -181,7 +181,7 @@ namespace hasm
                         if (operandTypes[i].EndsWith("s"))
                         {
                             var addressAsInteger = Grammar.Int32().FirstValue(address);
-                            address = (addressAsInteger - instruction.Assembled[0].Address).ToString();
+                            address = (addressAsInteger - (instruction.Assembled[0].Address/WORDSIZE)).ToString();
                         }
 
                         input.Append(address);
