@@ -157,6 +157,7 @@ namespace hasm
             if (instruction.Input.Instruction == opcode)
                 throw new NotImplementedException();
 
+            var instructionEncoding = _encoder.FindInstructionEncoding(opcode);
             var operands = HasmGrammar.GetOperands(instruction.Input.Instruction);
 
             var input = new StringBuilder(opcode);
@@ -167,9 +168,26 @@ namespace hasm
 
                 string address;
                 input.Append(' ');
-                input.Append(_labelLookup.TryGetValue(operand, out address)
-                    ? address
-                    : operand);
+                if (_labelLookup.TryGetValue(operand, out address))
+                {
+                    var operandTypes = HasmGrammar.GetOperands(instructionEncoding.Grammar);
+                    if (i >= operandTypes.Length || !operandTypes[i].StartsWith("IMM"))
+                    {
+                        input.Append(operand);
+                    }
+                    else
+                    {
+                        // signed operand means relative
+                        if (operandTypes[i].EndsWith("s"))
+                        {
+                            var addressAsInteger = Grammar.Int32().FirstValue(address);
+                            address = (addressAsInteger - instruction.Assembled[0].Address).ToString();
+                        }
+
+                        input.Append(address);
+                    }
+                }
+                else input.Append(operand);
 
                 if (i < operands.Length - 1)
                     input.Append(',');

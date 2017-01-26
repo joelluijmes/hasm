@@ -84,6 +84,14 @@ namespace hasm.Parsing.Encoding
             return false;
         }
 
+        /// <summary>
+        ///     Tries to find the InstructionEncoding by opcode which is parsed from the Instruction Set sheet.
+        /// </summary>
+        /// <param name="opcode">The opcode of the instruction to be found.</param>
+        /// <returns>The instruction encoding or null if not found</returns>
+        public InstructionEncoding FindInstructionEncoding(string opcode)
+            => _encodingProvider.Items.FirstOrDefault(i => i.Grammar.StartsWith(opcode.ToUpper()));
+
         private ValueRule<byte[]> FindRule(string opcode)
         {
             ValueRule<byte[]> rule;
@@ -103,9 +111,6 @@ namespace hasm.Parsing.Encoding
             _rules[opcode] = rule;
             return rule;
         }
-
-        private InstructionEncoding FindInstructionEncoding(string opcode)
-            => _encodingProvider.Items.FirstOrDefault(i => i.Grammar.StartsWith(opcode.ToUpper()));
 
         private static string FormatInput(string input)
         {
