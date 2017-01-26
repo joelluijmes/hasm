@@ -70,6 +70,9 @@ namespace hasm
             commandParser.Setup(a => a.LiveMode)
                 .As('l', "live-mode")
                 .WithDescription("Use live mode");
+            commandParser.Setup(a => a.OutputPreProcess)
+                .As('p')
+                .WithDescription("Export the files before alignment, useful for line by line assembly");
             commandParser.SetupHelp("?", "help")
                 .WithHeader("Invalid usage: ")
                 .Callback(c => Console.WriteLine(c));
@@ -100,7 +103,7 @@ namespace hasm
                     throw new InvalidOperationException("If you haven't chosen for live mode you want to assemble a listing. Therefor you need to give the input- and output file.");
             }
 
-            await AssembleFile(arguments.InputFile, arguments.OutputFile);
+            await AssembleFile(arguments.InputFile, arguments.OutputFile, arguments.OutputPreProcess);
         }
 
         private static void LiveMode()
@@ -133,40 +136,42 @@ namespace hasm
             }
         }
 
-        private static async Task AssembleFile(string input, string output)
+        private static async Task AssembleFile(string input, string output, bool outputPreAssembled = false)
         {
             var listing = File.ReadAllLines(input);
             var assembler = KernelFactory.Resolve<HasmAssembler>();
-            var assembled = assembler.Process(listing).ToArray();
-            assembled = PreProcess(assembled, HasmAssembler.WORDSIZE);
+            var assembled = assembler.Process(listing).Select(a => new ReverseEndianAssembled(a)).ToArray();
 
-            using (var stream = File.Open($"{output}_format.txt", FileMode.Create, FileAccess.Write))
+            if (outputPreAssembled)
+                await OutputAssembled(output + "_pre", assembled);
+            
+            await OutputAssembled(output, AlignAssmembled(assembled, HasmAssembler.WORDSIZE));
+        }
+
+        private static async Task OutputAssembled(string name, IAssembled[] assembled)
+        {
+            using (var stream = File.Open($"{name}_format.txt", FileMode.Create, FileAccess.Write))
             {
                 using (var exporter = new FormattedExporter(stream) {Base = 2, AppendToString = true})
                     await exporter.Export(assembled);
             }
 
-            using (var stream = File.Open($"{output}_intel.txt", FileMode.Create, FileAccess.Write))
+            using (var stream = File.Open($"{name}_intel.txt", FileMode.Create, FileAccess.Write))
             {
                 using (var exporter = new IntelHexExporter(stream))
                     await exporter.Export(assembled);
             }
 
-            using (var stream = File.Open($"{output}_binary.txt", FileMode.Create, FileAccess.Write))
+            using (var stream = File.Open($"{name}_binary.txt", FileMode.Create, FileAccess.Write))
             {
                 using (var exporter = new BinaryExporter(stream))
                     await exporter.Export(assembled);
             }
         }
 
-        private static IAssembled[] PreProcess(IEnumerable<IAssembled> assembled, int size = 2)
+        private static IAssembled[] AlignAssmembled(IEnumerable<IAssembled> assembled, int size = 2)
         {
-            var data = assembled.Select(a =>
-            {
-                var tmp = a.Bytes.ToArray();
-                Array.Reverse(tmp);
-                return tmp;
-            }).SelectMany(a => a).ToArray();
+            var data = assembled.Select(a => a.Bytes).SelectMany(a => a).ToArray();
             var padding = data.Length%size;
 
             // add nops to the end
@@ -224,6 +229,22 @@ namespace hasm
             public string OutputFile { get; set; }
             public bool LiveMode { get; set; }
             public bool ExportDefaultInstructionset { get; set; }
+            public bool OutputPreProcess { get; set; }
+        }
+
+        private class ReverseEndianAssembled : IAssembled
+        {
+            public int Address { get; set; }
+            public byte[] Bytes { get; }
+
+            public ReverseEndianAssembled(IAssembled original)
+            {
+                Address = original.Address;
+
+                var buf = original.Bytes.ToArray();
+                Array.Reverse(buf);
+                Bytes = buf;
+            }
         }
     }
 }
