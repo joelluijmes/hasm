@@ -7,9 +7,10 @@ namespace hasm.Parsing.Encoding.TypeConverters
 {
     internal sealed class RightConverter : TypeConverter
     {
-        private const long RIGHT_DISABLED = 0x0F;
-        private const long EXT_IMMEDIATE = 0x0C;
         private const long INT_IMMEDIATE = 0x0E;
+        private const long RIGHT_DISABLED = INT_IMMEDIATE;
+        private const long EXT_IMMEDIATE = 0x0C;
+        
 
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
