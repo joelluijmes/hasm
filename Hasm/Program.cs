@@ -231,20 +231,5 @@ namespace hasm
             public bool ExportDefaultInstructionset { get; set; }
             public bool OutputPreProcess { get; set; }
         }
-
-        private class ReverseEndianAssembled : IAssembled
-        {
-            public int Address { get; set; }
-            public byte[] Bytes { get; }
-
-            public ReverseEndianAssembled(IAssembled original)
-            {
-                Address = original.Address;
-
-                var buf = original.Bytes.ToArray();
-                Array.Reverse(buf);
-                Bytes = buf;
-            }
-        }
     }
 }

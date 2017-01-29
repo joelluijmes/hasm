@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace hasm.Parsing.Export
 {
@@ -18,6 +19,21 @@ namespace hasm.Parsing.Export
         {
             Address = address;
             Bytes = bytes;
+        }
+    }
+
+    public class ReverseEndianAssembled : IAssembled
+    {
+        public int Address { get; set; }
+        public byte[] Bytes { get; }
+
+        public ReverseEndianAssembled(IAssembled original)
+        {
+            Address = original.Address;
+
+            var buf = original.Bytes.ToArray();
+            Array.Reverse(buf);
+            Bytes = buf;
         }
     }
 }

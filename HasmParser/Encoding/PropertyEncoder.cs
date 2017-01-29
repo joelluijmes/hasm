@@ -156,6 +156,8 @@ namespace hasm.Parsing.Encoding
             public static bool operator ==(EncodableMember left, EncodableMember right) => left.Equals(right);
 
             public static bool operator !=(EncodableMember left, EncodableMember right) => !left.Equals(right);
+
+            public override string ToString() => Member.ToString();
         }
     }
 }

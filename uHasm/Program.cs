@@ -111,10 +111,11 @@ namespace hasm
             var microInstructions = MicroGenerator.GenerateMicroInstructions(_microFunctions);
 
             var assembler = KernelFactory.Resolve<MicroAssembler>();
+            var preassembled = assembler.Assemble(microInstructions).Select(x => new ReverseEndianAssembled(x));
             var assembled = generateGaps
-                ? MicroGenerator.GenerateGaps(assembler.Assemble(microInstructions)).ToArray()
-                : assembler.Assemble(microInstructions).ToArray();
-
+                ? MicroGenerator.GenerateGaps(preassembled).ToArray()
+                : preassembled.ToArray();
+            
             using (var stream = File.Open($"{output}_format.txt", FileMode.Create, FileAccess.Write))
             {
                 using (var exporter = new HexAddressedFormattedExporter(stream) { Base = 2, AppendToString = true })
@@ -141,7 +142,7 @@ namespace hasm
             using (var stream = Console.OpenStandardOutput())
             {
                 using (var exporter = new FormattedExporter(stream) {AppendToString = true, Base = 2})
-                    //using (var exporter = new IntelHexExporter(stream))
+                //using (var exporter = new IntelHexExporter(stream))
                 {
                     exporter.Writer.AutoFlush = true;
                     Console.SetOut(exporter.Writer);

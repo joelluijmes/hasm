@@ -11,6 +11,8 @@ namespace hasm
 {
     internal sealed class MicroAssembler
     {
+        public const int WORDSIZE = 5;
+
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly HasmEncoder _encoder;
 
@@ -151,8 +153,10 @@ namespace hasm
                 Address = instruction.Location;
 
                 var assembled = PropertyEncoder.Encode(instruction);
-                Bytes = BitConverter.GetBytes(assembled);
-                // Array.Reverse(Bytes);
+                var x  = BitConverter.GetBytes(assembled);
+                Array.Resize(ref x, WORDSIZE);
+
+                Bytes = x;
             }
 
             public MicroInstruction Instruction { get; }

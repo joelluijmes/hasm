@@ -48,7 +48,7 @@ namespace hasm.Parsing.Export
             if (assembled == null)
                 return;
 
-            await Writer.WriteLineAsync($"{FormatAddress(assembled.Address)}: {FormatAssembled(assembled.Bytes)} {(AppendToString ? assembled.ToString() : "")}");
+            await Writer.WriteLineAsync($"{FormatAddress(assembled.Address)}: {FormatAssembled(assembled.Bytes, assembled.Bytes.Length*8)} {(AppendToString ? assembled.ToString() : "")}");
         }
     }
 }
