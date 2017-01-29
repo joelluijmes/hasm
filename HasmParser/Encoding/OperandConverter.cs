@@ -18,8 +18,9 @@ namespace hasm.Parsing.Encoding
             {
                 _operand = value;
 
+                // TODO: Undo the hardcoding of the SP
                 if (_operand != value) // if changes -> reset the converted value
-                    _value = null;
+                    _value = _operand == "SP" ? (long?)0x0A : null;
             }
         }
 
