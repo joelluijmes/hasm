@@ -13,6 +13,7 @@ namespace hasm.Parsing.Export
 
         public bool AppendToString { get; set; } = false;
         public int Base { get; set; } = 16;
+        public int Count { get; set; } = 0;
 
         protected virtual string FormatAddress(int address)
         {
@@ -26,11 +27,11 @@ namespace hasm.Parsing.Export
             return _spaceRegex.Replace(str, "$0 ").Trim();
         }
 
-        protected virtual string FormatAssembled(byte[] bytes, int padding = 0)
+        protected virtual string FormatAssembled(byte[] bytes)
         {
-            if (padding == 0)
+            if (Count == 0)
             {
-                padding = Base == 16
+                Count = Base == 16
                     ? 16
                     : Base == 2
                         ? 64
@@ -39,7 +40,7 @@ namespace hasm.Parsing.Export
 
             Array.Resize(ref bytes, sizeof(long));
             var assembled = BitConverter.ToInt64(bytes, 0);
-            var str = Convert.ToString(assembled, Base).ToUpper().PadLeft(padding, '0');
+            var str = Convert.ToString(assembled, Base).ToUpper().PadLeft(Count, '0');
             return _spaceRegex.Replace(str, "$0 ").Trim();
         }
 
@@ -48,7 +49,7 @@ namespace hasm.Parsing.Export
             if (assembled == null)
                 return;
 
-            await Writer.WriteLineAsync($"{FormatAddress(assembled.Address)}: {FormatAssembled(assembled.Bytes, assembled.Bytes.Length*8)} {(AppendToString ? assembled.ToString() : "")}");
+            await Writer.WriteLineAsync($"{FormatAddress(assembled.Address)}: {FormatAssembled(assembled.Bytes)} {(AppendToString ? assembled.ToString() : "")}");
         }
     }
 }

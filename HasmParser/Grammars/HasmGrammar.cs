@@ -97,10 +97,15 @@ namespace hasm.Parsing.Grammars
 
             Func<Node, byte[]> converter = node =>
             {
+                // get value of this part (opcode, operand) and convert it to byte[]
                 var encodedAsInteger = node.FirstValue<int>();
                 var encoded = BitConverter.GetBytes(encodedAsInteger);
-                Array.Resize(ref encoded, instruction.Count);
                 
+                Array.Resize(ref encoded, instruction.Count);
+
+                // convert to big endian if need be
+                if (BitConverter.IsLittleEndian)
+                    Array.Reverse(encoded);
                 return encoded;
             };
 

@@ -27,13 +27,24 @@ namespace hasm.Parsing.Export
         public int Address { get; set; }
         public byte[] Bytes { get; }
 
-        public ReverseEndianAssembled(IAssembled original)
-        {
-            Address = original.Address;
+        private string _toString;
 
-            var buf = original.Bytes.ToArray();
+        public ReverseEndianAssembled(int address, byte[] bytes)
+        {
+            Address = address;
+
+            var buf = bytes.ToArray();
             Array.Reverse(buf);
             Bytes = buf;
         }
+
+        public static IAssembled Create(IAssembled original)
+        {
+            var assembled = new ReverseEndianAssembled(original.Address, original.Bytes) {_toString = original.ToString()};
+
+            return assembled;
+        }
+
+        public override string ToString() => _toString;
     }
 }

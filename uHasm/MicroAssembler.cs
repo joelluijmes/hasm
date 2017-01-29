@@ -21,23 +21,26 @@ namespace hasm
             _encoder = encoder;
         }
 
-        public IEnumerable<IAssembled> Assemble(IList<MicroFunction> microFunctions, int address = 0)
+        public IEnumerable<IAssembled> Assemble(IList<MicroFunction> microFunctions, bool enableLastNop = true)
         {
             _logger.Info($"Assembling {microFunctions.Count} micro-functions..");
 
             var sw = Stopwatch.StartNew();
 
             var distinct = DistinctInstructions(microFunctions).ToList();
-            var assembled = AssembleFunctions(distinct, address);
+            var assembled = AssembleFunctions(distinct);
             var microInstructions = assembled
                 .GroupBy(i => i.Address)
                 .Select(i => i.First())
                 .OrderBy(i => i.Address)
                 .ToList();
 
-            var lastNop = MicroInstruction.NOP;
-            lastNop.Location = 0xFFFF;
-            microInstructions.Add(new AssembledInstruction(lastNop));
+            if (enableLastNop)
+            {
+                var lastNop = MicroInstruction.NOP;
+                lastNop.Location = 0xFFFF;
+                microInstructions.Add(new AssembledInstruction(lastNop));
+            }
 
             sw.Stop();
             _logger.Info($"Assembled {microInstructions.Count} micro-instructions in {sw.Elapsed}");
@@ -86,10 +89,12 @@ namespace hasm
             return list;
         }
 
-        private IList<IAssembled> AssembleFunctions(IEnumerable<MicroFunction> microFunctions, int address = 0)
+        private IList<IAssembled> AssembleFunctions(IEnumerable<MicroFunction> microFunctions)
         {
             var cache = new Dictionary<MicroInstruction, MicroInstruction>();
             var list = new List<MicroInstruction>();
+
+            var address = 0;
             
             foreach (var function in microFunctions)
             {
@@ -121,26 +126,7 @@ namespace hasm
             // first microinstruction/function address is the assembled (macro)instruction
             var encoded = _encoder.Encode(function.Instruction);
 
-            // TODO: Refactor this.
-
-            switch (encoded.Length)
-            {
-            case 1:
-                encoded = new byte[] {0x00, encoded[0]};
-                break;
-            //case 2:
-            //    encoded = new [] { encoded[1], encoded[0]};
-            //    break;
-            case 3:
-                encoded = new[] {encoded[1], encoded[2]};
-                break;
-            default:
-                if (encoded.Length != 2)
-                    throw new NotImplementedException();
-
-                break;
-            }
-
+            Array.Resize(ref encoded, 2);   
             var address = encoded.ConvertToInt();
             function.Location = address >> 1; // last bit doesn't count
         }
@@ -153,9 +139,12 @@ namespace hasm
                 Address = instruction.Location;
 
                 var assembled = PropertyEncoder.Encode(instruction);
-                var x  = BitConverter.GetBytes(assembled);
+                var x = BitConverter.GetBytes(assembled);
                 Array.Resize(ref x, WORDSIZE);
 
+                if (BitConverter.IsLittleEndian)
+                    Array.Reverse(x);
+                
                 Bytes = x;
             }
 

@@ -21,7 +21,7 @@ namespace hasm
         {
             var result = 0;
             for (var i = 0; i < array.Count; i++)
-                result |= array[i] << (i * 8);
+                result |= array[i] << ((array.Count - i - 1) * 8);
 
             return result;
         }

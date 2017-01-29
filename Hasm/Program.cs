@@ -140,36 +140,37 @@ namespace hasm
         {
             var listing = File.ReadAllLines(input);
             var assembler = KernelFactory.Resolve<HasmAssembler>();
-            var assembled = assembler.Process(listing).Select(a => new ReverseEndianAssembled(a)).ToArray();
+            var bigEndianAssembled = assembler.Process(listing).ToArray();
+            var littleEndianAssembled = bigEndianAssembled.Select(ReverseEndianAssembled.Create).ToArray();
+            var alignedBigEndianAssembled = AlignAssembled(bigEndianAssembled, HasmAssembler.WORDSIZE);
+            var alignedLittleEndianAssembled = AlignAssembled(littleEndianAssembled, HasmAssembler.WORDSIZE);
 
-            if (outputPreAssembled)
-                await OutputAssembled(output + "_pre", assembled);
-            
-            await OutputAssembled(output, AlignAssmembled(assembled, HasmAssembler.WORDSIZE));
-        }
-
-        private static async Task OutputAssembled(string name, IAssembled[] assembled)
-        {
-            using (var stream = File.Open($"{name}_format.txt", FileMode.Create, FileAccess.Write))
-            {
-                using (var exporter = new FormattedExporter(stream) {Base = 2, AppendToString = true})
-                    await exporter.Export(assembled);
-            }
-
-            using (var stream = File.Open($"{name}_intel.txt", FileMode.Create, FileAccess.Write))
-            {
-                using (var exporter = new IntelHexExporter(stream))
-                    await exporter.Export(assembled);
-            }
-
-            using (var stream = File.Open($"{name}_binary.txt", FileMode.Create, FileAccess.Write))
+            using (var stream = File.Open($"{output}_binary.txt", FileMode.Create, FileAccess.Write))
             {
                 using (var exporter = new BinaryExporter(stream))
-                    await exporter.Export(assembled);
+                    await exporter.Export(bigEndianAssembled);
+            }
+
+            using (var stream = File.Open($"{output}_aligned_binary.txt", FileMode.Create, FileAccess.Write))
+            {
+                using (var exporter = new BinaryExporter(stream))
+                    await exporter.Export(alignedBigEndianAssembled);
+            }
+
+            using (var stream = File.Open($"{output}_format.txt", FileMode.Create, FileAccess.Write))
+            {
+                using (var exporter = new FormattedExporter(stream) { Base = 2, AppendToString = true, Count = 40 })
+                    await exporter.Export(littleEndianAssembled);
+            }
+
+            using (var stream = File.Open($"{output}_intel.txt", FileMode.Create, FileAccess.Write))
+            {
+                using (var exporter = new IntelHexExporter(stream))
+                    await exporter.Export(alignedLittleEndianAssembled);
             }
         }
-
-        private static IAssembled[] AlignAssmembled(IEnumerable<IAssembled> assembled, int size = 2)
+        
+        private static IAssembled[] AlignAssembled(IEnumerable<IAssembled> assembled, int size = 2)
         {
             var data = assembled.Select(a => a.Bytes).SelectMany(a => a).ToArray();
             var padding = data.Length%size;

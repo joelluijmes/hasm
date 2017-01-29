@@ -111,27 +111,29 @@ namespace hasm
             var microInstructions = MicroGenerator.GenerateMicroInstructions(_microFunctions);
 
             var assembler = KernelFactory.Resolve<MicroAssembler>();
-            var preassembled = assembler.Assemble(microInstructions).Select(x => new ReverseEndianAssembled(x));
-            var assembled = generateGaps
+            var preassembled = assembler.Assemble(microInstructions);
+            var bigEndianAssembled = generateGaps
                 ? MicroGenerator.GenerateGaps(preassembled).ToArray()
                 : preassembled.ToArray();
+
+            var littleEndianAssembled = bigEndianAssembled.Select(ReverseEndianAssembled.Create).ToArray();
+            
+            using (var stream = File.Open($"{output}_binary.txt", FileMode.Create, FileAccess.Write))
+            {
+                using (var exporter = new BinaryExporter(stream))
+                    await exporter.Export(bigEndianAssembled);
+            }
             
             using (var stream = File.Open($"{output}_format.txt", FileMode.Create, FileAccess.Write))
             {
-                using (var exporter = new HexAddressedFormattedExporter(stream) { Base = 2, AppendToString = true })
-                    await exporter.Export(assembled);
+                using (var exporter = new FormattedExporter(stream) { Base = 2, AppendToString = true, Count = 40 })
+                    await exporter.Export(littleEndianAssembled);
             }
 
             using (var stream = File.Open($"{output}_intel.txt", FileMode.Create, FileAccess.Write))
             {
                 using (var exporter = new IntelHexExporter(stream))
-                    await exporter.Export(assembled);
-            }
-
-            using (var stream = File.Open($"{output}_binary.txt", FileMode.Create, FileAccess.Write))
-            {
-                using (var exporter = new BinaryExporter(stream))
-                    await exporter.Export(assembled);
+                    await exporter.Export(littleEndianAssembled);
             }
         }
 

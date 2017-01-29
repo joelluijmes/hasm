@@ -36,7 +36,7 @@ namespace hasm
 
             var sw = Stopwatch.StartNew();
 #if DEBUG
-             // microFunctions = new[] { microFunctions.ElementAt(0) };
+              // microFunctions = new[] { microFunctions.ElementAt(1) };
 #endif
 
 #if PARALLEL
