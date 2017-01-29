@@ -58,6 +58,9 @@ namespace hasm
             }
 
             var commandParser = new FluentCommandLineParser<ApplicationArguments>();
+            commandParser.Setup(a => a.InputFile)
+                .As('i', "input")
+                .WithDescription("\tInput file to be micro-assembled, assembles every microinstruction (see also live mode)");
             commandParser.Setup(a => a.OutputFile)
                 .As('o', "output")
                 .WithDescription("Output file of the micro-assembler");
@@ -100,10 +103,14 @@ namespace hasm
 
             if (arguments.LiveMode)
                 await LiveMode();
-            
+
             if (!string.IsNullOrEmpty(arguments.OutputFile))
-                await AssembleFile(arguments.OutputFile, arguments.GenerateGaps);
-            
+            {
+                if (string.IsNullOrEmpty(arguments.InputFile))
+                    await AssembleFile(arguments.OutputFile, arguments.GenerateGaps);
+                else
+                    await AssembleFile(arguments.InputFile, arguments.OutputFile);
+            }
         }
 
         private static async Task AssembleFile(string output, bool generateGaps = false)
@@ -116,17 +123,22 @@ namespace hasm
                 ? MicroGenerator.GenerateGaps(preassembled).ToArray()
                 : preassembled.ToArray();
 
+            await ExportAssembled(output, bigEndianAssembled);
+        }
+
+        private static async Task ExportAssembled(string output, IAssembled[] bigEndianAssembled)
+        {
             var littleEndianAssembled = bigEndianAssembled.Select(ReverseEndianAssembled.Create).ToArray();
-            
+
             using (var stream = File.Open($"{output}_binary.txt", FileMode.Create, FileAccess.Write))
             {
                 using (var exporter = new BinaryExporter(stream))
                     await exporter.Export(bigEndianAssembled);
             }
-            
+
             using (var stream = File.Open($"{output}_format.txt", FileMode.Create, FileAccess.Write))
             {
-                using (var exporter = new FormattedExporter(stream) { Base = 2, AppendToString = true, Count = 40 })
+                using (var exporter = new FormattedExporter(stream) {Base = 2, AppendToString = true, Count = 40})
                     await exporter.Export(littleEndianAssembled);
             }
 
@@ -137,13 +149,36 @@ namespace hasm
             }
         }
 
+        private static async Task AssembleFile(string input, string output)
+        {
+            var listing = File.ReadAllLines(input);
+            var assembler = KernelFactory.Resolve<MicroAssembler>();
+
+            var assembled = listing.SelectMany(m => TryAssembleInput(assembler, m)).ToArray();
+            await ExportAssembled(output, assembled);
+        }
+
+        private static IEnumerable<IAssembled> TryAssembleInput(MicroAssembler assembler, string input)
+        {
+            MicroFunction function;
+            MicroInstruction instruction;
+
+            if (TryParseInstruction(input, out function))
+                return assembler.Assemble(new[] { function }, false);
+
+            if (TryParseMicroInstruction(input, out instruction))
+                return new[] { assembler.Assemble(instruction) };
+
+            return null;
+        }
+
         private static async Task LiveMode()
         {
             var assembler = KernelFactory.Resolve<MicroAssembler>();
 
             using (var stream = Console.OpenStandardOutput())
             {
-                using (var exporter = new FormattedExporter(stream) {AppendToString = true, Base = 2})
+                using (var exporter = new FormattedExporter(stream) {AppendToString = true, Base = 2, Count = 40})
                 //using (var exporter = new IntelHexExporter(stream))
                 {
                     exporter.Writer.AutoFlush = true;
@@ -153,34 +188,14 @@ namespace hasm
                     {
                         Console.Write("Enter instruction: ");
                         var input = Console.ReadLine();
-                        //var index = input.IndexOf(':');
-                        //var address = 0;
-                        //if (index != -1)
-                        //{
-                        //    address = int.Parse(input.Substring(0, index));
-                        //    input = input.Substring(index + 1).Trim();
-                        //}
-
-                        MicroFunction function;
-                        MicroInstruction instruction;
-                        IEnumerable<IAssembled> assembled;
-
-                        if (TryParseInstruction(input, out function))
+                        var assembled = TryAssembleInput(assembler, input);
+                        if (assembled == null)
                         {
-                            assembled = assembler.Assemble(new[] {function});
-                            await exporter.Export(assembled);
-                        }
-                        else
-                        {
-                            if (TryParseMicroInstruction(input, out instruction))
-                            {
-                                assembled = new[] {assembler.Assemble(instruction)};
-                                await exporter.Export(assembled);
-                            }
-                            else
-                                Console.WriteLine("Unable to parse input.");
+                            Console.WriteLine("Invalid input.\r\n");
+                            continue;
                         }
 
+                        await exporter.Export(assembled);
                         Console.WriteLine();
                     }
                 }
@@ -264,6 +279,7 @@ namespace hasm
         {
             public string InputInstructionFile { get; set; }
             public string OutputFile { get; set;  }
+            public string InputFile { get; set; }
             public bool LiveMode { get; set;  }
             public bool GenerateGaps { get; set; }
             public bool ExportDefaultInstructionset { get; set; }
