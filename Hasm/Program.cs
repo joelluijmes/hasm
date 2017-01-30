@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Fclp;
 using hasm.Assembler;
+using hasm.Parsing;
 using hasm.Parsing.DependencyInjection;
 using hasm.Parsing.Encoding;
 using hasm.Parsing.Export;
@@ -118,7 +119,7 @@ namespace hasm
                     continue;
 
                 var encoded = encoder.Encode(line);
-                var value = ConvertToInt(encoded);
+                var value = encoded.ConvertToInt();
 
                 var storeAddress = 0;
                 if (encoded.Length == 1)
@@ -141,9 +142,10 @@ namespace hasm
             var listing = File.ReadAllLines(input);
             var assembler = KernelFactory.Resolve<HasmAssembler>();
             var bigEndianAssembled = assembler.Process(listing).ToArray();
-            var littleEndianAssembled = bigEndianAssembled.Select(ReverseEndianAssembled.Create).ToArray();
             var alignedBigEndianAssembled = AlignAssembled(bigEndianAssembled, HasmAssembler.WORDSIZE);
-            var alignedLittleEndianAssembled = AlignAssembled(littleEndianAssembled, HasmAssembler.WORDSIZE);
+
+            var littleEndianAssembled = bigEndianAssembled.Select(ReverseEndianAssembled.Create).ToArray();
+            var alignedLittleEndianAssembled = alignedBigEndianAssembled.Select(ReverseEndianAssembled.Create).ToArray();
 
             using (var stream = File.Open($"{output}_binary.txt", FileMode.Create, FileAccess.Write))
             {
@@ -157,16 +159,16 @@ namespace hasm
                     await exporter.Export(alignedBigEndianAssembled);
             }
 
-            using (var stream = File.Open($"{output}_format.txt", FileMode.Create, FileAccess.Write))
-            {
-                using (var exporter = new FormattedExporter(stream) { Base = 2, AppendToString = true, Count = 40 })
-                    await exporter.Export(littleEndianAssembled);
-            }
+            //using (var stream = File.Open($"{output}_format.txt", FileMode.Create, FileAccess.Write))
+            //{
+            //    using (var exporter = new HexAddressedFormattedExporter(stream) { Base = 2, AppendToString = true, Count = 40 })
+            //        await exporter.Export(littleEndianAssembled);
+            //}
 
             using (var stream = File.Open($"{output}_intel.txt", FileMode.Create, FileAccess.Write))
             {
                 using (var exporter = new IntelHexExporter(stream))
-                    await exporter.Export(alignedLittleEndianAssembled);
+                    await exporter.Export(alignedBigEndianAssembled);
             }
         }
         
@@ -209,18 +211,6 @@ namespace hasm
         {
             _logger.Fatal(e, "Unhandled exception");
             Environment.Exit(-1);
-        }
-
-        private static int ConvertToInt(byte[] array)
-        {
-            if (array == null)
-                throw new ArgumentNullException(nameof(array));
-
-            var result = 0;
-            for (var i = 0; i < array.Length; i++)
-                result |= array[i] << (i*8);
-
-            return result;
         }
 
         private class ApplicationArguments

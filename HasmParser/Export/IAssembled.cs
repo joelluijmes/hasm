@@ -22,6 +22,24 @@ namespace hasm.Parsing.Export
         }
     }
 
+    public sealed class CopyAssembled : IAssembled
+    {
+        public int Address { get; set; }
+        public byte[] Bytes { get; }
+
+        private readonly string _str;
+
+        public CopyAssembled(IAssembled assembled)
+        {
+            Address = assembled.Address;
+            Bytes = assembled.Bytes;
+
+            _str = assembled.ToString();
+        }
+
+        public override string ToString() => _str;
+    }
+
     public class ReverseEndianAssembled : IAssembled
     {
         public int Address { get; set; }

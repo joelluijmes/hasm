@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using hasm.Parsing;
 using hasm.Parsing.Encoding;
 using hasm.Parsing.Export;
 using hasm.Parsing.Models;

@@ -138,7 +138,7 @@ namespace hasm
 
             using (var stream = File.Open($"{output}_format.txt", FileMode.Create, FileAccess.Write))
             {
-                using (var exporter = new FormattedExporter(stream) {Base = 2, AppendToString = true, Count = 40})
+                using (var exporter = new HexAddressedFormattedExporter(stream) {Base = 2, AppendToString = true, Count = 40})
                     await exporter.Export(littleEndianAssembled);
             }
 
@@ -178,7 +178,7 @@ namespace hasm
 
             using (var stream = Console.OpenStandardOutput())
             {
-                using (var exporter = new FormattedExporter(stream) {AppendToString = true, Base = 2, Count = 40})
+                using (var exporter = new HexAddressedFormattedExporter(stream) {AppendToString = true, Base = 2, Count = 40})
                 //using (var exporter = new IntelHexExporter(stream))
                 {
                     exporter.Writer.AutoFlush = true;
@@ -195,7 +195,9 @@ namespace hasm
                             continue;
                         }
 
-                        await exporter.Export(assembled);
+                        var littleEndianAssembled = assembled.Select(ReverseEndianAssembled.Create).ToArray();
+
+                        await exporter.Export(littleEndianAssembled);
                         Console.WriteLine();
                     }
                 }
@@ -267,14 +269,7 @@ namespace hasm
             _logger.Fatal(e, "Unhandled exception");
             Environment.Exit(-1);
         }
-
-        private static void IfDebugging(Action action)
-        {
-#if DEBUG
-            action();
-#endif
-        }
-
+        
         private class ApplicationArguments
         {
             public string InputInstructionFile { get; set; }

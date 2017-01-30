@@ -80,7 +80,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Extensions.cs" />
     <Compile Include="MicroAssembler.cs" />
     <Compile Include="MicroGenerator.cs" />
     <Compile Include="MicroModule.cs" />

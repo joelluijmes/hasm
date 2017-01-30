@@ -97,6 +97,7 @@
     <Compile Include="Export\FormattedExporter.cs" />
     <Compile Include="Export\IExporter.cs" />
     <Compile Include="Export\IntelHexExporter.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="Grammars\HasmGrammer.Rules.cs" />
     <Compile Include="Grammars\MicroHasmGrammar.cs" />
     <Compile Include="DependencyInjection\KernelFactory.cs" />
